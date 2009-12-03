@@ -34,8 +34,8 @@ public:
 	~WowCrypt();
 
 	void Init(uint8 *K);
-	void DecryptRecv(uint8 * data, size_t len);
-	void EncryptSend(uint8 * data, size_t len);
+	void DecryptRecv(uint8 * data, unsigned int len);
+	void EncryptSend(uint8 * data, unsigned int len);
 
 	bool IsInitialized() { return _initialized; }
 

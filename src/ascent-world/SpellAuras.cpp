@@ -1377,7 +1377,7 @@ void Aura::EventRelocateRandomTarget()
 	if( !enemies.size() )
 		return;
 
-	uint32 random = RandomUInt(enemies.size() - 1);
+	uint32 random = RandomUInt(uint32(enemies.size()) - 1);
 	set<UnitPointer >::iterator it2 = enemies.begin();
 	while( random-- )
 		it2++;
@@ -5300,7 +5300,7 @@ void Aura::EventPeriodicLeech(uint32 amount)
 			}
 		}
 
-		uint32 siphonbonus = auras.size() * m_caster->m_soulSiphon.amt;
+		uint32 siphonbonus = uint32(auras.size()) * m_caster->m_soulSiphon.amt;
 		if( siphonbonus > m_caster->m_soulSiphon.max )
 			siphonbonus = m_caster->m_soulSiphon.max;
 

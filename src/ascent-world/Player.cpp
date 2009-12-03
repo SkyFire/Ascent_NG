@@ -2475,7 +2475,7 @@ void Player::_SaveSkillsToDB(QueryBuffer * buf)
 
 	std::stringstream ss;
 	ss << "INSERT INTO playerskills (Player_Guid, skill_id, type, currentlvl, maxlvl ) VALUES ";
-	uint32 iI = m_skills.size()-1;
+	uint32 iI = uint32(m_skills.size())-1;
 	for(SkillMap::iterator itr = m_skills.begin(); itr != m_skills.end() ; ++itr)
 	{
 		if(itr->first)
@@ -3264,7 +3264,7 @@ void Player::LoadFromDBProc(QueryResultVector & results)
 		m_finishedQuests.insert(atol(start));
 		start = end +1;
 	}
-	GetAchievementInterface()->HandleAchievementCriteriaQuestCount( m_finishedQuests.size() );
+	GetAchievementInterface()->HandleAchievementCriteriaQuestCount( uint32(m_finishedQuests.size()));
 
 	DailyMutex.Acquire();
 	start =  (char*)get_next_field.GetString();
@@ -3273,7 +3273,7 @@ void Player::LoadFromDBProc(QueryResultVector & results)
 		end = strchr(start,',');
 		if(!end)break;
 		*end=0;
-		SetUInt32Value(PLAYER_FIELD_DAILY_QUESTS_1 + m_finishedDailyQuests.size(), atol(start));
+		SetUInt32Value(PLAYER_FIELD_DAILY_QUESTS_1 + uint32(m_finishedDailyQuests.size()), atol(start));
 		m_finishedDailyQuests.insert(atol(start));
 		start = end +1;
 	}
@@ -4745,7 +4745,7 @@ int32 Player::GetOpenQuestSlot()
 void Player::AddToFinishedQuests(uint32 quest_id)
 {
 	m_finishedQuests.insert(quest_id);
-	GetAchievementInterface()->HandleAchievementCriteriaQuestCount( m_finishedQuests.size() );
+	GetAchievementInterface()->HandleAchievementCriteriaQuestCount( uint32(m_finishedQuests.size()));
 }
 
 bool Player::HasFinishedQuest(uint32 quest_id)
@@ -4759,7 +4759,7 @@ void Player::AddToFinishedDailyQuests(uint32 quest_id)
 		return;
 
 	DailyMutex.Acquire();
-	SetUInt32Value(PLAYER_FIELD_DAILY_QUESTS_1 + m_finishedDailyQuests.size(), quest_id);
+	SetUInt32Value(PLAYER_FIELD_DAILY_QUESTS_1 + uint32(m_finishedDailyQuests.size()), quest_id);
 	m_finishedDailyQuests.insert(quest_id);
 	DailyMutex.Release();
 }

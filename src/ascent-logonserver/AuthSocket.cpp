@@ -602,7 +602,7 @@ void AuthSocket::HandleReconnectChallenge()
     rs.SetRand(16*8);
     pkt.append(rs.AsByteBuffer());	// 16 bytes random
     pkt << (uint64) 0x00 << (uint64) 0x00;	// 16 bytes zeros
-    Send(pkt.contents(), pkt.size());
+    Send(pkt.contents(), uint32(pkt.size()));
 }
 
 void AuthSocket::HandleReconnectProof()

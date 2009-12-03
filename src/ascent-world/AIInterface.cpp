@@ -1851,7 +1851,7 @@ void AIInterface::SendMoveToPacket(float toX, float toY, float toZ, float toO, u
 	for(unordered_set<PlayerPointer  >::iterator itr = m_Unit->GetInRangePlayerSetBegin(); itr != m_Unit->GetInRangePlayerSetEnd(); ++itr)
 	{
 		if( (*itr)->GetPositionNC().Distance2DSq( m_Unit->GetPosition() ) >= World::m_movementCompressThresholdCreatures )
-			(*itr)->AppendMovementData( SMSG_MONSTER_MOVE, data.GetSize(), (const uint8*)data.GetBufferPointer() );
+			(*itr)->AppendMovementData( SMSG_MONSTER_MOVE, uint32(data.GetSize()), (const uint8*)data.GetBufferPointer() );
 		else
 			(*itr)->GetSession()->SendPacket(&data);
 	}
@@ -2385,7 +2385,7 @@ WayPoint* AIInterface::getWayPoint(uint32 wpid)
 		return NULL;
 
 	//make sure wpid is valid, return 1st/last if out of boundaries.
-	wpid = ( wpid > m_waypoints->size() ? m_waypoints->size() : ( !wpid?  1 : wpid ));
+	wpid = uint32( wpid > m_waypoints->size() ? m_waypoints->size() : ( !wpid?  1 : wpid ));
 
 	return m_waypoints->at(wpid-1);
 }

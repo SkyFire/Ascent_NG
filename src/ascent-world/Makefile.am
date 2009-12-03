@@ -2,7 +2,7 @@ INCLUDES += -I$(srcdir)/../ascent-shared
 
 bin_PROGRAMS = ascent-world
 
-hearthstone_world_SOURCES = \
+ascent_world_SOURCES = \
     CollideInterface.cpp \
     CollideInterface.h \
     VoiceChatClientSocket.cpp \

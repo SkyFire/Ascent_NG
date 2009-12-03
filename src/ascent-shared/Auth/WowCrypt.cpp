@@ -57,7 +57,7 @@ void WowCrypt::Init(uint8 *K)
     _initialized = true;
 }
 
-void WowCrypt::DecryptRecv(uint8 *data, size_t len)
+void WowCrypt::DecryptRecv(uint8 *data, unsigned int len)
 {
     if (!_initialized)
         return;
@@ -65,7 +65,7 @@ void WowCrypt::DecryptRecv(uint8 *data, size_t len)
     _Decrypt.Process((uint8*)data, (uint8*)data, len);
 }
 
-void WowCrypt::EncryptSend(uint8 *data, size_t len)
+void WowCrypt::EncryptSend(uint8 *data, unsigned int len)
 {
     if (!_initialized)
         return;

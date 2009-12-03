@@ -1250,7 +1250,7 @@ void Spell::SpellEffectDummy(uint32 i) // Dummy(Scripted events)
 					{
 						PlayerPointer tgt;
 						if( possible_targets.size() > 1 )
-							tgt = possible_targets[RandomUInt(possible_targets.size()-1)];
+							tgt = possible_targets[RandomUInt(uint32(possible_targets.size())-1)];
 						else
 							tgt = possible_targets[0];
 

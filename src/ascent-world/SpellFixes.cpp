@@ -117,7 +117,7 @@ void GenerateNameHashesFile()
 {
 	const uint32 fieldSize = 81;
 	const char* prefix = "SPELL_HASH_";
-	uint32 prefixLen = strlen(prefix);
+	uint32 prefixLen = uint32(strlen(prefix));
 	DBCFile dbc;
 
 	if( !dbc.open( "DBC/Spell.dbc" ) )

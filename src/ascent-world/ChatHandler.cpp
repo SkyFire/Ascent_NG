@@ -172,7 +172,7 @@ void WorldSession::HandleMessagechatOpcode( WorldPacket & recv_data )
 			if( msg.length() >= sWorld.flood_caps_min_len )
 			{
 				uint32 fc = 0;
-				uint32 slen = msg.length();
+				uint32 slen = uint32(msg.length());
 				uint32 clen = 0;
 				for(; fc < slen; ++fc)
 				{

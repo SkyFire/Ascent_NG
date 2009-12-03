@@ -46,7 +46,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				InlineFunctionExpansion="2"
-				AdditionalIncludeDirectories="..\..\hearthstone-shared;..\..\hearthstone-world;..\..\..\dep\include;..\..\..\dep\src"
+				AdditionalIncludeDirectories="..\..\ascent-shared;..\..\ascent-world;..\..\..\dep\include;..\..\..\dep\src"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;SCRIPTLIB"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -67,7 +67,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="hearthstone-world.lib"
+				AdditionalDependencies="ascent-world.lib"
 				OutputFile="../../../bin/debug/script_bin/WorldPvPScripts.dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\..\..\bin\debug"
@@ -129,7 +129,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				InlineFunctionExpansion="2"
-				AdditionalIncludeDirectories="..\..\hearthstone-shared;..\..\hearthstone-world;..\..\..\dep\include;..\..\..\dep\src"
+				AdditionalIncludeDirectories="..\..\ascent-shared;..\..\ascent-world;..\..\..\dep\include;..\..\..\dep\src"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;SCRIPTLIB;X64;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -150,7 +150,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="hearthstone-world.lib"
+				AdditionalDependencies="ascent-world.lib"
 				OutputFile="../../../bin/debug_x64/script_bin/WorldPvPScripts.dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\..\..\bin\debug_x64"
@@ -216,7 +216,7 @@
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
 				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories="..\..\hearthstone-shared;..\..\hearthstone-world;..\..\..\dep\include;..\..\..\dep\src"
+				AdditionalIncludeDirectories="..\..\ascent-shared;..\..\ascent-world;..\..\..\dep\include;..\..\..\dep\src"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;SCRIPTLIB"
 				RuntimeLibrary="2"
 				BufferSecurityCheck="false"
@@ -237,7 +237,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="hearthstone-world.lib"
+				AdditionalDependencies="ascent-world.lib"
 				OutputFile="../../../bin/release/script_bin/WorldPvPScripts.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\..\bin\release"
