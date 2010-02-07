@@ -1,25 +1,18 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
-//
-// MapCell.cpp
-//
+
 #include "StdAfx.h"
 
 MapCell::MapCell()
@@ -32,7 +25,7 @@ MapCell::~MapCell()
 	RemoveObjects();
 }
 
-void MapCell::Init(uint32 x, uint32 y, uint32 mapid, MapMgrPointer mapmgr)
+void MapCell::Init(uint32 x, uint32 y, uint32 mapid, MapMgr* mapmgr)
 {
 	_mapmgr = mapmgr;
 	_active = false;
@@ -44,7 +37,7 @@ void MapCell::Init(uint32 x, uint32 y, uint32 mapid, MapMgrPointer mapmgr)
 	_objects.clear();
 }
 
-void MapCell::AddObject(ObjectPointer obj)
+void MapCell::AddObject(Object* obj)
 {
 	if(obj->IsPlayer())
 		++_playerCount;
@@ -52,7 +45,7 @@ void MapCell::AddObject(ObjectPointer obj)
 	_objects.insert(obj);
 }
 
-void MapCell::RemoveObject(ObjectPointer obj)
+void MapCell::RemoveObject(Object* obj)
 {
 	if(obj->IsPlayer())
 		--_playerCount;
@@ -101,7 +94,7 @@ void MapCell::RemoveObjects()
 	//uint32 ltime = getMSTime();
 
 	/* delete objects in pending respawn state */
-	ObjectPointer pObject;
+	Object* pObject;
 	for(itr = _respawnObjects.begin(); itr != _respawnObjects.end(); ++itr)
 	{
 		pObject = *itr;
@@ -116,25 +109,21 @@ void MapCell::RemoveObjects()
 					_mapmgr->_reusable_guids_vehicle.push_back( pObject->GetUIdFromGUID() );
 					TO_VEHICLE(pObject)->m_respawnCell=NULL;
 					TO_VEHICLE(pObject)->Destructor();
-					pObject = NULLOBJ;
 				}
 				else if( !pObject->IsPet() )
 				{
 					_mapmgr->_reusable_guids_creature.push_back( pObject->GetUIdFromGUID() );
 					TO_CREATURE(pObject)->m_respawnCell=NULL;
 					TO_CREATURE(pObject)->Destructor();
-					pObject = NULLOBJ;
 				}
 			}break;
 
 		case TYPEID_GAMEOBJECT: {
 			TO_GAMEOBJECT(pObject)->m_respawnCell=NULL;
 			TO_GAMEOBJECT(pObject)->Destructor();
-			pObject = NULLOBJ;
 			}break;
 		default:
 			pObject->Destructor();
-			pObject = NULLOBJ;
 			break;
 
 		}
@@ -142,7 +131,7 @@ void MapCell::RemoveObjects()
 	_respawnObjects.clear();
 
 	//This time it's simpler! We just remove everything :)
-	ObjectPointer obj; //do this outside the loop!
+	Object* obj; //do this outside the loop!
 	for(itr = _objects.begin(); itr != _objects.end();)
 	{
 		obj = (*itr);
@@ -168,11 +157,10 @@ void MapCell::RemoveObjects()
 		if( obj->Active )
 			obj->Deactivate( _mapmgr );
 
-		if( obj->IsInWorld() )
+		if( obj->IsInWorld())
 			obj->RemoveFromWorld( true );
 
 		obj->Destructor();
-		obj = NULLOBJ;
 	}
 
 	_playerCount = 0;
@@ -187,8 +175,8 @@ void MapCell::LoadObjects(CellSpawns * sp)
 
 	if(sp->CreatureSpawns.size())//got creatures
 	{
-		VehiclePointer v;
-		CreaturePointer c;
+		Vehicle* v = NULL;
+		Creature* c = NULL;
 		for(CreatureSpawnList::iterator i=sp->CreatureSpawns.begin();i!=sp->CreatureSpawns.end();i++)
 		{
 			if(pInstance)
@@ -199,54 +187,59 @@ void MapCell::LoadObjects(CellSpawns * sp)
 /*				if((*i)->respawnNpcLink && pInstance->m_killedNpcs.find((*i)->respawnNpcLink) != pInstance->m_killedNpcs.end())
 					continue;*/
 			}
-			if((*i)->vehicle != 0)
+			if(!(*i)->eventid)
 			{
-				v=_mapmgr->CreateVehicle((*i)->entry);
-
-				v->SetMapId(_mapmgr->GetMapId());
-				v->SetInstanceID(_mapmgr->GetInstanceID());
-				v->m_loadedFromDB = true;
-
-				if(v->Load(*i, _mapmgr->iInstanceMode, _mapmgr->GetMapInfo()))
+				if((*i)->vehicle != 0)
 				{
-					if(!v->CanAddToWorld())
+				v =_mapmgr->CreateVehicle((*i)->entry);
+				if(v == NULL)
+					continue;
+
+					v->SetMapId(_mapmgr->GetMapId());
+					v->SetInstanceID(_mapmgr->GetInstanceID());
+					v->m_loadedFromDB = true;
+
+					if(v->Load(*i, _mapmgr->iInstanceMode, _mapmgr->GetMapInfo()))
+					{
+						if(!v->CanAddToWorld())
+						{
+							v->Destructor();
+							v = NULL;
+							continue;
+						}
+
+						v->PushToWorld(_mapmgr);
+					}
+					else
 					{
 						v->Destructor();
-						v = NULLVEHICLE;
-						continue;
 					}
-
-					v->PushToWorld(_mapmgr);
 				}
 				else
 				{
-					v->Destructor();
-					v = NULLVEHICLE;
-				}
-			}
-			else
-			{
-				c=_mapmgr->CreateCreature((*i)->entry);
+					c=_mapmgr->CreateCreature((*i)->entry);
+					if(c == NULL)
+						continue;
+	
+					c->SetMapId(_mapmgr->GetMapId());
+					c->SetInstanceID(_mapmgr->GetInstanceID());
+					c->m_loadedFromDB = true;
 
-				c->SetMapId(_mapmgr->GetMapId());
-				c->SetInstanceID(_mapmgr->GetInstanceID());
-				c->m_loadedFromDB = true;
+					if(c->Load(*i, _mapmgr->iInstanceMode, _mapmgr->GetMapInfo()))
+					{
+						if(!c->CanAddToWorld())
+						{
+							c->Destructor();
+							c = NULL;
+							continue;
+						}
 
-				if(c->Load(*i, _mapmgr->iInstanceMode, _mapmgr->GetMapInfo()))
-				{
-					if(!c->CanAddToWorld())
+						c->PushToWorld(_mapmgr);
+					}
+					else
 					{
 						c->Destructor();
-						c = NULLCREATURE;
-						continue;
 					}
-
-					c->PushToWorld(_mapmgr);
-				}
-				else
-				{
-					c->Destructor();
-					c = NULLCREATURE;
 				}
 			}
 		}
@@ -254,31 +247,24 @@ void MapCell::LoadObjects(CellSpawns * sp)
 
 	if(sp->GOSpawns.size())//got GOs
 	{
-		GameObjectPointer go;
+		GameObject* go;
 		for(GOSpawnList::iterator i=sp->GOSpawns.begin();i!=sp->GOSpawns.end();i++)
 		{
-			go = _mapmgr->CreateGameObject((*i)->entry);
-			if(go == NULL )
-				continue;
-			if(go->Load(*i))
+			if(!(*i)->eventid)
 			{
-				//uint32 state = go->GetByte(GAMEOBJECT_BYTES_1, GAMEOBJECT_BYTES_STATE);
-
-				// FIXME - burlex
-				/*
-				if(pInstance && pInstance->FindObject((*i)->stateNpcLink))
+				go = _mapmgr->CreateGameObject((*i)->entry);
+				if(go == NULL)
+					continue;
+				if(go->Load(*i))
 				{
-					go->SetByte(GAMEOBJECT_BYTES_1,GAMEOBJECT_BYTES_STATE, (state ? 0 : 1));
-				}*/			   
-
-				go->m_loadedFromDB = true;
-				go->PushToWorld(_mapmgr);
-				CALL_GO_SCRIPT_EVENT(go, OnSpawn)();
-			}
-			else
-			{
-				go->Destructor();
-				go = NULLGOB;
+					go->m_loadedFromDB = true;
+					go->PushToWorld(_mapmgr);
+					CALL_GO_SCRIPT_EVENT(go, OnSpawn)();
+				}
+				else
+				{
+					go->Destructor();
+				}
 			}
 		}
 	}

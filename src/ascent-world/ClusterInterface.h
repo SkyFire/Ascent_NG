@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #ifdef CLUSTERING
 #ifndef _CLUSTERINTERFACE_H
@@ -29,9 +24,7 @@ typedef void(ClusterInterface::*ClusterInterfaceHandler)(WorldPacket&);
 
 class ClusterInterface : public Singleton<ClusterInterface>
 {
-	Mutex m_onlinePlayerMapMutex;
-	typedef HM_NAMESPACE::hash_map<uint32,RPlayerInfo*> OnlinePlayerStorageMap;
-	OnlinePlayerStorageMap _onlinePlayers;
+	
 	WSClient * _clientSocket;
 	FastQueue<WorldPacket*, Mutex> _pckQueue;
 	time_t _lastConnectTime;
@@ -43,6 +36,9 @@ class ClusterInterface : public Singleton<ClusterInterface>
 
 public:
 
+	Mutex m_onlinePlayerMapMutex;
+	typedef HM_NAMESPACE::hash_map<uint32,RPlayerInfo*> OnlinePlayerStorageMap;
+	OnlinePlayerStorageMap _onlinePlayers;
 	string GenerateVersionString();
 
 	static ClusterInterfaceHandler PHandlers[IMSG_NUM_TYPES];
@@ -56,7 +52,7 @@ public:
 	
 	RPlayerInfo * GetPlayer(uint32 guid)
 	{
-		RPlayerInfo * inf;
+		//RPlayerInfo * inf;
 		OnlinePlayerStorageMap::iterator itr;
 		m_onlinePlayerMapMutex.Acquire();
 		itr = _onlinePlayers.find(guid);
@@ -66,6 +62,8 @@ public:
 
 	ASCENT_INLINE WorldSession * GetSession(uint32 sid) { return _sessions[sid]; }
 
+	void HandleSessionRemoved(WorldPacket & pck);
+	void HandleTeleportResult(WorldPacket & pck);
 	void HandleAuthRequest(WorldPacket & pck);
 	void HandleAuthResult(WorldPacket & pck);
 	void HandleRegisterResult(WorldPacket & pck);
@@ -73,18 +71,27 @@ public:
 	void HandleDestroyInstance(WorldPacket & pck);
 	void HandlePlayerLogin(WorldPacket & pck);
 	void HandlePackedPlayerInfo(WorldPacket & pck);
+	void HandlePlayerInfo(WorldPacket & pck);
 	void HandleWoWPacket(WorldPacket & pck);
 	void HandlePlayerChangedServers(WorldPacket & pck);
+	void HandleSaveAllPlayers(WorldPacket & pck);
+	void HandleTransporterMapChange(WorldPacket & pck);
+	void HandlePlayerTeleport(WorldPacket & pck);
+	void HandleCreatePlayer(WorldPacket & pck);
+	void HandleDestroyPlayerInfo(WorldPacket & pck);
+	void HandleChannelAction(WorldPacket & pck);
+	void HandleChannelLFGDungeonStatusRequest(WorldPacket & pck);
 
 	ASCENT_INLINE void QueuePacket(WorldPacket * pck) { _pckQueue.Push(pck); }
 
 	void Update();
 	void DestroySession(uint32 sid);
+	void ConnectionDropped();
 
 	ASCENT_INLINE void SendPacket(WorldPacket * data) { if(_clientSocket) _clientSocket->SendPacket(data); }
 	ASCENT_INLINE void SetSocket(WSClient * s) { _clientSocket = s; }
 
-	void RequestTransfer(PlayerPointer plr, uint32 MapId, uint32 InstanceId, LocationVector & vec);
+	void RequestTransfer(Player* plr, uint32 MapId, uint32 InstanceId, LocationVector & vec);
 };
 
 #define sClusterInterface ClusterInterface::getSingleton()

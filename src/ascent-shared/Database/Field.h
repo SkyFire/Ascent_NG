@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #if !defined(FIELD_H)
 #define FIELD_H
@@ -32,6 +27,7 @@ public:
 	ASCENT_INLINE uint8 GetUInt8() { return mValue ? static_cast<uint8>(atol(mValue)) : 0; }
 	ASCENT_INLINE int8 GetInt8() { return mValue ? static_cast<int8>(atol(mValue)) : 0; }
 	ASCENT_INLINE uint16 GetUInt16() { return mValue ? static_cast<uint16>(atol(mValue)) : 0; }
+	ASCENT_INLINE int16 GetInt16() { return mValue ? static_cast<int16>(atol(mValue)) : 0; }
 	ASCENT_INLINE uint32 GetUInt32() { return mValue ? static_cast<uint32>(atol(mValue)) : 0; }
 	ASCENT_INLINE int32 GetInt32() { return mValue ? static_cast<int32>(atol(mValue)) : 0; }
 	uint64 GetUInt64() 

@@ -1,28 +1,23 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 
 Item::Item()//this is called when constructing as container
 {
 	m_itemProto = NULL;
-	m_owner = NULLPLR;
+	m_owner = NULL;
 	locked = false;
 	wrapped_item_id = 0;
 
@@ -44,7 +39,7 @@ Item::Item( uint32 high, uint32 low )
 	SetFloatValue( OBJECT_FIELD_SCALE_X, 1 );//always 1
 
 	m_itemProto = NULL;
-	m_owner = NULLPLR;
+	m_owner = NULL;
 	locked = false;
 	m_isDirty = true;
 	random_prop = 0;
@@ -59,11 +54,7 @@ void Item::Init()
 
 Item::~Item()
 {
-}
-
-void Item::Destructor()
-{
-	sEventMgr.RemoveEvents( shared_from_this() );
+	sEventMgr.RemoveEvents( this );
 
 	EnchantmentMap::iterator itr;
 	for( itr = Enchantments.begin(); itr != Enchantments.end(); ++itr )
@@ -78,11 +69,15 @@ void Item::Destructor()
 	if( IsInWorld() )
 		RemoveFromWorld();
 
-	m_owner = NULLPLR;
-	Object::Destructor();
+	m_owner = NULL;
 }
 
-void Item::Create( uint32 itemid, PlayerPointer owner )
+void Item::Destructor()
+{
+	delete this;
+}
+
+void Item::Create( uint32 itemid, Player* owner )
 {
 	SetUInt32Value( OBJECT_FIELD_ENTRY, itemid );
  
@@ -111,7 +106,7 @@ void Item::Create( uint32 itemid, PlayerPointer owner )
 		locked = false;
 }
 
-void Item::LoadFromDB(Field* fields, PlayerPointer plr, bool light )
+void Item::LoadFromDB(Field* fields, Player* plr, bool light )
 {
 	uint32 itemid = fields[2].GetUInt32();
 	uint32 random_prop, random_suffix;
@@ -363,10 +358,10 @@ void Item::DeleteFromDB()
 {
 	if( m_itemProto->ContainerSlots>0 && GetTypeId() == TYPEID_CONTAINER )
 	{
-		/* deleting a ContainerPointer */
+		/* deleting a Container* */
 		for( uint32 i = 0; i < m_itemProto->ContainerSlots; ++i )
 		{
-			if( CAST(Container,shared_from_this())->GetItem( i ) != NULL )
+			if( CAST(Container,this)->GetItem( i ) != NULL )
 			{
 				/* abort the delete */
 				return;
@@ -459,7 +454,7 @@ uint32 GetSellPriceForItem( ItemPrototype *proto, uint32 count )
 	return cost;
 }
 
-uint32 GetBuyPriceForItem( ItemPrototype* proto, uint32 count, PlayerPointer plr, CreaturePointer vendor )
+uint32 GetBuyPriceForItem( ItemPrototype* proto, uint32 count, Player* plr, Creature* vendor )
 {
 	int32 cost = proto->BuyPrice;
 
@@ -480,7 +475,7 @@ uint32 GetSellPriceForItem( uint32 itemid, uint32 count )
 		return 1;
 }
 
-uint32 GetBuyPriceForItem( uint32 itemid, uint32 count, PlayerPointer plr, CreaturePointer vendor )
+uint32 GetBuyPriceForItem( uint32 itemid, uint32 count, Player* plr, Creature* vendor )
 {
 	if( ItemPrototype* proto = ItemPrototypeStorage.LookupEntry( itemid ) )
 		return GetBuyPriceForItem( proto, count, plr, vendor );
@@ -500,14 +495,14 @@ void Item::RemoveFromWorld()
 		return;
 
 	mSemaphoreTeleport = true;
-	m_mapMgr->RemoveObject( obj_shared_from_this(), false );
-	m_mapMgr = NULLMAPMGR;
+	m_mapMgr->RemoveObject( TO_OBJECT(this), false );
+	m_mapMgr = NULL;
   
 	// update our event holder
 	event_Relocate();
 }
 
-void Item::SetOwner( PlayerPointer owner )
+void Item::SetOwner( Player* owner )
 { 
 	if( owner != NULL )
 		SetUInt64Value( ITEM_FIELD_OWNER, owner->GetGUID() );
@@ -583,12 +578,12 @@ int32 Item::AddEnchantment( EnchantEntry* Enchantment, uint32 Duration, bool Per
 	if( m_owner == NULL )
 		return Slot;
 
-	PlayerPointer owner = m_owner;
+	Player* owner = m_owner;
 
 	// Add the removal event.
 	if( Duration )
 	{
-		sEventMgr.AddEvent( item_shared_from_this(), &Item::RemoveEnchantment, uint32(Slot), EVENT_REMOVE_ENCHANTMENT1 + Slot, Duration * 1000, 1, 0 );
+		sEventMgr.AddEvent( TO_ITEM(this), &Item::RemoveEnchantment, uint32(Slot), EVENT_REMOVE_ENCHANTMENT1 + Slot, Duration * 1000, 1, 0 );
 	}
 
 	// No need to send the log packet, if the owner isn't in world (we're still loading)
@@ -783,15 +778,15 @@ void Item::ApplyEnchantmentBonus( uint32 Slot, bool Apply )
 							if( sp == NULL )
 								continue;
 
-							SpellPointer spell = NULLSPELL;
+							Spell* spell = NULL;
 							//Never found out why, 
 							//but this Blade of Life's Inevitability spell must be casted by the item, not owner.
 							if( m_itemProto->ItemId != 34349  )
-								spell = SpellPointer(new Spell( m_owner, sp, true, NULLAURA ));
+								spell = (new Spell( m_owner, sp, true, NULL ));
 							else
-								spell = SpellPointer(new Spell( item_shared_from_this(), sp, true, NULLAURA ));
+								spell = (new Spell( TO_ITEM(this), sp, true, NULL ));
 							
-							spell->i_caster = item_shared_from_this();
+							spell->i_caster = TO_ITEM(this);
 							spell->prepare( &targets );
 						}
 					}
@@ -974,7 +969,8 @@ void Item::SendEnchantTimeUpdate( uint32 Slot, uint32 Duration )
 	uint64 player_guid
 	*/
 
-	WorldPacket* data = new WorldPacket(SMSG_ITEM_ENCHANT_TIME_UPDATE, 24 );
+	WorldPacket* data = NULL;
+	data = new WorldPacket(SMSG_ITEM_ENCHANT_TIME_UPDATE, 24 );
 	*data << GetGUID();
 	*data << Slot;
 	*data << Duration;
@@ -1138,4 +1134,12 @@ string ItemPrototype::ConstructItemLink(uint32 random_prop, uint32 random_suffix
 bool ItemPrototype::ValidateItemLink(const char *szLink)
 {
 	return true;
+}
+
+bool ItemPrototype::ValidateItemSpell(uint32 SpellId)
+{
+	for(uint8 i = 0; i < 5; i++)
+		if(Spells[i].Id == SpellId)
+			return true;
+	return false;
 }

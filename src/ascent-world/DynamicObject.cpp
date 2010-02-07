@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 
@@ -33,17 +28,40 @@ DynamicObject::DynamicObject(uint32 high, uint32 low)
 	m_floatValues[OBJECT_FIELD_SCALE_X] = 1;
 
 
-	m_parentSpell=NULLSPELL;
+	m_parentSpell=NULL;
 	m_aliveDuration = 0;
-	u_caster = NULLUNIT;
+	u_caster = NULL;
 	m_spellProto = 0;
-	p_caster = NULLPLR;
-	m_caster = NULLOBJ;
-	g_caster = NULLGOB;
+	p_caster = NULL;
+	m_caster = NULL;
+	g_caster = NULL;
 }
 
 DynamicObject::~DynamicObject()
 {
+	// remove aura from all targets
+	DynamicObjectList::iterator jtr  = targets.begin();
+	DynamicObjectList::iterator jend = targets.end();
+	Unit* target;
+
+	while(jtr != jend)
+	{
+		target = *jtr;
+		++jtr;
+		target->RemoveAura(m_spellProto->Id);
+	}
+
+	if(m_caster && m_caster->dynObj == this )
+		m_caster->dynObj = NULL;
+
+	m_parentSpell=NULL;
+	m_aliveDuration = 0;
+	u_caster = NULL;
+	m_spellProto = 0;
+	p_caster = NULL;
+	m_caster = NULL;
+	g_caster = NULL;
+
 }
 
 void DynamicObject::Init()
@@ -53,39 +71,15 @@ void DynamicObject::Init()
 
 void DynamicObject::Destructor()
 {
-	// remove aura from all targets
-	DynamicObjectList::iterator jtr  = targets.begin();
-	DynamicObjectList::iterator jend = targets.end();
-	UnitPointer target;
-
-	while(jtr != jend)
-	{
-		target = *jtr;
-		++jtr;
-		target->RemoveAura(m_spellProto->Id);
-	}
-
-	if(m_caster && m_caster->dynObj == dyn_shared_from_this() )
-		m_caster->dynObj = NULLDYN;
-
-	m_parentSpell=NULLSPELL;
-	m_aliveDuration = 0;
-	u_caster = NULLUNIT;
-	m_spellProto = 0;
-	p_caster = NULLPLR;
-	m_caster = NULLOBJ;
-	g_caster = NULLGOB;
-
-	Object::Destructor();
+	delete this;
 }
 
-void DynamicObject::Create(ObjectPointer caster, SpellPointer pSpell, float x, float y, float z, uint32 duration, float radius)
+void DynamicObject::Create(Object* caster, Spell* pSpell, float x, float y, float z, uint32 duration, float radius)
 {
 	Object::_Create(caster->GetMapId(),x, y, z, 0);
 	if(pSpell->g_caster)
-	{
 		m_parentSpell = pSpell;
-	}
+
 	m_caster = caster;
 	switch(caster->GetTypeId())
 	{
@@ -95,6 +89,7 @@ void DynamicObject::Create(ObjectPointer caster, SpellPointer pSpell, float x, f
 			u_caster = pSpell->u_caster;
 			if(!u_caster && p_caster)
 				u_caster = TO_UNIT(p_caster);
+
 			g_caster = TO_GAMEOBJECT(caster);
 		}break;
 	case TYPEID_UNIT:
@@ -116,9 +111,9 @@ void DynamicObject::Create(ObjectPointer caster, SpellPointer pSpell, float x, f
 	m_uint32Values[DYNAMICOBJECT_SPELLID] = m_spellProto->Id;
 
 	m_floatValues[DYNAMICOBJECT_RADIUS] = radius;
-	m_floatValues[DYNAMICOBJECT_POS_X]  = x;
-	m_floatValues[DYNAMICOBJECT_POS_Y]  = y;
-	m_floatValues[DYNAMICOBJECT_POS_Z]  = z;
+	m_position.x = x;
+	m_position.y = y;
+	m_position.z = z;
 	m_uint32Values[DYNAMICOBJECT_CASTTIME] = (uint32)UNIXTIME;
 
 	m_aliveDuration = duration;
@@ -130,18 +125,14 @@ void DynamicObject::Create(ObjectPointer caster, SpellPointer pSpell, float x, f
 		caster->dynObj->m_aliveDuration = 1;
 		caster->dynObj->UpdateTargets();
 	}
-	caster->dynObj = TO_DYNAMICOBJECT(shared_from_this());
-	if(pSpell->g_caster)
-	{
-	   PushToWorld(pSpell->g_caster->GetMapMgr());
-	}else 
-		PushToWorld(caster->GetMapMgr());
-	
-  
-	sEventMgr.AddEvent(TO_DYNAMICOBJECT(shared_from_this()), &DynamicObject::UpdateTargets, EVENT_DYNAMICOBJECT_UPDATE, 100, 0,EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+	caster->dynObj = TO_DYNAMICOBJECT(this);
+
+	PushToWorld(caster->GetMapMgr());
+
+	sEventMgr.AddEvent(TO_DYNAMICOBJECT(this), &DynamicObject::UpdateTargets, EVENT_DYNAMICOBJECT_UPDATE, 200, 0,EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
 }
 
-void DynamicObject::AddInRangeObject( ObjectPointer pObj )
+void DynamicObject::AddInRangeObject( Object* pObj )
 {
 	if( pObj->IsUnit() )
 	{
@@ -149,7 +140,7 @@ void DynamicObject::AddInRangeObject( ObjectPointer pObj )
 		if( p_caster != NULL)
 			attackable = isAttackable( m_caster, pObj );
 		else
-			attackable = isAttackable( dyn_shared_from_this(), pObj );
+			attackable = isAttackable( TO_DYNAMICOBJECT(this), pObj );
 		
 		if( attackable )
 			m_inRangeOppFactions.insert( TO_UNIT( pObj ) );
@@ -157,7 +148,7 @@ void DynamicObject::AddInRangeObject( ObjectPointer pObj )
 	Object::AddInRangeObject( pObj );
 }
 
-void DynamicObject::OnRemoveInRangeObject( ObjectPointer pObj )
+void DynamicObject::OnRemoveInRangeObject( Object* pObj )
 {
 	if( pObj->IsUnit() )
 	{
@@ -173,9 +164,10 @@ void DynamicObject::UpdateTargets()
 	if(m_aliveDuration == 0)
 		return;
 
-	if(m_aliveDuration >= 100)
+	if(m_aliveDuration >= 200)
 	{
-		UnitPointer target;
+		Unit* target;
+
 		float radius = m_floatValues[DYNAMICOBJECT_RADIUS]*m_floatValues[DYNAMICOBJECT_RADIUS];
 
 		Object::InRangeSet::iterator itr,itr2;
@@ -188,7 +180,7 @@ void DynamicObject::UpdateTargets()
 
 			target = TO_UNIT( *itr2 );
 
-			if( !isAttackable( p_caster, target, !(m_spellProto->c_is_flags & SPELL_FLAG_IS_TARGETINGSTEALTHED) ) )
+			if( !isAttackable( m_caster, target, !(m_spellProto->c_is_flags & SPELL_FLAG_IS_TARGETINGSTEALTHED) ) )
 				continue;
 
 			// skip units already hit, their range will be tested later
@@ -197,7 +189,8 @@ void DynamicObject::UpdateTargets()
 
 			if(GetDistanceSq(target) <= radius)
 			{
-				AuraPointer pAura(new Aura(m_spellProto, m_aliveDuration, u_caster, target));
+				Aura* pAura(new Aura(m_spellProto, m_aliveDuration, m_caster, target));
+
 				for(uint32 i = 0; i < 3; ++i)
 				{
 					if(m_spellProto->Effect[i] == 27)
@@ -207,7 +200,7 @@ void DynamicObject::UpdateTargets()
 					}
 				}
 				target->AddAura(pAura);
-				if(p_caster)
+				if( m_caster->IsPlayer() )
 				{
 					p_caster->HandleProc(PROC_ON_CAST_SPECIFIC_SPELL | PROC_ON_CAST_SPELL,target, m_spellProto);
 					p_caster->m_procCounter = 0;
@@ -236,7 +229,7 @@ void DynamicObject::UpdateTargets()
 			}
 		}
 
-		m_aliveDuration -= 100;
+		m_aliveDuration -= 200;
 	}
 	else
 	{
@@ -247,7 +240,7 @@ void DynamicObject::UpdateTargets()
 	{
 		DynamicObjectList::iterator jtr  = targets.begin();
 		DynamicObjectList::iterator jend = targets.end();
-		UnitPointer target;
+		Unit* target;
 
 		while(jtr != jend)
 		{
@@ -255,7 +248,6 @@ void DynamicObject::UpdateTargets()
 			++jtr;
 			target->RemoveAura(m_spellProto->Id);
 		}
-
 		Remove();
 	}
 }

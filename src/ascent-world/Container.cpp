@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 
@@ -35,7 +30,7 @@ Container::Container(uint32 high,uint32 low) : Item()
 
 
 	for(uint32 i = 0; i < 72; ++i)
-		m_Slot[i] = NULLITEM;
+		m_Slot[i] = NULL;
 
 	random_suffix=random_prop=0;
 }
@@ -47,21 +42,20 @@ void Container::Init()
 
 Container::~Container( )
 {
-}
-
-void Container::Destructor()
-{
 	for(uint32 i = 0; i < m_itemProto->ContainerSlots; i++)
 	{
 		if(m_Slot[i] && m_Slot[i]->GetOwner() == m_owner)
 		{
 			m_Slot[i]->Destructor();
-			m_Slot[i] = NULLITEM;
 		}
 	}
-
-	Item::Destructor();
 }
+
+void Container::Destructor()
+{
+	delete this;
+}
+
 void Container::LoadFromDB( Field*fields )
 {
 
@@ -85,7 +79,7 @@ void Container::LoadFromDB( Field*fields )
 	SetUInt32Value( CONTAINER_FIELD_NUM_SLOTS, m_itemProto->ContainerSlots);
 }
 
-void Container::Create( uint32 itemid, PlayerPointer owner )
+void Container::Create( uint32 itemid, Player* owner )
 {
 
 	m_itemProto = ItemPrototypeStorage.LookupEntry( itemid );
@@ -116,7 +110,7 @@ int8 Container::FindFreeSlot()
 			return i; 
 		}
 	}
-	OUT_DEBUG( "Container::FindFreeSlot: no slot available" );
+	DEBUG_LOG( "Container","FindFreeSlot: no slot available" );
 	return ITEM_NO_SLOT_AVAILABLE;
 }
 
@@ -133,7 +127,7 @@ bool Container::HasItems()
 	return false;
 }
 
-bool Container::AddItem(int8 slot, ItemPointer item)
+bool Container::AddItem(int8 slot, Item* item)
 {
 	if (slot < 0 || (uint32)slot >= GetProto()->ContainerSlots)
 		return false;
@@ -174,7 +168,7 @@ bool Container::AddItem(int8 slot, ItemPointer item)
 
 void Container::SwapItems(int8 SrcSlot, int8 DstSlot)
 {
-	ItemPointer temp;
+	Item* temp;
 	if( SrcSlot < 0 || SrcSlot >= (int8)m_itemProto->ContainerSlots )
 		return;
 	
@@ -232,15 +226,15 @@ void Container::SwapItems(int8 SrcSlot, int8 DstSlot)
 	}
 }
 
-ItemPointer Container::SafeRemoveAndRetreiveItemFromSlot(int8 slot, bool destroy)
+Item* Container::SafeRemoveAndRetreiveItemFromSlot(int8 slot, bool destroy)
 {
 	if (slot < 0 || (uint32)slot >= GetProto()->ContainerSlots)
-		return NULLITEM;
+		return NULL;
 
-	ItemPointer pItem = m_Slot[slot];
+	Item* pItem = m_Slot[slot];
 
-	if (pItem == NULL || pItem == item_shared_from_this()) return NULLITEM;
-	m_Slot[slot] = NULLITEM;
+	if (pItem == NULL || pItem == TO_ITEM(this)) return NULL;
+	m_Slot[slot] = NULL;
 
 	if( pItem->GetOwner() == m_owner )
 	{
@@ -257,7 +251,7 @@ ItemPointer Container::SafeRemoveAndRetreiveItemFromSlot(int8 slot, bool destroy
 		}
 	}
 	else
-		pItem = NULLITEM;
+		pItem = NULL;
 
 	return pItem;
 }
@@ -267,10 +261,10 @@ bool Container::SafeFullRemoveItemFromSlot(int8 slot)
 	if (slot < 0 || (uint32)slot >= GetProto()->ContainerSlots)
 		return false;
 
-	ItemPointer pItem = m_Slot[slot];
+	Item* pItem = m_Slot[slot];
 
-	if (pItem == NULL ||pItem == item_shared_from_this()) return false;
-	m_Slot[slot] = NULLITEM;
+	if (pItem == NULL ||pItem == TO_ITEM(this)) return false;
+	m_Slot[slot] = NULL;
 
 	SetUInt64Value(CONTAINER_FIELD_SLOT_1  + slot*2, 0 );
 	pItem->SetUInt64Value(ITEM_FIELD_CONTAINED, 0);
@@ -281,12 +275,11 @@ bool Container::SafeFullRemoveItemFromSlot(int8 slot)
 	}
 	pItem->DeleteFromDB();
 	pItem->Destructor();
-	pItem = NULLITEM;
 
 	return true;
 }
 
-bool Container::AddItemToFreeSlot(ItemPointer pItem, uint32 * r_slot)
+bool Container::AddItemToFreeSlot(Item* pItem, uint32 * r_slot)
 {
 	uint32 slot;
 	for(slot = 0; slot < GetProto()->ContainerSlots; slot++)

@@ -1,30 +1,19 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #ifndef WOWSERVER_COMMON_H
 #define WOWSERVER_COMMON_H
-
-/* Define these if you are creating a repack */
-/*
-#define REPACK "Goat's Repack"
-#define REPACK_AUTHOR "Ascent"
-#define REPACK_WEBSITE "www.ascentemulator.net"*/
 
 #ifdef WIN32
 #pragma warning(disable:4996)
@@ -295,6 +284,26 @@ using std::tr1::shared_ptr;
 #define HM_NAMESPACE tr1
 #define hash_map unordered_map
 #define TRHAX 1
+namespace std
+{
+	namespace tr1
+	{
+		template<> struct hash<const long long unsigned int> : public std::unary_function<const long long unsigned int, std::size_t>
+		{
+			std::size_t operator()(const long long unsigned int val) const
+			{
+				return static_cast<std::size_t>(val);
+			}
+		};
+		template<> struct hash<const unsigned int> : public std::unary_function<const unsigned int, std::size_t>
+		{
+			std::size_t operator()(const unsigned int val) const
+			{
+				return static_cast<std::size_t>(val);
+			}
+		};
+	}
+}
 #elif COMPILER == COMPILER_MICROSOFT && (_MSC_VER < 1500 || !_HAS_TR1)
 using namespace std::tr1;
 using std::tr1::shared_ptr;

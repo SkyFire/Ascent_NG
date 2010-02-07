@@ -1,30 +1,33 @@
 /*
  * Ascent MMORPG Server
- * Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
  *
  */
 
 #include "RStdAfx.h"
 
-void Session::HandleCreatureQueryOpcode(WorldPacket & pck)
+//////////////////////////////////////////////////////////////
+/// This function handles CMSG_CREATURE_QUERY:
+//////////////////////////////////////////////////////////////
+void Session::HandleCreatureQueryOpcode( WorldPacket & recv_data )
 {
-	WorldPacket data(SMSG_CREATURE_QUERY_RESPONSE, 150);
-	CreatureInfo * ci;
+	//WorldPacket data(SMSG_CREATURE_QUERY_RESPONSE, 150);
+	uint8 databuffer[10000];
+	StackPacket data(SMSG_CREATURE_QUERY_RESPONSE, databuffer, 10000);
 	uint32 entry;
-	pck >> entry;
+	uint64 guid;
+	CreatureInfo *ci;
+
+	recv_data >> entry;
+	recv_data >> guid;
 
 	if(entry == 300000)
 	{
@@ -36,18 +39,34 @@ void Session::HandleCreatureQueryOpcode(WorldPacket & pck)
 		{
 			data << uint32(0);
 		}
+		data << uint8(0);  
 	}
 	else
 	{
 		ci = CreatureNameStorage.LookupEntry(entry);
 		if(ci == NULL)
 			return;
-		Log.Debug("World", "CMSG_CREATURE_QUERY '%s'", ci->Name);
 
-		data << (uint32)entry;
-		data << ci->Name;
-		data << uint8(0) << uint8(0) << uint8(0);
-		data << ci->SubName;
+		LocalizedCreatureName * lcn = (language>0) ? sLocalizationMgr.GetLocalizedCreatureName(entry, language) : NULL;
+
+		if(lcn == NULL)
+		{
+			DEBUG_LOG("WORLD","HandleCreatureQueryOpcode CMSG_CREATURE_QUERY '%s'", ci->Name);
+			data << (uint32)entry;
+			data << ci->Name;
+			data << uint8(0) << uint8(0) << uint8(0);
+			data << ci->SubName;
+		}
+		else
+				{
+					DEBUG_LOG("WORLD","HandleCreatureQueryOpcode CMSG_CREATURE_QUERY '%s' (localized to %s)", ci->Name, lcn->Name);
+					data << (uint32)entry;
+					data << lcn->Name;
+					data << uint8(0) << uint8(0) << uint8(0);
+					data << lcn->SubName;
+				}
+		
+		data << ci->info_str; //!!! this is a string in 2.3.0 Example: stormwind guard has : "Direction"
 		data << ci->Flags1;  
 		data << ci->Type;
 		data << ci->Family;
@@ -57,32 +76,54 @@ void Session::HandleCreatureQueryOpcode(WorldPacket & pck)
 		data << ci->Female_DisplayID;
 		data << ci->Male_DisplayID2;
 		data << ci->Female_DisplayID2;
+		data << ci->Unknown1;
 		data << ci->unkfloat1;
 		data << ci->unkfloat2;
 		data << ci->Leader;
+		data << uint32(0);	// unk
+		data << uint32(0);	// unk
+		data << uint32(0);	// unk
+		data << uint32(0);	// unk
+		data << uint32(0);	// unk
 	}
 
 	SendPacket( &data );
 }
 
-void Session::HandleGameObjectQueryOpcode(WorldPacket & pck)
+//////////////////////////////////////////////////////////////
+/// This function handles CMSG_GAMEOBJECT_QUERY:
+//////////////////////////////////////////////////////////////
+void Session::HandleGameObjectQueryOpcode( WorldPacket & recv_data )
 {
-	WorldPacket data(SMSG_GAMEOBJECT_QUERY_RESPONSE, 300);
+	//CHECK_PACKET_SIZE(recv_data, 12);
+	//WorldPacket data(SMSG_GAMEOBJECT_QUERY_RESPONSE, 300);
+	uint8 databuffer[10000];
+	StackPacket data(SMSG_GAMEOBJECT_QUERY_RESPONSE, databuffer, 10000);
+
 	uint32 entryID;
+	uint64 guid;
 	GameObjectInfo *goinfo;
 
-	pck >> entryID;
 
-	Log.Debug("World", "CMSG_GAMEOBJECT_QUERY '%u'", entryID);
+	recv_data >> entryID;
+	recv_data >> guid;
+
+	DEBUG_LOG("WORLD","HandleGameObjectQueryOpcode CMSG_GAMEOBJECT_QUERY '%u'", entryID);
 
 	goinfo = GameObjectNameStorage.LookupEntry(entryID);
-	if(goinfo == 0)
+	if(goinfo == NULL)
 		return;
+
+	LocalizedGameObjectName * lgn = (language>0) ? sLocalizationMgr.GetLocalizedGameObjectName(entryID, language) : NULL;
 
 	data << entryID;
 	data << goinfo->Type;
 	data << goinfo->DisplayID;
-	data << goinfo->Name;
+	if(lgn)
+		data << lgn->Name;
+	else
+		data << goinfo->Name;
+
 	data << uint8(0) << uint8(0) << uint8(0) << uint8(0) << uint8(0) << uint8(0);   // new string in 1.12
 	data << goinfo->SpellFocus;
 	data << goinfo->sound1;
@@ -111,29 +152,37 @@ void Session::HandleGameObjectQueryOpcode(WorldPacket & pck)
 
 	SendPacket( &data );
 }
-void Session::HandleItemQuerySingleOpcode(WorldPacket & pck)
+void Session::HandleItemQuerySingleOpcode( WorldPacket & recv_data )
 {
-	int i;
-	uint32 itemid;
-	pck >> itemid;
+	//CHECK_PACKET_SIZE(recv_data, 4);
 
-	Log.Debug("World", "CMSG_ITEM_QUERY_SINGLE for item id %d",	itemid );
+	int i;
+	uint32 itemid=0;
+	recv_data >> itemid;
 
 	ItemPrototype *itemProto = ItemPrototypeStorage.LookupEntry(itemid);
 	if(!itemProto)
 	{
+		DEBUG_LOG( "WORLD"," Unknown item id 0x%.8X", itemid );
 		return;
 	} 
 
-	WorldPacket data(SMSG_ITEM_QUERY_SINGLE_RESPONSE, 600 + strlen(itemProto->Name1) + strlen(itemProto->Description) );
+	//WorldPacket data(SMSG_ITEM_QUERY_SINGLE_RESPONSE, 5000);
+	uint8 databuffer[50000];
+	StackPacket data(SMSG_ITEM_QUERY_SINGLE_RESPONSE, databuffer, 50000);
+
+	LocalizedItem* li = (language>0) ? sLocalizationMgr.GetLocalizedItem(itemid, language) : NULL;
+
 	data << itemProto->ItemId;
 	data << itemProto->Class;
 	data << itemProto->SubClass;
 	data << itemProto->unknown_bc;
-	data << itemProto->Name1;
-	/*data << itemProto->Name2;
-	data << itemProto->Name3;
-	data << itemProto->Name4;*/
+
+	if(li)
+		data << li->Name;
+	else
+		data << itemProto->Name1;
+
 	data << uint8(0) << uint8(0) << uint8(0); // name 2,3,4
 	data << itemProto->DisplayInfoID;
 	data << itemProto->Quality;
@@ -155,17 +204,21 @@ void Session::HandleItemQuerySingleOpcode(WorldPacket & pck)
 	data << itemProto->Unique;
 	data << itemProto->MaxCount;
 	data << itemProto->ContainerSlots;
+	data << uint32(10);								// 3.0.2 count of stats
 	for(i = 0; i < 10; i++)
 	{
 		data << itemProto->Stats[i].Type;
 		data << itemProto->Stats[i].Value;
 	}
-	for(i = 0; i < 5; i++)
+	data << uint32(0);								// 3.0.2 related to scaling stats
+	data << uint32(0);								// 3.0.2 related to scaling stats
+	for(i = 0; i < 2; i++)
 	{
 		data << itemProto->Damage[i].Min;
 		data << itemProto->Damage[i].Max;
 		data << itemProto->Damage[i].Type;
 	}
+	// 7 resistances
 	data << itemProto->Armor;
 	data << itemProto->HolyRes;
 	data << itemProto->FireRes;
@@ -173,6 +226,7 @@ void Session::HandleItemQuerySingleOpcode(WorldPacket & pck)
 	data << itemProto->FrostRes;
 	data << itemProto->ShadowRes;
 	data << itemProto->ArcaneRes;
+
 	data << itemProto->Delay;
 	data << itemProto->AmmoType;
 	data << itemProto->Range;
@@ -185,7 +239,12 @@ void Session::HandleItemQuerySingleOpcode(WorldPacket & pck)
 		data << itemProto->Spells[i].CategoryCooldown;
 	}
 	data << itemProto->Bonding;
-	data << itemProto->Description;
+
+	if(li)
+		data << li->Description;
+	else
+		data << itemProto->Description;
+
 	data << itemProto->PageId;
 	data << itemProto->PageLanguage;
 	data << itemProto->PageMaterial;
@@ -201,25 +260,117 @@ void Session::HandleItemQuerySingleOpcode(WorldPacket & pck)
 	data << itemProto->ZoneNameID;
 	data << itemProto->MapID;
 	data << itemProto->BagFamily;
-	data << itemProto->ToolCategory;
+	data << itemProto->TotemCategory;
+	// 3 sockets
 	data << itemProto->Sockets[0].SocketColor ;
 	data << itemProto->Sockets[0].Unk;
 	data << itemProto->Sockets[1].SocketColor ;
 	data << itemProto->Sockets[1].Unk ;
 	data << itemProto->Sockets[2].SocketColor ;
 	data << itemProto->Sockets[2].Unk ;
-	/*
-	data << itemProto->SocketColor1;
-	data << itemProto->Unk201_3;
-	data << itemProto->SocketColor2;
-	data << itemProto->Unk201_5;
-	data << itemProto->SocketColor3;
-	data << itemProto->Unk201_7;*/
 	data << itemProto->SocketBonus;
 	data << itemProto->GemProperties;
-	data << itemProto->ItemExtendedCost;
-	data << itemProto->DisenchantReqSkill;
+	data << itemProto->DisenchantReqSkill;			// should be a float here
 	data << itemProto->ArmorDamageModifier;
-	//WPAssert(data.size() == 453 + itemProto->Name1.length() + itemProto->Description.length());
+	data << uint32(0);								// 2.4.2 Item duration in seconds
+	data << uint32(0);								// 3.0.2
+	data << uint32(0);								// 3.1.0
+
+	SendPacket( &data );
+}
+
+//////////////////////////////////////////////////////////////
+/// This function handles CMSG_ITEM_NAME_QUERY:
+//////////////////////////////////////////////////////////////
+void Session::HandleItemNameQueryOpcode( WorldPacket & recv_data )
+{
+	//CHECK_PACKET_SIZE(recv_data, 4);
+	uint8 databuffer[1000];
+	StackPacket reply(SMSG_ITEM_NAME_QUERY_RESPONSE, databuffer, 1000);
+
+	uint32 itemid;
+	recv_data >> itemid;
+	reply << itemid;
+	ItemPrototype *proto=ItemPrototypeStorage.LookupEntry(itemid);
+	if(!proto)
+		reply << "Unknown Item";
+	else
+	{
+		LocalizedItem* li = (language>0) ? sLocalizationMgr.GetLocalizedItem(itemid, language) : NULL;
+		if(li)
+			reply << li->Name;
+		else
+			reply << proto->Name1;
+	}
+	SendPacket(&reply);	
+}
+
+//////////////////////////////////////////////////////////////
+/// This function handles CMSG_PAGE_TEXT_QUERY
+//////////////////////////////////////////////////////////////
+void Session::HandlePageTextQueryOpcode( WorldPacket & recv_data )
+{
+	//CHECK_PACKET_SIZE(recv_data, 4);
+	uint32 pageid = 0;
+	uint8 buffer[10000];
+	StackPacket data(SMSG_PAGE_TEXT_QUERY_RESPONSE,buffer, 10000);
+	recv_data >> pageid;
+
+	while(pageid)
+	{
+		ItemPage * page = ItemPageStorage.LookupEntry(pageid);
+		if(page == NULL)
+			return;
+
+		LocalizedItemPage * lpi = (language>0) ? sLocalizationMgr.GetLocalizedItemPage(pageid,language):NULL;
+		data.Clear();
+		data << pageid;
+		if(lpi)
+			data.Write((uint8*)lpi->Text, strlen(lpi->Text) + 1);
+		else
+			data.Write((uint8*)page->text, strlen(page->text) + 1);
+
+		data << page->next_page;
+		pageid = page->next_page;
+		SendPacket(&data);
+	}
+}
+
+//////////////////////////////////////////////////////////////
+/// This function handles CMSG_QUERY_TIME:
+//////////////////////////////////////////////////////////////
+void Session::HandleQueryTimeOpcode( WorldPacket & recv_data )
+{
+	uint32 t = (uint32)UNIXTIME;
+	OutPacket(SMSG_QUERY_TIME_RESPONSE, 4, &t);
+}
+
+//////////////////////////////////////////////////////////////
+/// This function handles CMSG_NAME_QUERY:
+//////////////////////////////////////////////////////////////
+void Session::HandleNameQueryOpcode( WorldPacket & recv_data )
+{
+	//CHECK_PACKET_SIZE(recv_data, 8);
+	uint64 guid;
+	recv_data >> guid;
+
+	RPlayerInfo *pn = sClientMgr.GetRPlayer( (uint32)guid );
+	WoWGuid pguid(guid);
+
+	if(!pn)
+		return;
+
+	DEBUG_LOG("WorldSession","Received CMSG_NAME_QUERY for: %s", pn->Name );
+
+	uint8 databuffer[5000];
+	StackPacket data(SMSG_NAME_QUERY_RESPONSE, databuffer, 5000);
+	data << pguid;
+	data << uint8(0);
+	data << pn->Name;
+	data << uint8(0);	   // this probably is "different realm" or something flag.
+	data << uint8(pn->Race);
+	data << uint8(pn->Gender);
+	data << uint8(pn->Class);
+	data << uint8(0);
 	SendPacket( &data );
 }

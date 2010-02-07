@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 
@@ -98,10 +93,10 @@ void LootMgr::LoadLoot()
 	//THIS MUST BE CALLED AFTER LOADING OF ITEMS
 	is_loading = true;
 	LoadLootProp();
-	DEBUG_LOG("LootMgr","Loading loot...\n");
+	DEBUG_LOG("LootMgr","Loading loot...");
 	//LoadLootTables("creatureloot",&CreatureLoot);
 	LoadLootTables("objectloot",&GOLoot);
-	LoadLootTables("skinningloot",&SkinningLoot);
+	LoadLootTables("creatureloot_gathering",&GatheringLoot);
 	LoadLootTables("fishingloot",&FishingLoot);
 	LoadLootTables("itemloot", &ItemLoot);
 	LoadLootTables("prospectingloot", &ProspectingLoot);
@@ -228,7 +223,8 @@ LootMgr::~LootMgr()
 	for(LootStore::iterator iter=FishingLoot.begin(); iter != FishingLoot.end(); ++iter)
 		delete [] iter->second.items;
 
-	for(LootStore::iterator iter=SkinningLoot.begin(); iter != SkinningLoot.end(); ++iter)
+
+	for(LootStore::iterator iter=GatheringLoot.begin(); iter != GatheringLoot.end(); ++iter)
 		delete [] iter->second.items;
 
 	for(LootStore::iterator iter=GOLoot.begin(); iter != GOLoot.end(); ++iter)
@@ -280,11 +276,6 @@ void LootMgr::LoadLootTables(const char * szTableName,LootStore * LootTable)
 	{	 
 		Field *fields = result->Fetch();
 		entry_id = fields[0].GetUInt32();
-		if(entry_id < last_entry)
-		{
-			Log.Error("LootMgr", "WARNING: Out of order loot table being loaded.\n");
-			return;
-		}
 		if(entry_id != last_entry)
 		{
 			if(last_entry != 0)
@@ -432,7 +423,7 @@ void LootMgr::PushLoot(StoreLootList *list,Loot * loot, bool heroic, bool disenc
 				__LootItem itm;
 				itm.item =list->items[x].item;
 				itm.iItemsCount = count;
-				itm.roll = NULLROLL;
+				itm.roll = NULL;
 				itm.passed = false;
 				itm.ffa_loot = list->items[x].ffa_loot;
 				itm.has_looted.clear();
@@ -511,14 +502,14 @@ void LootMgr::FillFishingLoot(Loot * loot,uint32 loot_id)
     else PushLoot(&tab->second, loot, false, false);
 }
 
-void LootMgr::FillSkinningLoot(Loot * loot,uint32 loot_id)
+void LootMgr::FillGatheringLoot(Loot * loot,uint32 loot_id)
 {
 	loot->items.clear();
 	loot->gold = 0;
 
-	LootStore::iterator tab = SkinningLoot.find(loot_id);
-	if( SkinningLoot.end() == tab)return;
-	else PushLoot(&tab->second, loot, false, false);
+	LootStore::iterator tab = GatheringLoot.find(loot_id);
+	if(tab != GatheringLoot.end())
+		PushLoot(&tab->second, loot, false, false);
 }
 
 void LootMgr::FillPickpocketingLoot(Loot * loot,uint32 loot_id)
@@ -590,9 +581,11 @@ bool LootMgr::IsPickpocketable(uint32 creatureId)
 //THIS should be cached 
 bool LootMgr::IsSkinnable(uint32 creatureId)
 {
-	LootStore::iterator tab =SkinningLoot.find(creatureId);
-	if( SkinningLoot.end()==tab)return false;
-	else return true;
+	LootStore::iterator tab = GatheringLoot.find(creatureId);
+	if( tab != GatheringLoot.end())
+		return true;
+
+	return false;
 }
 
 //THIS should be cached 
@@ -643,7 +636,7 @@ void LootMgr::AddLoot(Loot * loot, uint32 itemid, uint32 mincount, uint32 maxcou
 		__LootItem itm;
 		itm.item = item;
 		itm.iItemsCount = count;
-		itm.roll = NULLROLL;
+		itm.roll = NULL;
 		itm.passed = false;
 		itm.ffa_loot = ffa_loot;
 		itm.has_looted.clear();
@@ -668,10 +661,10 @@ LootRoll::LootRoll() : EventableObject()
 {
 }
 
-void LootRoll::Init(uint32 timer, uint32 groupcount, uint64 guid, uint32 slotid, uint32 itemid, uint32 itemunk1, uint32 itemunk2, MapMgrPointer mgr)
+void LootRoll::Init(uint32 timer, uint32 groupcount, uint64 guid, uint32 slotid, uint32 itemid, uint32 itemunk1, uint32 itemunk2, MapMgr* mgr)
 {
 	_mgr = mgr;
-	sEventMgr.AddEvent(shared_from_this(), &LootRoll::Finalize, EVENT_LOOT_ROLL_FINALIZE, 60000, 1,0);
+	sEventMgr.AddEvent(this, &LootRoll::Finalize, EVENT_LOOT_ROLL_FINALIZE, 60000, 1,0);
 	_groupcount = groupcount;
 	_guid = guid;
 	_slotid = slotid;
@@ -690,11 +683,11 @@ void LootRoll::Finalize()
 {
 	if( !mLootLock.AttemptAcquire() ) // only one finalization, please. players on different maps can roll, too, so this is needed.
 	{
-		sEventMgr.RemoveEvents(shared_from_this());
+		sEventMgr.RemoveEvents(this);
 		return;
 	}
 
-	sEventMgr.RemoveEvents(shared_from_this());
+	sEventMgr.RemoveEvents(this);
 
 	// this we will have to finalize with groups types.. for now
 	// we'll just assume need before greed. person with highest roll
@@ -733,42 +726,38 @@ void LootRoll::Finalize()
 	uint32 guidtype = GET_TYPE_FROM_GUID(_guid);
 	if( guidtype == HIGHGUID_TYPE_UNIT )
 	{
-		CreaturePointer pc = _mgr->GetCreature(GET_LOWGUID_PART(_guid));
+		Creature* pc = _mgr->GetCreature(GET_LOWGUID_PART(_guid));
 		if(pc) pLoot = &pc->m_loot;
 	}
 	else if( guidtype == HIGHGUID_TYPE_GAMEOBJECT )
 	{
-		GameObjectPointer go = _mgr->GetGameObject(GET_LOWGUID_PART(_guid));
+		GameObject* go = _mgr->GetGameObject(GET_LOWGUID_PART(_guid));
 		if(go) pLoot = &go->m_loot;
 	}
 
 	if(!pLoot)
 	{
-		// should never happen w/ shared ptrs
-		//delete this;
+		delete this;
 		return;
 	}
 
 	if(_slotid >= pLoot->items.size())
 	{
-		// also should never happen... just return.
+		delete this;
 		return;
 	}
 
-	// set this so we're not deleted yet.
-	LootRollPointer pThis = pLoot->items.at(_slotid).roll;
-
-	pLoot->items.at(_slotid).roll = NULLROLL;
+	pLoot->items.at(_slotid).roll = NULL;
 
 	uint32 itemid = pLoot->items.at(_slotid).item.itemproto->ItemId;
 	uint32 amt = pLoot->items.at(_slotid).iItemsCount;
 	if(!amt)
 	{
-		//delete this; we're about to be deleted regardless
+		delete this;
 		return;
 	}
 
-	PlayerPointer _player = (player) ? _mgr->GetPlayer((uint32)player) : NULLPLR;
+	Player* _player = (player) ? _mgr->GetPlayer((uint32)player) : NULL;
 	if(!player || !_player)
 	{
 		/* all passed */
@@ -788,10 +777,11 @@ void LootRoll::Finalize()
 
 		/* item can now be looted by anyone :) */
 		pLoot->items.at(_slotid).passed = true;
-		//delete this; we're already deleted ffs
+		delete this;
 		return;
 	}
 
+	pLoot->items.at(_slotid).roll = 0;
 	data.Initialize(SMSG_LOOT_ROLL_WON);
 	data << _guid << _slotid << _itemid << _itemunk1 << _itemunk2;
 	data << _player->GetGUID() << uint8(highest) << uint8(hightype);
@@ -805,23 +795,23 @@ void LootRoll::Finalize()
 	int8 error;
 	if((error = _player->GetItemInterface()->CanReceiveItem(it, 1, NULL)))
 	{
-		_player->GetItemInterface()->BuildInventoryChangeError(NULLITEM, NULLITEM, error);
+		_player->GetItemInterface()->BuildInventoryChangeError(NULL, NULL, error);
 		return;
 	}
 
-	ItemPointer add = _player->GetItemInterface()->FindItemLessMax(itemid, amt, false);
+	Item* add = _player->GetItemInterface()->FindItemLessMax(itemid, amt, false);
 
 	if (!add)
 	{
 		SlotResult slotresult = _player->GetItemInterface()->FindFreeInventorySlot(it);
 		if(!slotresult.Result)
 		{
-			_player->GetItemInterface()->BuildInventoryChangeError(NULLITEM, NULLITEM, INV_ERR_INVENTORY_FULL);
+			_player->GetItemInterface()->BuildInventoryChangeError(NULL, NULL, INV_ERR_INVENTORY_FULL);
 			return;
 		}
 
 		DEBUG_LOG("HandleAutostoreItem","AutoLootItem %u",itemid);
-		ItemPointer item = objmgr.CreateItem( itemid, _player);
+		Item* item = objmgr.CreateItem( itemid, _player);
 
 		item->SetUInt32Value(ITEM_FIELD_STACK_COUNT,amt);
 		if(pLoot->items.at(_slotid).iRandomProperty!=NULL)
@@ -844,7 +834,6 @@ void LootRoll::Finalize()
 		else
 		{
 			item->Destructor();
-			item = NULLITEM;
 		}
 	}
 	else 
@@ -859,7 +848,7 @@ void LootRoll::Finalize()
 	// this gets sent to all looters
 	data.Initialize(SMSG_LOOT_REMOVED);
 	data << uint8(_slotid);
-	PlayerPointer plr;
+	Player* plr;
 	for(LooterSet::iterator itr = pLoot->looters.begin(); itr != pLoot->looters.end(); ++itr)
 	{
 		if((plr = _player->GetMapMgr()->GetPlayer(*itr)))
@@ -874,10 +863,10 @@ void LootRoll::Finalize()
 	else
 		_player->GetSession()->SendPacket(&idata);*/
 
-	// delete this; so many deletes. overkill much?
+	delete this;
 }
 
-void LootRoll::PlayerRolled(PlayerPointer player, uint8 choice)
+void LootRoll::PlayerRolled(Player* player, uint8 choice)
 {
 	if(m_NeedRolls.find(player->GetLowGUID()) != m_NeedRolls.end() || m_GreedRolls.find(player->GetLowGUID()) != m_GreedRolls.end())
 		return; // dont allow cheaters
@@ -966,7 +955,7 @@ void LootMgr::FillObjectLootMap(map<uint32, vector<uint32> > *dest)
 
 }
 
-bool Loot::HasLoot(PlayerPointer Looter)
+bool Loot::HasLoot(Player* Looter)
 {
 	// check gold
 	if( gold > 0 )
@@ -974,7 +963,7 @@ bool Loot::HasLoot(PlayerPointer Looter)
 
 	return HasItems(Looter);
 }
-bool Loot::HasItems(PlayerPointer Looter)
+bool Loot::HasItems(Player* Looter)
 {
 	// check items
 	for(vector<__LootItem>::iterator itr = items.begin(); itr != items.end(); ++itr)

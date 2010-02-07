@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #ifndef __SPELLSTORE_H
 #define __SPELLSTORE_H
@@ -462,6 +457,18 @@ struct AreaTriggerEntry
 	float edge_o;			// 10
 };
 
+struct AreaPOIEntry
+{
+	uint32 Id;
+	uint32 Icon[11];
+	float X;
+	float Y;
+	float Z;
+	uint32 MapId;
+	uint32 ZoneId;
+	uint32 WorldState;
+};
+
 struct BankSlotPrice
 {
 	uint32 Id;
@@ -809,6 +816,7 @@ struct ItemExtendedCostEntry
     uint32 costid;
     uint32 honor;
     uint32 arena;
+	//uint32 unk;
     uint32 item[5];
     uint32 count[5];
 	uint32 personalrating;
@@ -831,7 +839,7 @@ struct TalentEntry
 
 struct TalentTabEntry
 {
-    uint32	TalentTabID;	//1
+    uint32	TalentTabID;	// 1
     //char*	Name;
 	//unit32  unk3
 	//unit32  unk4
@@ -851,9 +859,10 @@ struct TalentTabEntry
 	//unit32  unk18
 	//unit32  unk19
 	//unit32  unk20
-    uint32	ClassMask;	//21
-    uint32	TabPage;	//22
-    //char*	InternalName;	//23
+	uint32  ClassMask;      // 20
+	uint32  PetTalentMask;  // 21
+	uint32	TabPage;	    // 22
+	//char*	InternalName;	// 23
 };
 
 struct Trainerspell
@@ -1094,9 +1103,13 @@ struct CreatureSpellDataEntry
 struct CharRaceEntry
 {
 	uint32 race_id;
+	uint32 faction_id;
+	uint32 male_displayid;
+	uint32 female_displayid;
 	uint32 team_id;
 	uint32 cinematic_id;
 	char* name1;
+	uint32 expansion;
 };
 
 struct CharClassEntry
@@ -1155,20 +1168,20 @@ struct CreatureDisplayInfo
 
 struct CreatureFamilyEntry
 {
-    uint32 ID;                                              // 1
-    float minsize;                                          // 2
-    uint32 minlevel;                                        // 3
-    float maxsize;                                          // 4
-    uint32 maxlevel;                                        // 5
-    uint32 skilline;                                        // 6
-    uint32 tameable;		//second skill line - 270 Generic  7
-    uint32 petdietflags;                                    // 8
-                                                            // 9        m_petTalentType
-                                                            // 10        m_categoryEnumID
-    char* name;                                             // 11
+	uint32 ID;                                              // 1
+	float minsize;                                          // 2
+	uint32 minlevel;                                        // 3
+	float maxsize;                                          // 4
+	uint32 maxlevel;                                        // 5
+	uint32 skilline;                                        // 6
+	uint32 tameable;		                                // 7 second skill line - 270 Generic
+	uint32 petdietflags;                                    // 8
+	int32 pettalenttype;                                    // 9 m_petTalentType
+															// 10 m_categoryEnumID
+	char* name;                                             // 11
 	//char*   NameAlt[15];									// 12-26
-                                                            // 27 string flags, unused
-                                                            // 28       m_iconFile unused
+															// 27 string flags, unused
+															// 28 m_iconFile unused
 };
 
 struct MapEntry
@@ -1252,88 +1265,90 @@ struct SpellShapeshiftForm
 
 struct VehicleEntry
 {
-    uint32 m_ID; // 0
-    uint32 m_flags; // 1
-    float m_turnSpeed; // 2
-    float m_pitchSpeed; // 3
-    float m_pitchMin; // 4
-    float m_pitchMax; // 5
-    uint32 m_seatID[8]; // 6-13
-    float m_mouseLookOffsetPitch; // 14
-    float m_cameraFadeDistScalarMin; // 15
-    float m_cameraFadeDistScalarMax; // 16
-    float m_cameraPitchOffset; // 17
-    float m_facingLimitRight; // 24
-    float m_facingLimitLeft; // 25
-    float m_msslTrgtTurnLingering; // 26
-    float m_msslTrgtPitchLingering; // 27
-    float m_msslTrgtMouseLingering; // 28
-    float m_msslTrgtEndOpacity; // 29
-    float m_msslTrgtArcSpeed; // 30
-    float m_msslTrgtArcRepeat; // 31
-    float m_msslTrgtArcWidth; // 32
-    float m_msslTrgtImpactRadius[2]; // 33-34
-    char* m_msslTrgtArcTexture; // 35
-    char* m_msslTrgtImpactTexture; // 36
-    char* m_msslTrgtImpactModel[2]; // 37-38
-    float m_cameraYawOffset; // 39
-    uint32 m_uiLocomotionType; // 40
-    float m_msslTrgtImpactTexRadius; // 41
-    uint32 m_uiSeatIndicatorType; // 42
-	//
-	//
-	//
+	uint32 m_ID; // 0
+	uint32 m_flags; // 1
+	float m_turnSpeed; // 2
+	float m_pitchSpeed; // 3
+	float m_pitchMin; // 4
+	float m_pitchMax; // 5
+	uint32 m_seatID[8]; // 6-13
+	float m_mouseLookOffsetPitch; // 14
+	float m_cameraFadeDistScalarMin; // 15
+	float m_cameraFadeDistScalarMax; // 16
+	float m_cameraPitchOffset; // 17
+	//int m_powerType[3]; // removed in 3.1
+	//int m_powerToken[3]; // removed in 3.1
+	float m_facingLimitRight; // 18
+	float m_facingLimitLeft; // 19
+	float m_msslTrgtTurnLingering; // 20
+	float m_msslTrgtPitchLingering; // 21
+	float m_msslTrgtMouseLingering; // 22
+	float m_msslTrgtEndOpacity; // 23
+	float m_msslTrgtArcSpeed; // 24
+	float m_msslTrgtArcRepeat; // 25
+	float m_msslTrgtArcWidth; // 26
+	float m_msslTrgtImpactRadius[2]; // 27-28
+	char* m_msslTrgtArcTexture; // 29
+	char* m_msslTrgtImpactTexture; // 30
+	char* m_msslTrgtImpactModel[2]; // 31-32
+	float m_cameraYawOffset; // 33
+	uint32 m_uiLocomotionType; // 34
+	float m_msslTrgtImpactTexRadius; // 35
+	uint32 m_uiSeatIndicatorType; // 36
+	// 37, new in 3.1
+	// 38, new in 3.1
+	// 39, new in 3.1
 };
  
 struct VehicleSeatEntry
 {
-    uint32 m_ID; // 0
-    uint32 m_flags; // 1
-    int32 m_attachmentID; // 2
-    float m_attachmentOffsetX; // 3
-    float m_attachmentOffsetY; // 4
-    float m_attachmentOffsetZ; // 5
-    float m_enterPreDelay; // 6
-    float m_enterSpeed; // 7
-    float m_enterGravity; // 8
-    float m_enterMinDuration; // 9
-    float m_enterMaxDuration; // 10
-    float m_enterMinArcHeight; // 11
-    float m_enterMaxArcHeight; // 12
-    int32 m_enterAnimStart; // 13
-    int32 m_enterAnimLoop; // 14
-    int32 m_rideAnimStart; // 15
-    int32 m_rideAnimLoop; // 16
-    int32 m_rideUpperAnimStart; // 17
-    int32 m_rideUpperAnimLoop; // 18
-    float m_exitPreDelay; // 19
-    float m_exitSpeed; // 20
-    float m_exitGravity; // 21
-    float m_exitMinDuration; // 22
-    float m_exitMaxDuration; // 23
-    float m_exitMinArcHeight; // 24
-    float m_exitMaxArcHeight; // 25
-    int32 m_exitAnimStart; // 26
-    int32 m_exitAnimLoop; // 27
-    int32 m_exitAnimEnd; // 28
-    float m_passengerYaw; // 29
-    float m_passengerPitch; // 30
-    float m_passengerRoll; // 31
-    int32 m_passengerAttachmentID; // 32
-    int32 m_vehicleEnterAnim; // 33
-    int32 m_vehicleExitAnim; // 34
-    int32 m_vehicleRideAnimLoop; // 35
-    int32 m_vehicleEnterAnimBone; // 36
-    int32 m_vehicleExitAnimBone; // 37
-    int32 m_vehicleRideAnimLoopBone; // 38
-    float m_vehicleEnterAnimDelay; // 39
-    float m_vehicleExitAnimDelay; // 40
-    uint32 m_vehicleAbilityDisplay; // 41
-    uint32 m_enterUISoundID; // 42
-    uint32 m_exitUISoundID; // 43
-    int32 m_uiSkin; // 44
-    uint32 m_flagsB; // 45
-	// 46-57
+	uint32  m_ID;                                           // 0
+	uint32  m_flags;                                        // 1
+	int32   m_attachmentID;                                 // 2
+	float   m_attachmentOffsetX;                            // 3
+	float   m_attachmentOffsetY;                            // 4
+	float   m_attachmentOffsetZ;                            // 5
+	float   m_enterPreDelay;                                // 6
+	float   m_enterSpeed;                                   // 7
+	float   m_enterGravity;                                 // 8
+	float   m_enterMinDuration;                             // 9
+	float   m_enterMaxDuration;                             // 10
+	float   m_enterMinArcHeight;                            // 11
+	float   m_enterMaxArcHeight;                            // 12
+	int32   m_enterAnimStart;                               // 13
+	int32   m_enterAnimLoop;                                // 14
+	int32   m_rideAnimStart;                                // 15
+	int32   m_rideAnimLoop;                                 // 16
+	int32   m_rideUpperAnimStart;                           // 17
+	int32   m_rideUpperAnimLoop;                            // 18
+	float   m_exitPreDelay;                                 // 19
+	float   m_exitSpeed;                                    // 20
+	float   m_exitGravity;                                  // 21
+	float   m_exitMinDuration;                              // 22
+	float   m_exitMaxDuration;                              // 23
+	float   m_exitMinArcHeight;                             // 24
+	float   m_exitMaxArcHeight;                             // 25
+	int32   m_exitAnimStart;                                // 26
+	int32   m_exitAnimLoop;                                 // 27
+	int32   m_exitAnimEnd;                                  // 28
+	float   m_passengerYaw;                                 // 29
+	float   m_passengerPitch;                               // 30
+	float   m_passengerRoll;                                // 31
+	int32   m_passengerAttachmentID;                        // 32
+	int32   m_vehicleEnterAnim;                             // 33
+	int32   m_vehicleExitAnim;                              // 34
+	int32   m_vehicleRideAnimLoop;                          // 35
+	int32   m_vehicleEnterAnimBone;                         // 36
+	int32   m_vehicleExitAnimBone;                          // 37
+	int32   m_vehicleRideAnimLoopBone;                      // 38
+	float   m_vehicleEnterAnimDelay;                        // 39
+	float   m_vehicleExitAnimDelay;                         // 40
+	uint32  m_vehicleAbilityDisplay;                        // 41
+	uint32  m_enterUISoundID;                               // 42
+	uint32  m_exitUISoundID;                                // 43
+	int32   m_uiSkin;                                       // 44
+	uint32  m_flagsB;                                       // 45
+															// 46-57 added in 3.1, floats mostly
 };
 
 #pragma pack(pop)
@@ -1400,17 +1415,20 @@ public:
 	{
 		if(m_heapBlock)
 		{
-			free(m_heapBlock);
+			delete[] m_heapBlock;
+			//free(m_heapBlock);
 			m_heapBlock = NULL;
 		}
 		if(m_entries)
 		{
-			free(m_entries);
+			delete[] m_entries;
+			//free(m_entries);
 			m_entries = NULL;
 		}
 		if( m_stringData != NULL )
 		{
-			free(m_stringData);
+			delete[] m_stringData;
+			//free(m_stringData);
 			m_stringData = NULL;
 		}
 	}
@@ -1444,14 +1462,16 @@ public:
 		if( load_strings )
 		{
 			fseek( f, 20 + ( rows * cols * 4 ), SEEK_SET );
-			m_stringData = (char*)malloc(string_length);
+			m_stringData = new char[string_length];
+			//m_stringData = (char*)malloc(string_length);
 			m_stringlength = string_length;
 			fread( m_stringData, string_length, 1, f );
 		}
 
 		fseek(f, pos, SEEK_SET);
 
-		m_heapBlock = (T*)malloc(rows * sizeof(T));
+		m_heapBlock = new T[rows];
+		//m_heapBlock = (T*)malloc(rows * sizeof(T));
 		ASSERT(m_heapBlock);
 
 		/* read the data for each row */
@@ -1470,7 +1490,8 @@ public:
 
 		if(load_indexed)
 		{
-			m_entries = (T**)malloc(sizeof(T*) * (m_max+1));
+			m_entries = new T*[(m_max+1)];
+			//m_entries = (T**)malloc(sizeof(T*) * (m_max+1));
 			ASSERT(m_entries);
 
 			memset(m_entries, 0, (sizeof(T*) * (m_max+1)));
@@ -1705,7 +1726,9 @@ extern SERVER_DECL DBCStorage<VehicleEntry> dbcVehicle;
 extern SERVER_DECL DBCStorage<VehicleSeatEntry> dbcVehicleSeat;
 extern SERVER_DECL DBCStorage<WorldMapOverlayEntry> dbcWorldMapOverlay;
 extern SERVER_DECL DBCStorage<SummonPropertiesEntry> dbcSummonProps;
+extern SERVER_DECL DBCStorage<AreaPOIEntry> dbcAreaPOI;
 
 bool LoadDBCs();
+bool LoadRSDBCs();
 
 #endif

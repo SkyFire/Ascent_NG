@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 
@@ -23,7 +18,7 @@
 #define GREEN_TEAM 0
 #define GOLD_TEAM 1
 
-Arena::Arena( MapMgrPointer mgr, uint32 id, uint32 lgroup, uint32 t, uint32 players_per_side) : CBattleground(mgr, id, lgroup, t)
+Arena::Arena( MapMgr* mgr, uint32 id, uint32 lgroup, uint32 t, uint32 players_per_side) : CBattleground(mgr, id, lgroup, t)
 {
 	int i;
 
@@ -57,12 +52,12 @@ Arena::Arena( MapMgrPointer mgr, uint32 id, uint32 lgroup, uint32 t, uint32 play
 	}
 	rated_match=false;
 
-	m_buffs[0] = m_buffs[1] = NULLGOB;
+	m_buffs[0] = m_buffs[1] = NULL;
 	m_playersCount[0] = m_playersCount[1] = 0;
 
-	m_playersAlive = hashmap_new();
-	m_players2[0] = hashmap_new();
-	m_players2[1] = hashmap_new();
+	m_playersAlive.clear();
+	m_players2[0].clear();
+	m_players2[1].clear();
 	m_teams[0] = m_teams[1] = -1;
 	m_deltaRating[0] = m_deltaRating[1] = 0;
 }
@@ -82,24 +77,18 @@ Arena::~Arena()
 		if(m_buffs[i] && m_buffs[i]->IsInWorld()==false)
 		{
 			m_buffs[i]->Destructor();
-			m_buffs[i] = NULLGOB;
 		}
 	}
 
-	if (m_playersAlive) {
-		hashmap_free(m_playersAlive);
-		m_playersAlive = NULL;
-	}
+	m_playersAlive.clear();
+	m_players2[0].clear();
+	m_players2[1].clear();
 
-	for (i=0; i<2; i++) {
-		if (m_players2[i]) {
-			hashmap_free(m_players2[i]);
-			m_players2[i] = NULL;
-		}
-	}
+	m_pvpData.clear();
+	m_resurrectMap.clear();
 }
 
-void Arena::OnAddPlayer(PlayerPointer plr)
+void Arena::OnAddPlayer(Player* plr)
 {
 	plr->m_deathVision = true;
 
@@ -114,9 +103,7 @@ void Arena::OnAddPlayer(PlayerPointer plr)
 			if(plr->m_auras[x] && !plr->m_auras[x]->GetSpellProto()->DurationIndex && plr->m_auras[x]->GetSpellProto()->Flags4 & CAN_PERSIST_AND_CASTED_WHILE_DEAD)
 				continue;
 			else
-			{
-				plr->m_auras[x]->Remove();
-			}
+				plr->RemoveAuraBySlot(x);
 		}
 	}
 	plr->GetItemInterface()->RemoveAllConjured();
@@ -129,17 +116,17 @@ void Arena::OnAddPlayer(PlayerPointer plr)
 	UpdatePlayerCounts();
 
 	/* Add the green/gold team flag */
-	AuraPointer aura(new Aura(dbcSpell.LookupEntry(32724+plr->m_bgTeam), -1, plr, plr));
+	Aura* aura(new Aura(dbcSpell.LookupEntry(32724+plr->m_bgTeam), -1, plr, plr));
 	plr->AddAura(aura);
 	
 	/* Set FFA PvP Flag */
 	plr->SetFFAPvPFlag();
 
-	hashmap_put(m_playersAlive, plr->GetLowGUID(), (any_t)1);
+	m_playersAlive.insert(plr->GetLowGUID());
 	if(Rated())
 	{
 		// Store the players who join so that we can change their rating even if they leave before arena finishes
-		hashmap_put(m_players2[plr->GetTeam()], plr->GetLowGUID(), (any_t)1);
+		m_players2[plr->GetTeam()].insert(plr->GetLowGUID());
 		if(m_teams[plr->GetTeam()] == -1 && plr->m_playerInfo && plr->m_playerInfo->arenaTeam[m_arenateamtype] != NULL)
 		{
 			m_teams[plr->GetTeam()] = plr->m_playerInfo->arenaTeam[m_arenateamtype]->m_id;
@@ -147,7 +134,7 @@ void Arena::OnAddPlayer(PlayerPointer plr)
 	}
 }
 
-void Arena::OnRemovePlayer(PlayerPointer plr)
+void Arena::OnRemovePlayer(Player* plr)
 {
 	/* remove arena readyness buff */
 	plr->m_deathVision = false;
@@ -165,7 +152,7 @@ void Arena::OnRemovePlayer(PlayerPointer plr)
 	plr->m_bgRatedQueue = false;
 }
 
-void Arena::HookOnPlayerKill(PlayerPointer plr, UnitPointer pVictim)
+void Arena::HookOnPlayerKill(Player* plr, Unit* pVictim)
 {
 	if( !pVictim->IsPlayer() )
 		return;
@@ -174,25 +161,26 @@ void Arena::HookOnPlayerKill(PlayerPointer plr, UnitPointer pVictim)
 	UpdatePlayerCounts();
 }
 
-void Arena::HookOnHK(PlayerPointer plr)
+void Arena::HookOnHK(Player* plr)
 {
 	plr->m_bgScore.HonorableKills++;
 }
 
-void Arena::HookOnPlayerDeath(PlayerPointer plr)
+void Arena::HookOnPlayerDeath(Player* plr)
 {
 	ASSERT(plr != NULL);
 
-	if (hashmap_get(m_playersAlive, plr->GetLowGUID(), NULL) == MAP_OK) {
+	if (m_playersAlive.find(plr->GetLowGUID()) != m_playersAlive.end())
+	{
 		m_playersCount[plr->GetTeam()]--;
 		UpdatePlayerCounts();
-		hashmap_remove(m_playersAlive, plr->GetLowGUID());
+		m_playersAlive.erase(plr->GetLowGUID());
 	}
 }
 
 void Arena::OnCreate()
 {
-	GameObjectPointer obj;
+	GameObject* obj;
 	WorldStateManager &sm = m_mapMgr->GetStateManager();
 
 	switch(m_mapMgr->GetMapId())
@@ -273,7 +261,7 @@ void Arena::OnCreate()
 		/* Dalaran Sewers */
 	case 617:
 		{
-			obj = SpawnGameObject(192643, 1256.33996582031f, 770.06201171875f, 20.5f, 0.0f, 32, 1375, 2.0f);
+			obj = SpawnGameObject(192643, 1256.33996582031f, 770.06201171875f, 20.5f, 0.0f, 32, 1375, 1.29783f);
 			if(obj)
 			{
 				obj->SetByte(GAMEOBJECT_BYTES_1,GAMEOBJECT_BYTES_STATE, 1);
@@ -281,7 +269,7 @@ void Arena::OnCreate()
 				m_gates.insert(obj);
 			}
 			
-			obj = SpawnGameObject(192642, 1327.2099609375f, 813.239990234375f, 20.5f, 0.0f, 32, 1375, 2.0f);
+			obj = SpawnGameObject(192642, 1327.2099609375f, 813.239990234375f, 20.5f, 0.0f, 32, 1375, 1.29783f);
 			if(obj)
 			{
 				obj->SetByte(GAMEOBJECT_BYTES_1,GAMEOBJECT_BYTES_STATE, 1);
@@ -363,7 +351,7 @@ void Arena::OnCreate()
 	}
 
 	/* push gates into world */
-	for(set< GameObjectPointer >::iterator itr = m_gates.begin(); itr != m_gates.end(); ++itr)
+	for(set< GameObject* >::iterator itr = m_gates.begin(); itr != m_gates.end(); ++itr)
 		(*itr)->PushToWorld(m_mapMgr);
 
 	
@@ -385,14 +373,14 @@ void Arena::OnStart()
 {
 	/* remove arena readyness buff */
 	for(uint32 i = 0; i < 2; ++i) {
-		for(set<PlayerPointer  >::iterator itr = m_players[i].begin(); itr != m_players[i].end(); ++itr) {
-			PlayerPointer plr = *itr;
+		for(set<Player*  >::iterator itr = m_players[i].begin(); itr != m_players[i].end(); ++itr) {
+			Player* plr = *itr;
 			plr->RemoveAura(ARENA_PREPARATION);
 		}
 	}
 
 	/* open gates */
-	for(set< GameObjectPointer >::iterator itr = m_gates.begin(); itr != m_gates.end(); ++itr)
+	for(set< GameObject* >::iterator itr = m_gates.begin(); itr != m_gates.end(); ++itr)
 	{
 		(*itr)->SetUInt32Value(GAMEOBJECT_FLAGS, 64);
 		(*itr)->SetByte(GAMEOBJECT_BYTES_1,GAMEOBJECT_BYTES_STATE, 0);
@@ -406,8 +394,8 @@ void Arena::OnStart()
 	// soundz!
 	PlaySoundToAll(SOUND_BATTLEGROUND_BEGIN);
 
-	sEventMgr.RemoveEvents(shared_from_this(), EVENT_ARENA_SHADOW_SIGHT);
-	sEventMgr.AddEvent(TO_CBATTLEGROUND(shared_from_this()), &CBattleground::HookOnShadowSight, EVENT_ARENA_SHADOW_SIGHT, 90000, 1,0);
+	sEventMgr.RemoveEvents(this, EVENT_ARENA_SHADOW_SIGHT);
+	sEventMgr.AddEvent(TO_CBATTLEGROUND(this), &CBattleground::HookOnShadowSight, EVENT_ARENA_SHADOW_SIGHT, 90000, 1,0);
 }
 
 void Arena::UpdatePlayerCounts()
@@ -479,26 +467,28 @@ void Arena::Finish()
 			teams[i]->m_stat_rating += m_deltaRating[i];
 			if ((int32)teams[i]->m_stat_rating < 0) teams[i]->m_stat_rating = 0;
 
-			for (int x=0; x<hashmap_length(m_players2[i]); x++) {
-				uint32 key;
-				if (MAP_OK == hashmap_get_index(m_players2[i], x, (int*)&key, (any_t*) NULL)) {
-					PlayerInfo * info = objmgr.GetPlayerInfo(key);
-					if (info) {
-						ArenaTeamMember * tp = teams[i]->GetMember(info);
+			for(set<uint32>::iterator itr = m_players2[i].begin(); itr != m_players2[i].end(); ++itr)
+			{
+				PlayerInfo * info = objmgr.GetPlayerInfo(*itr);
+				if (info)
+				{
+					ArenaTeamMember * tp = teams[i]->GetMember(info);
+					if(tp != NULL)
+					{
+						tp->PersonalRating += CalcDeltaRating(tp->PersonalRating, teams[j]->m_stat_rating, outcome);
 
-						if(tp != NULL) {
-							tp->PersonalRating += CalcDeltaRating(tp->PersonalRating, teams[j]->m_stat_rating, outcome);
-							if ((int32)tp->PersonalRating < 0) tp->PersonalRating = 0;
+						if ((int32)tp->PersonalRating < 0)
+							tp->PersonalRating = 0;
 
-							if(outcome) {
-								tp->Won_ThisWeek++;
-								tp->Won_ThisSeason++;
-							}
+						if(outcome)
+						{
+							tp->Won_ThisWeek++;
+							tp->Won_ThisSeason++;
 						}
 					}
 				}
 			}
-			
+
 			teams[i]->SaveToDB();
 			// send arena team stats update
 			WorldPacket data(256);
@@ -512,17 +502,17 @@ void Arena::Finish()
 	UpdatePvPData();
 	PlaySoundToAll(m_losingteam ? SOUND_ALLIANCEWINS : SOUND_HORDEWINS);
 
-	sEventMgr.RemoveEvents(shared_from_this(), EVENT_BATTLEGROUND_CLOSE);
-	sEventMgr.RemoveEvents(shared_from_this(), EVENT_ARENA_SHADOW_SIGHT);
-	sEventMgr.AddEvent(TO_CBATTLEGROUND(shared_from_this()), &CBattleground::Close, EVENT_BATTLEGROUND_CLOSE, 120000, 1,0);
+	sEventMgr.RemoveEvents(this, EVENT_BATTLEGROUND_CLOSE);
+	sEventMgr.RemoveEvents(this, EVENT_ARENA_SHADOW_SIGHT);
+	sEventMgr.AddEvent(TO_CBATTLEGROUND(this), &CBattleground::Close, EVENT_BATTLEGROUND_CLOSE, 120000, 1,0);
 
 	for(int i = 0; i < 2; i++)
 	{
 		bool victorious = (i != m_losingteam);
-		set<PlayerPointer  >::iterator itr = m_players[i].begin();
+		set<Player*  >::iterator itr = m_players[i].begin();
 		for(; itr != m_players[i].end(); itr++)
 		{
-			PlayerPointer plr = (PlayerPointer )(*itr);
+			Player* plr = (Player* )(*itr);
 			plr->Root();
 
 			if( plr->m_bgScore.DamageDone == 0 && plr->m_bgScore.HealingDone == 0 )
@@ -602,7 +592,7 @@ LocationVector Arena::GetStartingCoords(uint32 Team)
 	return LocationVector(0,0,0,0);
 }
 
-bool Arena::HookHandleRepop(PlayerPointer plr)
+bool Arena::HookHandleRepop(Player* plr)
 {
 	// 559, 562, 572
 	/*
@@ -652,7 +642,7 @@ bool Arena::HookHandleRepop(PlayerPointer plr)
 	return true;
 }
 
-void Arena::HookOnAreaTrigger(PlayerPointer plr, uint32 id)
+void Arena::HookOnAreaTrigger(Player* plr, uint32 id)
 {
 	if(!m_started)
 		return;

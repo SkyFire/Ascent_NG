@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 #include "EventableObject.h"
@@ -69,7 +64,7 @@ void EventableObject::event_AddEvent(TimedEvent * ptr)
 	m_lock.Release();
 
 	/* Add to event manager */
-	if(!m_holder)
+	if(!m_holder || ptr->eventFlag & EVENT_FLAG_MOVE_TO_WORLD_CONTEXT)
 	{
 		/* relocate to -1 eventholder :/ */
 		m_event_Instanceid = -1;
@@ -226,6 +221,7 @@ bool EventableObject::event_GetTimeLeft(uint32 EventType, uint32 * Time)
 	return false;
 }
 
+
 void EventableObject::event_ModifyTime(uint32 EventType, uint32 Time)
 {
 	m_lock.Acquire();
@@ -338,10 +334,10 @@ void EventableObjectHolder::Update(uint32 time_difference)
 	m_insertPoolLock.Release();
 
 	/* Now we can proceed normally. */
-	EventList::iterator itr = m_events.begin();
-	EventList::iterator it2;
+	EventList::iterator itr,it2;
 	TimedEvent * ev;
 
+	itr	= m_events.begin();
 	while(itr != m_events.end())
 	{
 		it2 = itr++;
@@ -377,10 +373,6 @@ void EventableObjectHolder::Update(uint32 time_difference)
 			{
 				// Event expired :>
 				
-				/* remove the event from the ObjectPointer*/
-				/*obj = TO_EVENTABLEOBJECT(ev->obj);
-				obj->event_RemoveByPointer(ev);*/
-
 				/* remove the event from here */
 				ev->deleted = true;
 				ev->DecRef();
@@ -414,14 +406,15 @@ void EventableObject::event_Relocate()
 	/* prevent any new stuff from getting added */
 	m_lock.Acquire();
 
-	EventableObjectHolder * nh = sEventMgr.GetEventHolder(event_GetInstanceID());
+	EventableObjectHolder * nh = NULL;
+	nh = sEventMgr.GetEventHolder(event_GetInstanceID());
 	if(nh != m_holder)
 	{
 		// whee, we changed event holder :>
 		// doing this will change the instanceid on all the events, as well as add to the new holder.
 		
 		// no need to do this if we don't have any events, though.
-		if(!nh)
+		if(nh == NULL)
 			nh = sEventMgr.GetEventHolder(-1);
 
 		nh->AddObject(this);

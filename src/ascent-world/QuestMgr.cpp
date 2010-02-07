@@ -1,30 +1,25 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 
-uint32 QuestMgr::CalcQuestStatus(ObjectPointer quest_giver, PlayerPointer plr, QuestRelation* qst)
+uint32 QuestMgr::CalcQuestStatus(Object* quest_giver, Player* plr, QuestRelation* qst)
 {
 	return CalcQuestStatus(quest_giver, plr, qst->qst, qst->type, false);
 }
 
-bool QuestMgr::isRepeatableQuestFinished(PlayerPointer plr, Quest *qst)
+bool QuestMgr::isRepeatableQuestFinished(Player* plr, Quest *qst)
 {
     uint32 i;
 
@@ -42,7 +37,7 @@ bool QuestMgr::isRepeatableQuestFinished(PlayerPointer plr, Quest *qst)
 	return true;
 }
 
-uint32 QuestMgr::PlayerMeetsReqs(PlayerPointer plr, Quest* qst, bool skiplevelcheck)
+uint32 QuestMgr::PlayerMeetsReqs(Player* plr, Quest* qst, bool skiplevelcheck)
 {
 	std::list<uint32>::iterator itr;
 	uint32 status;
@@ -125,7 +120,7 @@ uint32 QuestMgr::PlayerMeetsReqs(PlayerPointer plr, Quest* qst, bool skiplevelch
 	return status;
 }
 
-uint32 QuestMgr::CalcQuestStatus(ObjectPointer quest_giver, PlayerPointer plr, Quest* qst, uint8 type, bool skiplevelcheck)
+uint32 QuestMgr::CalcQuestStatus(Object* quest_giver, Player* plr, Quest* qst, uint8 type, bool skiplevelcheck)
 {
 	QuestLogEntry* qle;
 
@@ -160,7 +155,7 @@ uint32 QuestMgr::CalcQuestStatus(ObjectPointer quest_giver, PlayerPointer plr, Q
 	return QMGR_QUEST_NOT_AVAILABLE;
 }
 
-uint8 QuestMgr::CalcStatus(ObjectPointer quest_giver, PlayerPointer plr)
+uint8 QuestMgr::CalcStatus(Object* quest_giver, Player* plr)
 {
 	uint32 status = QMGR_QUEST_NOT_AVAILABLE;
 	std::list<QuestRelation *>::const_iterator itr;
@@ -226,7 +221,7 @@ uint8 QuestMgr::CalcStatus(ObjectPointer quest_giver, PlayerPointer plr)
     return status;
 }
 
-uint32 QuestMgr::ActiveQuestsCount(ObjectPointer quest_giver, PlayerPointer plr)
+uint32 QuestMgr::ActiveQuestsCount(Object* quest_giver, Player* plr)
 {
 	std::list<QuestRelation *>::const_iterator itr;
 	map<uint32, uint8> tmp_map;
@@ -277,7 +272,7 @@ uint32 QuestMgr::ActiveQuestsCount(ObjectPointer quest_giver, PlayerPointer plr)
 	return questCount;
 }
 
-void QuestMgr::BuildOfferReward(WorldPacket *data, Quest* qst, ObjectPointer qst_giver, uint32 menutype, uint32 language, PlayerPointer plr)
+void QuestMgr::BuildOfferReward(WorldPacket *data, Quest* qst, Object* qst_giver, uint32 menutype, uint32 language, Player* plr)
 {
 	LocalizedQuest * lq = (language>0) ? sLocalizationMgr.GetLocalizedQuest(qst->id,language):NULL;
 	ItemPrototype * it;
@@ -345,7 +340,7 @@ void QuestMgr::BuildOfferReward(WorldPacket *data, Quest* qst, ObjectPointer qst
 	*data << qst->reward_talents;
 }
 
-void QuestMgr::BuildQuestDetails(WorldPacket *data, Quest* qst, ObjectPointer qst_giver, uint32 menutype, uint32 language, PlayerPointer plr)
+void QuestMgr::BuildQuestDetails(WorldPacket *data, Quest* qst, Object* qst_giver, uint32 menutype, uint32 language, Player* plr)
 {
 	LocalizedQuest * lq = (language>0) ? sLocalizationMgr.GetLocalizedQuest(qst->id,language):NULL;
 	std::map<uint32, uint8>::const_iterator itr;
@@ -358,14 +353,14 @@ void QuestMgr::BuildQuestDetails(WorldPacket *data, Quest* qst, ObjectPointer qs
 	if(lq)
 	{
 		*data << lq->Title;
-		*data << lq->Details;
 		*data << lq->Objectives;
+		*data << lq->Details;
 	}
 	else
 	{
 		*data <<  qst->title;
-		*data <<  qst->details;
 		*data <<  qst->objectives;
+		*data <<  qst->details;
 	}
 
 	*data << uint32(1);								// Is Acceptable
@@ -423,7 +418,7 @@ void QuestMgr::BuildQuestDetails(WorldPacket *data, Quest* qst, ObjectPointer qs
 	*data << uint32(0);							// Emote delay/player emote
 }
 
-void QuestMgr::BuildRequestItems(WorldPacket *data, Quest* qst, ObjectPointer qst_giver, uint32 status, uint32 language)
+void QuestMgr::BuildRequestItems(WorldPacket *data, Quest* qst, Object* qst_giver, uint32 status, uint32 language)
 {
 	LocalizedQuest * lq = (language>0) ? sLocalizationMgr.GetLocalizedQuest(qst->id,language):NULL;
 	ItemPrototype * it;
@@ -480,7 +475,7 @@ void QuestMgr::BuildRequestItems(WorldPacket *data, Quest* qst, ObjectPointer qs
 	*data << uint32(16);
 }
 
-void QuestMgr::BuildQuestComplete(PlayerPointer plr, Quest* qst)
+void QuestMgr::BuildQuestComplete(Player* plr, Quest* qst)
 {
 	uint32 xp = 0;
 	if(plr->getLevel() < plr->GetUInt32Value(PLAYER_FIELD_MAX_LEVEL))
@@ -509,10 +504,10 @@ void QuestMgr::BuildQuestComplete(PlayerPointer plr, Quest* qst)
 	plr->GetSession()->SendPacket(&data);
 }
 
-void QuestMgr::BuildQuestList(WorldPacket *data, ObjectPointer qst_giver, PlayerPointer plr, uint32 language)
+void QuestMgr::BuildQuestList(WorldPacket *data, Object* qst_giver, Player* plr, uint32 language)
 {
 	uint32 status;
-	list<QuestRelation *>::iterator it;
+	list<QuestRelation *>::iterator it,it2;
 	list<QuestRelation *>::iterator st;
 	list<QuestRelation *>::iterator ed;
 	map<uint32, uint8> tmp_map;
@@ -552,19 +547,19 @@ void QuestMgr::BuildQuestList(WorldPacket *data, ObjectPointer qst_giver, Player
 	
 	*data << uint8(sQuestMgr.ActiveQuestsCount(qst_giver, plr));
 
-	for (it = st; it != ed; ++it)
+	for (it = st; it != ed;)
 	{
-		status = sQuestMgr.CalcQuestStatus(qst_giver, plr, *it);
+		it2 = it;
+		++it;
+		status = sQuestMgr.CalcQuestStatus(qst_giver, plr, *it2);
 		if (status >= QMGR_QUEST_CHAT)
 		{
-			if (tmp_map.find((*it)->qst->id) == tmp_map.end())
+			if (tmp_map.find((*it2)->qst->id) == tmp_map.end())
 			{
-				tmp_map.insert(std::map<uint32,uint8>::value_type((*it)->qst->id, 1));
-				LocalizedQuest * lq = (language>0) ? sLocalizationMgr.GetLocalizedQuest((*it)->qst->id,language):NULL;
+				tmp_map.insert(std::map<uint32,uint8>::value_type((*it2)->qst->id, 1));
+				LocalizedQuest * lq = (language>0) ? sLocalizationMgr.GetLocalizedQuest((*it2)->qst->id,language):NULL;
 
-				*data << (*it)->qst->id;
-				/**data << sQuestMgr.CalcQuestStatus(qst_giver, plr, *it);
-				*data << uint32(0);*/
+				*data << (*it2)->qst->id;
 				
 				switch(status)
 				{
@@ -586,7 +581,7 @@ void QuestMgr::BuildQuestList(WorldPacket *data, ObjectPointer qst_giver, Player
 				if(lq)
 					*data << lq->Title;
 				else
-					*data << (*it)->qst->title;
+					*data << (*it2)->qst->title;
 			}
 		}
 	}
@@ -598,7 +593,7 @@ void QuestMgr::BuildQuestUpdateAddItem(WorldPacket* data, uint32 itemid, uint32 
 	*data << itemid << count;
 }
 
-void QuestMgr::SendQuestUpdateAddKill(PlayerPointer plr, uint32 questid, uint32 entry, uint32 count, uint32 tcount, uint64 guid)
+void QuestMgr::SendQuestUpdateAddKill(Player* plr, uint32 questid, uint32 entry, uint32 count, uint32 tcount, uint64 guid)
 {
 	WorldPacket data(32);
 	data.SetOpcode(SMSG_QUESTUPDATE_ADD_KILL);
@@ -613,7 +608,7 @@ void QuestMgr::BuildQuestUpdateComplete(WorldPacket* data, Quest* qst)
 	*data << qst->id;
 }
 
-void QuestMgr::SendPushToPartyResponse(PlayerPointer plr, PlayerPointer pTarget, uint32 response)
+void QuestMgr::SendPushToPartyResponse(Player* plr, Player* pTarget, uint32 response)
 {
 	WorldPacket data(MSG_QUEST_PUSH_RESULT, 13);
 	data << pTarget->GetGUID();
@@ -622,7 +617,7 @@ void QuestMgr::SendPushToPartyResponse(PlayerPointer plr, PlayerPointer pTarget,
 	plr->GetSession()->SendPacket(&data);
 }
 
-bool QuestMgr::OnGameObjectActivate(PlayerPointer plr, GameObjectPointer go)
+bool QuestMgr::OnGameObjectActivate(Player* plr, GameObject* go)
 {
 	uint32 i, j;
 	QuestLogEntry *qle;
@@ -662,13 +657,13 @@ bool QuestMgr::OnGameObjectActivate(PlayerPointer plr, GameObjectPointer go)
 	return false;
 }
 
-void QuestMgr::OnPlayerKill(PlayerPointer plr, CreaturePointer victim) //acctually only needed for external script support
+void QuestMgr::OnPlayerKill(Player* plr, Creature* victim) //acctually only needed for external script support
 {
 	uint32 entry = victim->GetEntry();
 	_OnPlayerKill( plr, entry);
 }
 
-void QuestMgr::_OnPlayerKill(PlayerPointer plr, uint32 creature_entry)
+void QuestMgr::_OnPlayerKill(Player* plr, uint32 creature_entry)
 {
 	if(!plr)
 		return;
@@ -711,7 +706,7 @@ void QuestMgr::_OnPlayerKill(PlayerPointer plr, uint32 creature_entry)
 	}
 
 	// Shared kills
-	PlayerPointer gplr = NULLPLR;
+	Player* gplr = NULL;
 
 	if(plr->InGroup())
 	{
@@ -773,7 +768,7 @@ void QuestMgr::_OnPlayerKill(PlayerPointer plr, uint32 creature_entry)
 	}
 }
 
-void QuestMgr::OnPlayerSlain(PlayerPointer plr, PlayerPointer victim)
+void QuestMgr::OnPlayerSlain(Player* plr, Player* victim)
 {
 	if(!plr || !victim)
 		return;
@@ -792,7 +787,7 @@ void QuestMgr::OnPlayerSlain(PlayerPointer plr, PlayerPointer victim)
 	}
 
 	// Shared kills
-	PlayerPointer gplr = NULLPLR;
+	Player* gplr = NULL;
 
 	if(plr->InGroup())
 	{
@@ -831,12 +826,12 @@ void QuestMgr::OnPlayerSlain(PlayerPointer plr, PlayerPointer victim)
 	}
 }
 
-void QuestMgr::OnPlayerCast(PlayerPointer plr, uint32 spellid, uint64& victimguid)
+void QuestMgr::OnPlayerCast(Player* plr, uint32 spellid, uint64& victimguid)
 {
 	if(!plr || !plr->HasQuestSpell(spellid))
 		return;
 
-	UnitPointer victim = plr->GetMapMgr() ? plr->GetMapMgr()->GetUnit(victimguid) : NULLUNIT;
+	Unit* victim = plr->GetMapMgr() ? plr->GetMapMgr()->GetUnit(victimguid) : NULL;
 	if(victim==NULL)
 		return;
 
@@ -873,7 +868,7 @@ void QuestMgr::OnPlayerCast(PlayerPointer plr, uint32 spellid, uint64& victimgui
 
 
 
-void QuestMgr::OnPlayerItemPickup(PlayerPointer plr, ItemPointer item)
+void QuestMgr::OnPlayerItemPickup(Player* plr, Item* item)
 {
 	uint32 i, j;
 	uint32 pcount;
@@ -911,7 +906,7 @@ void QuestMgr::OnPlayerItemPickup(PlayerPointer plr, ItemPointer item)
 	}
 }
 
-void QuestMgr::OnPlayerExploreArea(PlayerPointer plr, uint32 AreaID)
+void QuestMgr::OnPlayerExploreArea(Player* plr, uint32 AreaID)
 {
 	uint32 i, j;
 	QuestLogEntry *qle;
@@ -944,7 +939,7 @@ void QuestMgr::OnPlayerExploreArea(PlayerPointer plr, uint32 AreaID)
 	}
 }
 
-void QuestMgr::GiveQuestRewardReputation(PlayerPointer plr, Quest* qst, ObjectPointer qst_giver)
+void QuestMgr::GiveQuestRewardReputation(Player* plr, Quest* qst, Object* qst_giver)
 {
 	// Reputation reward
 	for(int z = 0; z < 5; z++)
@@ -974,12 +969,12 @@ void QuestMgr::GiveQuestRewardReputation(PlayerPointer plr, Quest* qst, ObjectPo
 		}
 	}
 }
-void QuestMgr::OnQuestAccepted(PlayerPointer plr, Quest* qst, ObjectPointer qst_giver)
+void QuestMgr::OnQuestAccepted(Player* plr, Quest* qst, Object* qst_giver)
 {
 	
 }
 
-void QuestMgr::GiveQuestTitleReward(PlayerPointer plr, Quest* qst)
+void QuestMgr::GiveQuestTitleReward(Player* plr, Quest* qst)
 {
 	if(!qst->reward_title || qst->reward_title > TITLE_END)
 		return;
@@ -987,7 +982,7 @@ void QuestMgr::GiveQuestTitleReward(PlayerPointer plr, Quest* qst)
 	plr->SetKnownTitle(qst->reward_title, true);
 }
 
-void QuestMgr::OnQuestFinished(PlayerPointer plr, Quest* qst, ObjectPointer qst_giver, uint32 reward_slot)
+void QuestMgr::OnQuestFinished(Player* plr, Quest* qst, Object* qst_giver, uint32 reward_slot)
 {
 	QuestLogEntry *qle = NULL;
 	qle = plr->GetQuestLogForEntry(qst->id);
@@ -1068,7 +1063,7 @@ void QuestMgr::OnQuestFinished(PlayerPointer plr, Quest* qst, ObjectPointer qst_
 			    }
 			    else
 			    {   
-					ItemPointer add;
+					Item* add;
 					SlotResult slotresult;
 					add = plr->GetItemInterface()->FindItemLessMax(qst->reward_item[i], qst->reward_itemcount[i], false);
 					if (!add)
@@ -1076,16 +1071,15 @@ void QuestMgr::OnQuestFinished(PlayerPointer plr, Quest* qst, ObjectPointer qst_
 						slotresult = plr->GetItemInterface()->FindFreeInventorySlot(proto);
 						if(!slotresult.Result)
 						{
-							plr->GetItemInterface()->BuildInventoryChangeError(NULLITEM, NULLITEM, INV_ERR_INVENTORY_FULL);
+							plr->GetItemInterface()->BuildInventoryChangeError(NULL, NULL, INV_ERR_INVENTORY_FULL);
 						}
 						else
 						{
-							ItemPointer itm = objmgr.CreateItem(qst->reward_item[i], plr);
+							Item* itm = objmgr.CreateItem(qst->reward_item[i], plr);
 							itm->SetUInt32Value(ITEM_FIELD_STACK_COUNT, uint32(qst->reward_itemcount[i]));
 							if( !plr->GetItemInterface()->SafeAddItem(itm,slotresult.ContainerSlot, slotresult.Slot) )
 							{
 								itm->Destructor();
-								itm = NULLITEM;
 							}
 						}
 					}
@@ -1108,7 +1102,7 @@ void QuestMgr::OnQuestFinished(PlayerPointer plr, Quest* qst, ObjectPointer qst_
 		    }
 		    else
 		    {
-				ItemPointer add;
+				Item* add;
 				SlotResult slotresult;
 				add = plr->GetItemInterface()->FindItemLessMax(qst->reward_choiceitem[reward_slot], qst->reward_choiceitemcount[reward_slot], false);
 				if (!add)
@@ -1116,16 +1110,15 @@ void QuestMgr::OnQuestFinished(PlayerPointer plr, Quest* qst, ObjectPointer qst_
 					slotresult = plr->GetItemInterface()->FindFreeInventorySlot(proto);
 					if(!slotresult.Result)
 					{
-						plr->GetItemInterface()->BuildInventoryChangeError(NULLITEM, NULLITEM, INV_ERR_INVENTORY_FULL);
+						plr->GetItemInterface()->BuildInventoryChangeError(NULL, NULL, INV_ERR_INVENTORY_FULL);
 					}
 					else
 					{
-						ItemPointer itm = objmgr.CreateItem(qst->reward_choiceitem[reward_slot], plr);
+						Item* itm = objmgr.CreateItem(qst->reward_choiceitem[reward_slot], plr);
 						itm->SetUInt32Value(ITEM_FIELD_STACK_COUNT, uint32(qst->reward_choiceitemcount[reward_slot]));
 						if( !plr->GetItemInterface()->SafeAddItem(itm,slotresult.ContainerSlot, slotresult.Slot) )
 						{
 							itm->Destructor();
-							itm = NULLITEM;
 						}
 
 					}
@@ -1144,7 +1137,7 @@ void QuestMgr::OnQuestFinished(PlayerPointer plr, Quest* qst, ObjectPointer qst_
 		    SpellEntry  * inf =dbcSpell.LookupEntry(qst->effect_on_player);
 		    if(inf)
 		    {
-			    SpellPointer spe(new Spell(qst_giver,inf,true,NULLAURA));
+			    Spell* spe(new Spell(qst_giver,inf,true,NULL));
 			    SpellCastTargets tgt;
 			    tgt.m_unitTarget = plr->GetGUID();
 			    spe->prepare(&tgt);
@@ -1172,7 +1165,7 @@ void QuestMgr::OnQuestFinished(PlayerPointer plr, Quest* qst, ObjectPointer qst_
 			    }
 			    else
 			    {   
-					ItemPointer add;
+					Item* add;
 					SlotResult slotresult;
 					add = plr->GetItemInterface()->FindItemLessMax(qst->reward_item[i], qst->reward_itemcount[i], false);
 					if (!add)
@@ -1180,16 +1173,15 @@ void QuestMgr::OnQuestFinished(PlayerPointer plr, Quest* qst, ObjectPointer qst_
 						slotresult = plr->GetItemInterface()->FindFreeInventorySlot(proto);
 						if(!slotresult.Result)
 						{
-							plr->GetItemInterface()->BuildInventoryChangeError(NULLITEM, NULLITEM, INV_ERR_INVENTORY_FULL);
+							plr->GetItemInterface()->BuildInventoryChangeError(NULL, NULL, INV_ERR_INVENTORY_FULL);
 						}
 						else
 						{
-							ItemPointer itm = objmgr.CreateItem(qst->reward_item[i], plr);
+							Item* itm = objmgr.CreateItem(qst->reward_item[i], plr);
 							itm->SetUInt32Value(ITEM_FIELD_STACK_COUNT, uint32(qst->reward_itemcount[i]));
 							if( !plr->GetItemInterface()->SafeAddItem(itm,slotresult.ContainerSlot, slotresult.Slot) )
 							{
 								itm->Destructor();
-								itm = NULLITEM;
 							}
 						}
 					}
@@ -1212,7 +1204,7 @@ void QuestMgr::OnQuestFinished(PlayerPointer plr, Quest* qst, ObjectPointer qst_
 		    }
 		    else
 		    {
-				ItemPointer add;
+				Item* add;
 				SlotResult slotresult;
 				add = plr->GetItemInterface()->FindItemLessMax(qst->reward_choiceitem[reward_slot], qst->reward_choiceitemcount[reward_slot], false);
 				if (!add)
@@ -1220,16 +1212,15 @@ void QuestMgr::OnQuestFinished(PlayerPointer plr, Quest* qst, ObjectPointer qst_
 					slotresult = plr->GetItemInterface()->FindFreeInventorySlot(proto);
 					if(!slotresult.Result)
 					{
-						plr->GetItemInterface()->BuildInventoryChangeError(NULLITEM, NULLITEM, INV_ERR_INVENTORY_FULL);
+						plr->GetItemInterface()->BuildInventoryChangeError(NULL, NULL, INV_ERR_INVENTORY_FULL);
 					}
 					else 
 					{
-						ItemPointer itm = objmgr.CreateItem(qst->reward_choiceitem[reward_slot], plr);
+						Item* itm = objmgr.CreateItem(qst->reward_choiceitem[reward_slot], plr);
 						itm->SetUInt32Value(ITEM_FIELD_STACK_COUNT, uint32(qst->reward_choiceitemcount[reward_slot]));
 						if( !plr->GetItemInterface()->SafeAddItem(itm,slotresult.ContainerSlot, slotresult.Slot) )
 						{
 							itm->Destructor();
-							itm = NULLITEM;
 						}
 					}
 				}
@@ -1280,7 +1271,7 @@ void QuestMgr::OnQuestFinished(PlayerPointer plr, Quest* qst, ObjectPointer qst_
 			SpellEntry  * inf =dbcSpell.LookupEntry(qst->effect_on_player);
 			if(inf)
 			{
-				SpellPointer spe(new Spell(qst_giver,inf,true,NULLAURA));
+				Spell* spe(new Spell(qst_giver,inf,true,NULL));
 				SpellCastTargets tgt;
 				tgt.m_unitTarget = plr->GetGUID();
 				spe->prepare(&tgt);
@@ -1306,12 +1297,12 @@ void QuestMgr::OnQuestFinished(PlayerPointer plr, Quest* qst, ObjectPointer qst_
 //		Quest Management		 //
 /////////////////////////////////////
 
-void QuestMgr::LoadNPCQuests(CreaturePointer qst_giver)
+void QuestMgr::LoadNPCQuests(Creature* qst_giver)
 {
 	qst_giver->SetQuestList(GetCreatureQuestList(qst_giver->GetEntry()));
 }
 
-void QuestMgr::LoadGOQuests(GameObjectPointer go)
+void QuestMgr::LoadGOQuests(GameObject* go)
 {
 	go->SetQuestList(GetGOQuestList(go->GetEntry()));
 }
@@ -1452,7 +1443,7 @@ void QuestMgr::_RemoveChar(char *c, std::string *str)
 	}	
 }
 
-uint32 QuestMgr::GenerateRewardMoney( PlayerPointer pl, Quest * qst )
+uint32 QuestMgr::GenerateRewardMoney( Player* pl, Quest * qst )
 {
 	if ( qst->reward_money < 0 )
 		return 0;
@@ -1463,7 +1454,7 @@ uint32 QuestMgr::GenerateRewardMoney( PlayerPointer pl, Quest * qst )
 		return qst->reward_money;
 }
 
-uint32 QuestMgr::GenerateQuestXP(PlayerPointer plr, Quest *qst)	
+uint32 QuestMgr::GenerateQuestXP(Player* plr, Quest *qst)	
 {	
 	if(qst->is_repeatable)
 		return 0;	
@@ -1517,7 +1508,7 @@ uint32 QuestMgr::GenerateQuestXP(PlayerPointer plr, Quest *qst)
 	return (int)mmx;*/
 
 
-void QuestMgr::SendQuestInvalid(INVALID_REASON reason, PlayerPointer plyr)
+void QuestMgr::SendQuestInvalid(INVALID_REASON reason, Player* plyr)
 {
 	if(!plyr)
 		return;
@@ -1525,7 +1516,7 @@ void QuestMgr::SendQuestInvalid(INVALID_REASON reason, PlayerPointer plyr)
 	OUT_DEBUG("WORLD:Sent SMSG_QUESTGIVER_QUEST_INVALID");
 }
 
-void QuestMgr::SendQuestFailed(FAILED_REASON failed, Quest * qst, PlayerPointer plyr)
+void QuestMgr::SendQuestFailed(FAILED_REASON failed, Quest * qst, Player* plyr)
 {
 	if(!plyr)
 		return;
@@ -1538,7 +1529,7 @@ void QuestMgr::SendQuestFailed(FAILED_REASON failed, Quest * qst, PlayerPointer 
 	OUT_DEBUG("WORLD:Sent SMSG_QUESTGIVER_QUEST_FAILED");
 }
 
-void QuestMgr::SendQuestUpdateFailedTimer(Quest *pQuest, PlayerPointer plyr)
+void QuestMgr::SendQuestUpdateFailedTimer(Quest *pQuest, Player* plyr)
 {
 	if(!plyr)
 		return;
@@ -1547,7 +1538,7 @@ void QuestMgr::SendQuestUpdateFailedTimer(Quest *pQuest, PlayerPointer plyr)
 	OUT_DEBUG("WORLD:Sent SMSG_QUESTUPDATE_FAILEDTIMER");
 }
 
-void QuestMgr::SendQuestUpdateFailed(Quest *pQuest, PlayerPointer plyr)
+void QuestMgr::SendQuestUpdateFailed(Quest *pQuest, Player* plyr)
 {
 	if(!plyr)
 		return;
@@ -1556,7 +1547,7 @@ void QuestMgr::SendQuestUpdateFailed(Quest *pQuest, PlayerPointer plyr)
 	OUT_DEBUG("WORLD:Sent SMSG_QUESTUPDATE_FAILED");
 }
 
-void QuestMgr::SendQuestLogFull(PlayerPointer plyr)
+void QuestMgr::SendQuestLogFull(Player* plyr)
 {
 	if(!plyr)
 		return;
@@ -1611,7 +1602,7 @@ void QuestMgr::BuildQuestFailed(WorldPacket* data, uint32 questid)
 	*data << questid;
 }
 
-bool QuestMgr::OnActivateQuestGiver(ObjectPointer qst_giver, PlayerPointer plr)
+bool QuestMgr::OnActivateQuestGiver(Object* qst_giver, Player* plr)
 {
 	if(qst_giver->GetTypeId() == TYPEID_GAMEOBJECT && !TO_GAMEOBJECT(qst_giver)->HasQuests())
 		return false;
@@ -1778,7 +1769,7 @@ QuestMgr::~QuestMgr()
 }
 
 
-bool QuestMgr::CanStoreReward(PlayerPointer plyr, Quest *qst, uint32 reward_slot)
+bool QuestMgr::CanStoreReward(Player* plyr, Quest *qst, uint32 reward_slot)
 {
     uint32 available_slots = 0;
     uint32 slotsrequired = 0;

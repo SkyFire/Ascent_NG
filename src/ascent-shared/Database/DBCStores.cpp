@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "DBCStores.h"
 #include "DataStore.h"
@@ -79,6 +74,7 @@ SERVER_DECL DBCStorage<VehicleEntry> dbcVehicle;
 SERVER_DECL DBCStorage<VehicleSeatEntry> dbcVehicleSeat;
 SERVER_DECL DBCStorage<WorldMapOverlayEntry> dbcWorldMapOverlay;
 SERVER_DECL DBCStorage<SummonPropertiesEntry> dbcSummonProps;
+SERVER_DECL DBCStorage<AreaPOIEntry> dbcAreaPOI;
 
 const char* SummonPropertiesfmt = "uuuuuu";
 const char* AreaTriggerFormat = "uuffffffff";
@@ -92,9 +88,9 @@ const char* EnchantEntrYFormat = "uxuuuuuuuuuuuusxxxxxxxxxxxxxxxxuuuuxxx";
 const char* GemPropertyEntryFormat = "uuuuu";
 const char* GlyphPropertyEntryFormat = "uuuu";
 const char* skilllineentrYFormat = "uuusxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
-const char* spellentryFormat = "uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuufuuuuuuuuuuuuuuuuuuuuiuuuuuuuuuuuffffffiiiiiiuuuuuuuuuuuuuuufffuuuuuuuuuuuuuuufffuuuuuuuuuuxuuusxxxxxxxxxxxxxxxxsxxxxxxxxxxxxxxxxsxxxxxxxxxxxxxxxxsxxxxxxxxxxxxxxxxuuuuuuuuuuuifffuuuuuiuuxu";
+const char* spellentryFormat = "uuuuuuuuuuuxuxuxuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuufuuuuuuuuuuuuuuuuuuuuiuuuuuuuuuuuffffffiiiiiiuuuuuuuuuuuuuuufffuuuuuuuuuuuuuuufffuuuuuuuuuuxuuusxxxxxxxxxxxxxxxxsxxxxxxxxxxxxxxxxsxxxxxxxxxxxxxxxxsxxxxxxxxxxxxxxxxuuuuuuuuuuuifffuuuuuiuuxuxxxx";
 
-const char* itemextendedcostFormat = "uuuuuuuuuuuuuux";
+const char* itemextendedcostFormat = "uuuxuuuuuuuuuuux";
 const char* talententryFormat = "uuuuuuuuuxxxxuxxuxxxuxx";
 const char* talenttabentryFormat = "uxxxxxxxxxxxxxxxxxxxuxux";
 const char* spellcasttimeFormat = "uuxx";
@@ -122,9 +118,9 @@ const char* dbctaxipathFormat = "uuuu";
 const char* dbctaxipathnodeFormat = "uuuufffuuxx";
 const char* creaturedisplayFormat = "uxxxfxxxxxxxxxxx";
 const char* creaturespelldataFormat = "uuuuuuuuu";
-const char* charraceFormat = "uxxxxxxxuxxxxusxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+const char* charraceFormat = "uxuxuuxuxxxxxusxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxu";
 const char* charclassFormat = "uxuxsxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxuxux";
-const char* creaturefamilyFormat = "ufufuuuuxxsxxxxxxxxxxxxxxxxx";
+const char* creaturefamilyFormat = "ufufuuuuuxsxxxxxxxxxxxxxxxxx";
 const char* mapentryFormat =
 	"u"					// 0 id
 	"s"					// 1 name_internal
@@ -136,18 +132,13 @@ const char* mapentryFormat =
 	"sxxxxxxxxxxxxxxxx" // 39-55 allianceIntro
 	"u"					// 56 multimap_id
 	"x"					// 57 unk_float (all 1 but arathi 1.25)
-	"sxxxxxxxxxxxxxxxx"	// 58-74 normalReqText
-	"sxxxxxxxxxxxxxxxx"	// 75-91 heroicReqText
-	"xxxxxxxxxxxxxxxxx"	// 92-108 emptyText
-	"u"					// 109 parent_map
-	"u"					// 110 start_x
-	"u"					// 111 start_y
-	"u"					// 112 resetTimeRaid
-	"u"					// 113 resetTimeHeroic
-	"x"					// 114 unk
-	"x"					// 115 unk
-	"u"					// 116 addon
-	"x";				// 117 unk
+	"u"					// 58 parent_map
+	"u"					// 59 start_x
+	"u"					// 60 start_y
+	"x"					// 61 unk
+	"u"					// 62 addon
+	"x"					// 63 unk
+	"x";				// 64 unk
 
 
 const char* itemrandomsuffixformat = "usxxxxxxxxxxxxxxxxxuuuuuuuuuu";
@@ -164,7 +155,7 @@ const char* vehicleentryFormat = "uuffffuuuuuuuufffffffffffffffssssfufuxxx";
 
 const char* achievementfmt="niixsxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxiixixxxxxxxxxxxxxxxxxxxx";
 const char* achievementCriteriafmt="niiiiiiiisxxxxxxxxxxxxxxxxiixix";
-
+const char* AreaPOIFormat = "nuuuuuuuuuuufffuxuxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxux";
 
 template<class T>
 bool loader_stub(const char * filename, const char * format, bool ind, T& l, bool loadstrs)
@@ -175,6 +166,14 @@ bool loader_stub(const char * filename, const char * format, bool ind, T& l, boo
 
 #define LOAD_DBC(filename, format, ind, stor, strings) if(!loader_stub(filename, format, ind, stor, strings)) { return false; } 
 
+bool LoadRSDBCs()
+{
+	LOAD_DBC("DBC/AreaTable.dbc", areatableFormat, true, dbcArea, true);
+	LOAD_DBC("DBC/ChatChannels.dbc", chatchannelformat, true, dbcChatChannels, true);
+
+	return true;
+}
+
 bool LoadDBCs()
 {
 	LOAD_DBC("DBC/Achievement.dbc", achievementfmt,true, dbcAchievement,true);
@@ -182,6 +181,7 @@ bool LoadDBCs()
 	LOAD_DBC("DBC/AreaGroup.dbc", AreaGroupFormat, true, dbcAreaGroup, true);
 	LOAD_DBC("DBC/AreaTable.dbc", areatableFormat, true, dbcArea, true);
 	LOAD_DBC("DBC/AreaTrigger.dbc", AreaTriggerFormat, true, dbcAreaTrigger, false);
+	LOAD_DBC("DBC/AreaPOI.dbc",AreaPOIFormat,true,dbcAreaPOI,false);
 	LOAD_DBC("DBC/AuctionHouse.dbc", auctionhousedbcFormat, true, dbcAuctionHouse, false);
 
 	LOAD_DBC("DBC/BankBagSlotPrices.dbc", bankslotpriceformat, true, dbcBankSlotPrices, false);

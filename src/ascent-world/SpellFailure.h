@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #ifndef _SPELLFAILURE_H
 #define _SPELLFAILURE_H
@@ -194,16 +189,19 @@ enum SpellCastError
 	SPELL_FAILED_ON_USE_ENCHANT                                  = 169,
 	SPELL_FAILED_NOT_ON_GROUND                                   = 170,
 	SPELL_FAILED_CUSTOM_ERROR                                    = 171,
-	SPELL_FAILED_CANT_DO_THAT_RIGHT_NOW                          = 172,
-	SPELL_FAILED_TOO_MANY_SOCKETS                                = 173,
-	SPELL_FAILED_INVALID_GLYPH                                   = 174,
-	SPELL_FAILED_UNIQUE_GLYPH                                    = 175,
-	SPELL_FAILED_GLYPH_SOCKET_LOCKED                             = 176,
-	SPELL_FAILED_NO_VALID_TARGETS                                = 177,
-	SPELL_FAILED_ITEM_AT_MAX_CHARGES                             = 178,
-	SPELL_FAILED_NOT_IN_BARBERSHOP                               = 179,
-	SPELL_FAILED_FISHING_TOO_LOW                                 = 180,
-	SPELL_FAILED_UNKNOWN                                         = 181,
+	SPELL_FAILED_TOO_MANY_SOCKETS                                = 172,
+	SPELL_FAILED_INVALID_GLYPH                                   = 173,
+	SPELL_FAILED_UNIQUE_GLYPH                                    = 174,
+	SPELL_FAILED_GLYPH_SOCKET_LOCKED                             = 175,
+	SPELL_FAILED_NO_VALID_TARGETS                                = 176,
+	SPELL_FAILED_ITEM_AT_MAX_CHARGES                             = 177,
+	SPELL_FAILED_NOT_IN_BARBERSHOP                               = 178,
+	SPELL_FAILED_FISHING_TOO_LOW                                 = 179,
+	SPELL_FAILED_ITEM_ENCHANT_TRADE_WINDOW                       = 180,
+	SPELL_FAILED_SUMMON_PENDING                                  = 181,
+	SPELL_FAILED_MAX_SOCKETS                                     = 182,
+	SPELL_FAILED_PET_CAN_RENAME                                  = 183,
+	SPELL_FAILED_UNKNOWN                                         = 184,
 	SPELL_CANCAST_OK                                             = 255,
 };
 

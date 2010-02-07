@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 initialiseSingleton( ObjectMgr );
@@ -59,12 +54,6 @@ ObjectMgr::~ObjectMgr()
 
 	Log.Notice("ObjectMgr", "Deleting Vendors...");
 	for( VendorMap::iterator i = mVendors.begin( ); i != mVendors.end( ); ++ i ) 
-	{
-		delete i->second;
-	}
-
-	Log.Notice("ObjectMgr", "Deleting Spell Override...");
-	for(OverrideIdMap::iterator i = mOverrideIdMap.begin(); i != mOverrideIdMap.end(); ++i)
 	{
 		delete i->second;
 	}
@@ -182,6 +171,11 @@ ObjectMgr::~ObjectMgr()
 	for(HM_NAMESPACE::hash_map<uint32, ArenaTeam*>::iterator itr = m_arenaTeams.begin(); itr != m_arenaTeams.end(); ++itr) 
 		delete itr->second;
 
+	Log.Notice("ObjectMgr", "Deleting Profession Discoveries...");
+	std::set<ProfessionDiscovery*>::iterator itr = ProfessionDiscoveryTable.begin();
+	for ( ; itr != ProfessionDiscoveryTable.end(); itr++ )
+		delete (*itr);	
+
 	Log.Notice("ObjectMgr", "Deleting Achievement Cache...");
 	for(AchievementCriteriaMap::iterator itr = m_achievementCriteriaMap.begin(); itr != m_achievementCriteriaMap.end(); ++itr)
 		delete (itr->second);
@@ -190,9 +184,12 @@ ObjectMgr::~ObjectMgr()
 	for(map<uint32,set<Quest*>*>::iterator qitr = ZoneToQuestMap.begin(); qitr != ZoneToQuestMap.end(); ++qitr)
 		delete qitr->second;
 
-	Log.Notice("ObjectMgr", "Deleting Profession Discovery Tables..");
-	for(std::set<ProfessionDiscovery*>::iterator itr = ProfessionDiscoveryTable.begin(); itr != ProfessionDiscoveryTable.end(); ++itr)
-		delete (*itr);
+	Log.Notice("ObjectMgr", "Deleting Pet Levelup Spells...");
+	for(PetLevelupSpellMap::iterator itr = mPetLevelupSpellMap.begin(); itr != mPetLevelupSpellMap.end(); ++itr)
+	{
+		itr->second.clear();
+	}
+	mPetLevelupSpellMap.clear();
 }
 
 void ObjectMgr::LoadAchievements()
@@ -265,7 +262,7 @@ void ObjectMgr::LoadAchievements()
 // Groups
 //
 
-Group * ObjectMgr::GetGroupByLeader(PlayerPointer pPlayer)
+Group * ObjectMgr::GetGroupByLeader(Player* pPlayer)
 {
 	GroupMap::iterator itr;
 	Group * ret=NULL;
@@ -630,18 +627,18 @@ void ObjectMgr::LoadGuilds()
 	Log.Notice("ObjectMgr", "%u guilds loaded.", mGuild.size());
 }
 
-CorpsePointer ObjectMgr::LoadCorpse(uint32 guid)
+Corpse* ObjectMgr::LoadCorpse(uint32 guid)
 {
-	CorpsePointer pCorpse;
+	Corpse* pCorpse;
 	QueryResult *result = CharacterDatabase.Query("SELECT * FROM Corpses WHERE guid =%u ", guid );
 
 	if( !result )
-		return NULLCORPSE;
+		return NULL;
 	
 	do
 	{
 		Field *fields = result->Fetch();
-		pCorpse = CorpsePointer (new Corpse(HIGHGUID_TYPE_CORPSE,fields[0].GetUInt32()));
+		pCorpse = new Corpse(HIGHGUID_TYPE_CORPSE,fields[0].GetUInt32());
 		pCorpse->Init();
 		pCorpse->SetPosition(fields[1].GetFloat(), fields[2].GetFloat(), fields[3].GetFloat(), fields[4].GetFloat());
 		pCorpse->SetZoneId(fields[5].GetUInt32());
@@ -650,7 +647,6 @@ CorpsePointer ObjectMgr::LoadCorpse(uint32 guid)
 		if(pCorpse->GetUInt32Value(CORPSE_FIELD_DISPLAY_ID) == 0)
 		{
 			pCorpse->Destructor();
-			pCorpse = NULLCORPSE;
 			continue;
 		}
 
@@ -669,10 +665,10 @@ CorpsePointer ObjectMgr::LoadCorpse(uint32 guid)
 // Live corpse retreival.
 // comments: I use the same tricky method to start from the last corpse instead of the first
 //------------------------------------------------------
-CorpsePointer ObjectMgr::GetCorpseByOwner(uint32 ownerguid)
+Corpse* ObjectMgr::GetCorpseByOwner(uint32 ownerguid)
 {
 	CorpseMap::const_iterator itr;
-	CorpsePointer rv = NULLCORPSE;
+	Corpse* rv = NULL;
 	_corpseslock.Acquire();
 	for (itr = m_corpses.begin();itr != m_corpses.end(); ++itr)
 	{
@@ -688,10 +684,10 @@ CorpsePointer ObjectMgr::GetCorpseByOwner(uint32 ownerguid)
 	return rv;
 }
 
-void ObjectMgr::DelinkPlayerCorpses(PlayerPointer pOwner)
+void ObjectMgr::DelinkPlayerCorpses(Player* pOwner)
 {
 	//dupe protection agaisnt crashs
-	CorpsePointer c;
+	Corpse* c;
 	c=this->GetCorpseByOwner(pOwner->GetLowGUID());
 	if(!c)return;
 	sEventMgr.AddEvent(c, &Corpse::Delink, EVENT_CORPSE_SPAWN_BONES, 1, 1, 0);
@@ -880,9 +876,9 @@ void ObjectMgr::ProcessGameobjectQuests()
 	Log.Notice("ObjectMgr", "%u NPC Gossip TextIds loaded.", mNpcToGossipText.size());
 }
 
-PlayerPointer ObjectMgr::GetPlayer(const char* name, bool caseSensitive)
+Player* ObjectMgr::GetPlayer(const char* name, bool caseSensitive)
 {
-	PlayerPointer rv = NULLPLR;
+	Player* rv = NULL;
 	PlayerStorageMap::const_iterator itr;
 	_playerslock.AcquireReadLock();	
 
@@ -916,12 +912,12 @@ PlayerPointer ObjectMgr::GetPlayer(const char* name, bool caseSensitive)
 	return rv;
 }
 
-PlayerPointer ObjectMgr::GetPlayer(uint32 guid)
+Player* ObjectMgr::GetPlayer(uint32 guid)
 {
-	PlayerPointer rv;
+	Player* rv = NULL;
 	_playerslock.AcquireReadLock();	
 	PlayerStorageMap::const_iterator itr = _players.find(guid);
-	rv = (itr != _players.end()) ? itr->second : NULLPLR;
+	rv = (itr != _players.end()) ? itr->second : NULL;
 	_playerslock.ReleaseReadLock();
 	return rv;
 }
@@ -1177,48 +1173,48 @@ void ObjectMgr::LoadAIThreatToSpellId()
 	delete result;
 }
 
-ItemPointer ObjectMgr::CreateItem(uint32 entry,PlayerPointer owner)
+Item* ObjectMgr::CreateItem(uint32 entry,Player* owner)
 {
 	ItemPrototype * proto = ItemPrototypeStorage.LookupEntry(entry);
-	if(proto == 0) return NULLITEM;
+	if(proto == 0) return NULL;
 
 	if(proto->InventoryType == INVTYPE_BAG)
 	{
-		ContainerPointer pContainer(new Container(HIGHGUID_TYPE_CONTAINER,GenerateLowGuid(HIGHGUID_TYPE_CONTAINER)));
+		Container* pContainer(new Container(HIGHGUID_TYPE_CONTAINER,GenerateLowGuid(HIGHGUID_TYPE_CONTAINER)));
 		pContainer->Create( entry, owner);
 		pContainer->SetUInt32Value(ITEM_FIELD_STACK_COUNT, 1);
 		return pContainer;
 	}
 	else
 	{
-		ItemPointer pItem(new Item(HIGHGUID_TYPE_ITEM,GenerateLowGuid(HIGHGUID_TYPE_ITEM)));
+		Item* pItem(new Item(HIGHGUID_TYPE_ITEM,GenerateLowGuid(HIGHGUID_TYPE_ITEM)));
 		pItem->Create(entry, owner);
 		pItem->SetUInt32Value(ITEM_FIELD_STACK_COUNT, 1);
 		return pItem;
 	}
 }
 
-ItemPointer ObjectMgr::LoadItem(uint64 guid)
+Item* ObjectMgr::LoadItem(uint64 guid)
 {
 	QueryResult * result = CharacterDatabase.Query("SELECT * FROM playeritems WHERE guid = %u", GUID_LOPART(guid));
-	ItemPointer pReturn = NULLITEM;
+	Item* pReturn = NULL;
 
 	if(result)
 	{
 		ItemPrototype * pProto = ItemPrototypeStorage.LookupEntry(result->Fetch()[2].GetUInt32());
 		if(!pProto)
-			return NULLITEM;
+			return NULL;
 
 		if(pProto->InventoryType == INVTYPE_BAG)
 		{
-			ContainerPointer pContainer(new Container(HIGHGUID_TYPE_CONTAINER,(uint32)guid));
+			Container* pContainer(new Container(HIGHGUID_TYPE_CONTAINER,(uint32)guid));
 			pContainer->LoadFromDB(result->Fetch());
 			pReturn = pContainer;
 		}
 		else
 		{
-			ItemPointer pItem(new Item(HIGHGUID_TYPE_ITEM,(uint32)guid));
-			pItem->LoadFromDB(result->Fetch(), NULLPLR, false);
+			Item* pItem(new Item(HIGHGUID_TYPE_ITEM,(uint32)guid));
+			pItem->LoadFromDB(result->Fetch(), NULL, false);
 			pReturn = pItem;
 		}
 		delete result;
@@ -1227,9 +1223,9 @@ ItemPointer ObjectMgr::LoadItem(uint64 guid)
 	return pReturn;
 }
 
-void ObjectMgr::LoadCorpses(MapMgrPointer mgr)
+void ObjectMgr::LoadCorpses(MapMgr* mgr)
 {
-	CorpsePointer pCorpse = NULLCORPSE;
+	Corpse* pCorpse = NULL;
 
 	QueryResult *result = CharacterDatabase.Query("SELECT * FROM corpses WHERE instanceId = %u", mgr->GetInstanceID());
 
@@ -1238,7 +1234,7 @@ void ObjectMgr::LoadCorpses(MapMgrPointer mgr)
 		do
 		{
 			Field *fields = result->Fetch();
-			pCorpse = CorpsePointer (new Corpse(HIGHGUID_TYPE_CORPSE,fields[0].GetUInt32()));
+			pCorpse = new Corpse(HIGHGUID_TYPE_CORPSE,fields[0].GetUInt32());
 			pCorpse->Init();
 			pCorpse->SetPosition(fields[1].GetFloat(), fields[2].GetFloat(), fields[3].GetFloat(), fields[4].GetFloat());
 			pCorpse->SetZoneId(fields[5].GetUInt32());
@@ -1248,7 +1244,6 @@ void ObjectMgr::LoadCorpses(MapMgrPointer mgr)
 			if(pCorpse->GetUInt32Value(CORPSE_FIELD_DISPLAY_ID) == 0)
 			{
 				pCorpse->Destructor();
-				pCorpse = NULLCORPSE;
 				continue;
 			}
 
@@ -1264,12 +1259,11 @@ std::list<ItemPrototype*>* ObjectMgr::GetListForItemSet(uint32 setid)
 	return mItemSets[setid];
 }
 
-void ObjectMgr::CorpseAddEventDespawn(CorpsePointer pCorpse)
+void ObjectMgr::CorpseAddEventDespawn(Corpse* pCorpse)
 {
 	if(!pCorpse->IsInWorld())
 	{
 		pCorpse->Destructor();
-		pCorpse = NULLCORPSE;
 	}
 	else
 		sEventMgr.AddEvent(pCorpse->GetMapMgr(), &MapMgr::EventCorpseDespawn, pCorpse->GetGUID(), EVENT_CORPSE_DESPAWN, 600000, 1,0);
@@ -1277,13 +1271,12 @@ void ObjectMgr::CorpseAddEventDespawn(CorpsePointer pCorpse)
 
 void ObjectMgr::DespawnCorpse(uint64 Guid)
 {
-	CorpsePointer pCorpse = objmgr.GetCorpse((uint32)Guid);
+	Corpse* pCorpse = objmgr.GetCorpse((uint32)Guid);
 	if(pCorpse == 0)	// Already Deleted
 		return;
 	
 	pCorpse->Despawn();
 	pCorpse->Destructor();
-	pCorpse = NULLCORPSE;
 }
 
 void ObjectMgr::CorpseCollectorUnload()
@@ -1292,13 +1285,12 @@ void ObjectMgr::CorpseCollectorUnload()
 	_corpseslock.Acquire();
 	for (itr = m_corpses.begin(); itr != m_corpses.end();)
 	{
-		CorpsePointer c =itr->second;
+		Corpse* c =itr->second;
 		++itr;
 		if(c->IsInWorld())
 			c->RemoveFromWorld(false);
 
 		c->Destructor();
-		c = NULLCORPSE;
 	}
 	m_corpses.clear();
 	_corpseslock.Release();
@@ -1350,7 +1342,7 @@ void GossipMenu::BuildPacket(WorldPacket& Packet)
 	}
 }
 
-void GossipMenu::SendTo(PlayerPointer Plr)
+void GossipMenu::SendTo(Player* Plr)
 {
 	WorldPacket data(SMSG_GOSSIP_MESSAGE, Menu.size() * 50 + 12);
 	BuildPacket(data);
@@ -1358,7 +1350,7 @@ void GossipMenu::SendTo(PlayerPointer Plr)
 	Plr->GetSession()->SendPacket(&data);
 }
 
-void ObjectMgr::CreateGossipMenuForPlayer(GossipMenu** Location, uint64 Guid, uint32 TextID, PlayerPointer Plr)
+void ObjectMgr::CreateGossipMenuForPlayer(GossipMenu** Location, uint64 Guid, uint32 TextID, Player* Plr)
 {
 	GossipMenu *Menu = new GossipMenu(Guid, TextID);
 	ASSERT(Menu);
@@ -1512,11 +1504,13 @@ void ObjectMgr::LoadTrainers()
 
 				if( ts.pCastSpell == NULL && ts.pLearnSpell == NULL )
 				{
-					//TODO add conf option for database cleaner
-					if(ts.pCastSpell == NULL)
-						WorldDatabase.Query("DELETE FROM trainer_spells where entry='%u' AND learn_spell='%u'",entry, LearnSpellID);
-					else
-						WorldDatabase.Query("DELETE FROM trainer_spells where entry='%u' AND cast_spell='%u'",entry, CastSpellID);
+					if(Config.MainConfig.GetBoolDefault("Server", "CleanDatabase", false))
+					{
+						if(ts.pCastSpell == NULL)
+							WorldDatabase.Query("DELETE FROM trainer_spells where entry='%u' AND learn_spell='%u'",entry, LearnSpellID);
+						else
+							WorldDatabase.Query("DELETE FROM trainer_spells where entry='%u' AND cast_spell='%u'",entry, CastSpellID);
+					}
 					Log.Warning("ObjectMgr", "Trainer %u skipped invalid spell (%u/%u).", entry, CastSpellID, LearnSpellID);
 					continue; //omg a bad spell !
 				}
@@ -1723,7 +1717,7 @@ void ObjectMgr::GenerateLevelUpInfo()
 				// Calculate next level XP
 				uint32 nextLvlXP = 0;
 
-				//this is a fixed table taken from 2.3.0 wow. This can;t get more blizzlike with the "if" cases ;)
+				//this is a fixed table taken from 2.3.0 wow. This can't get more blizzlike with the "if" cases ;)
 				if( ( Level - 1 ) < MAX_PREDEFINED_NEXTLEVELXP )
 				{
 					nextLvlXP = NextLevelXp[( Level - 1 )];
@@ -1911,7 +1905,7 @@ void ObjectMgr::LoadCreatureWaypoints()
 		i=m_waypoints.find(spawnid);
 		if(i==m_waypoints.end())
 		{
-			if(wp->id < 1)
+			if(wp->id > 1)
 			{
 				Log.Warning("Waypoints","Waypoint id's can't start above 1 (spawn %u)", spawnid);
 				if(spawnid)
@@ -1922,15 +1916,23 @@ void ObjectMgr::LoadCreatureWaypoints()
 
 			WayPointMap* m=new WayPointMap;
 			if(m->size() < wp->id)
-				m->resize(wp->id+1);
+				m->resize(wp->count);
 
 			(*m)[wp->id-1]=wp;
+			//m->push_back(wp);
 			m_waypoints[spawnid]=m;		
 		}else
 		{
-			if(i->second->size() <= wp->id)
-				i->second->resize(wp->id+1);
+			if(i->second->size() < wp->id)
+			{
+				Log.Warning("Waypoints","Waypoint id's are not continuous, skipping spawn (spawn %u)", spawnid);
+				delete i->second;
+				m_waypoints.erase(spawnid);
+				skipid = spawnid;
+				continue;
+			}
 			(*(i->second))[wp->id-1]=wp;
+			//i->second->push_back(wp);
 		}
 	}while( result->NextRow() );
 
@@ -1955,7 +1957,7 @@ WayPointMap*ObjectMgr::GetWayPointMap(uint32 spawnid)
 	else return NULL;
 }
 
-PetPointer ObjectMgr::CreatePet()
+Pet* ObjectMgr::CreatePet()
 {
 	uint32 guid;
 	m_petlock.Acquire();
@@ -1963,30 +1965,31 @@ PetPointer ObjectMgr::CreatePet()
 	m_petlock.Release();
 
 	uint64 fullguid = ((uint64)HIGHGUID_TYPE_PET << 32) | ((uint64)guid << 24) | guid;
-	PetPointer pet(new Pet(fullguid));
+	Pet* pet = NULL;
+	pet = new Pet(fullguid);
 	pet->Init();
 	return pet;
 }
 
-PlayerPointer ObjectMgr::CreatePlayer()
+Player* ObjectMgr::CreatePlayer()
 {
 	uint32 guid;
 	m_playerguidlock.Acquire();
 	guid =++m_hiPlayerGuid;
 	m_playerguidlock.Release();
-	PlayerPointer p(new Player(guid));
+	Player* p(new Player(guid));
 	p->Init();
 	return p;
 }
 
-void ObjectMgr::AddPlayer(PlayerPointer p)//add it to global storage
+void ObjectMgr::AddPlayer(Player* p)//add it to global storage
 {
 	_playerslock.AcquireWriteLock();
 	_players[p->GetLowGUID()] = p;
 	_playerslock.ReleaseWriteLock();
 }
 
-void ObjectMgr::RemovePlayer(PlayerPointer p)
+void ObjectMgr::RemovePlayer(Player* p)
 {
 	_playerslock.AcquireWriteLock();
 	_players.erase(p->GetLowGUID());
@@ -1994,63 +1997,63 @@ void ObjectMgr::RemovePlayer(PlayerPointer p)
 
 }
 
-CorpsePointer ObjectMgr::CreateCorpse()
+Corpse* ObjectMgr::CreateCorpse()
 {
 	uint32 guid;
 	m_corpseguidlock.Acquire();
 	guid =++m_hiCorpseGuid;
 	m_corpseguidlock.Release();
-	CorpsePointer pCorpse(new Corpse(HIGHGUID_TYPE_CORPSE,guid));
+	Corpse* pCorpse = new Corpse(HIGHGUID_TYPE_CORPSE,guid);
 	pCorpse->Init();
 	return pCorpse;
 }
 
-void ObjectMgr::AddCorpse(CorpsePointer p)//add it to global storage
+void ObjectMgr::AddCorpse(Corpse* p)//add it to global storage
 {
 	_corpseslock.Acquire();
 	m_corpses[p->GetLowGUID()]=p;
 	_corpseslock.Release();
 }
 
-void ObjectMgr::RemoveCorpse(CorpsePointer p)
+void ObjectMgr::RemoveCorpse(Corpse* p)
 {
 	_corpseslock.Acquire();
 	m_corpses.erase(p->GetLowGUID());
 	_corpseslock.Release();
 }
 
-CorpsePointer ObjectMgr::GetCorpse(uint32 corpseguid)
+Corpse* ObjectMgr::GetCorpse(uint32 corpseguid)
 {
-	CorpsePointer rv;
+	Corpse* rv;
 	_corpseslock.Acquire();
 	CorpseMap::const_iterator itr = m_corpses.find(corpseguid);
-	rv = (itr != m_corpses.end()) ? itr->second : NULLCORPSE;
+	rv = (itr != m_corpses.end()) ? itr->second : NULL;
 	_corpseslock.Release();
 	return rv;
 }
 
-TransporterPointer ObjectMgr::GetTransporter(uint32 guid)
+Transporter* ObjectMgr::GetTransporter(uint32 guid)
 {
-	TransporterPointer rv;
+	Transporter* rv;
 	_TransportLock.Acquire();
-	HM_NAMESPACE::hash_map<uint32, TransporterPointer >::const_iterator itr = mTransports.find(guid);
-	rv = (itr != mTransports.end()) ? itr->second : NULLTRANSPORT;
+	HM_NAMESPACE::hash_map<uint32, Transporter* >::const_iterator itr = mTransports.find(guid);
+	rv = (itr != mTransports.end()) ? itr->second : NULL;
 	_TransportLock.Release();
 	return rv;
 }
 
-void ObjectMgr::AddTransport(TransporterPointer pTransporter)
+void ObjectMgr::AddTransport(Transporter* pTransporter)
 {
 	_TransportLock.Acquire();
 	mTransports[pTransporter->GetUIdFromGUID()]=pTransporter;
  	_TransportLock.Release();
 }
 
-TransporterPointer ObjectMgr::GetTransporterByEntry(uint32 entry)
+Transporter* ObjectMgr::GetTransporterByEntry(uint32 entry)
 {
-	TransporterPointer rv = NULLTRANSPORT;
+	Transporter* rv = NULL;
 	_TransportLock.Acquire();
-	HM_NAMESPACE::hash_map<uint32, TransporterPointer >::iterator itr = mTransports.begin();
+	HM_NAMESPACE::hash_map<uint32, Transporter* >::iterator itr = mTransports.begin();
 	for(; itr != mTransports.end(); ++itr)
 	{
 		if(itr->second->GetEntry() == entry)
@@ -2354,6 +2357,12 @@ void ObjectMgr::LoadMonsterSay()
 		if(Event >= NUM_MONSTER_SAY_EVENTS)
 			continue;
 
+		if( mMonsterSays[Event].find( Entry ) != mMonsterSays[Event].end() )
+		{
+			sLog.outError("Duplicate monstersay event %u for entry %u, skipping", Event, Entry	);
+			continue;
+		}	
+
 		NpcMonsterSay * ms = new NpcMonsterSay;
 		ms->Chance = fields[2].GetFloat();
 		ms->Language = fields[3].GetUInt32();
@@ -2398,7 +2407,7 @@ void ObjectMgr::LoadMonsterSay()
 	delete result;
 }
 
-void ObjectMgr::HandleMonsterSayEvent(CreaturePointer pCreature, MONSTER_SAY_EVENTS Event)
+void ObjectMgr::HandleMonsterSayEvent(Creature* pCreature, MONSTER_SAY_EVENTS Event)
 {
 	MonsterSayMap::iterator itr = mMonsterSays[Event].find(pCreature->GetEntry());
 	if(itr == mMonsterSays[Event].end())
@@ -2459,7 +2468,7 @@ void ObjectMgr::LoadInstanceReputationModifiers()
 	Log.Notice("ObjectMgr", "%u instance reputation modifiers loaded.", m_reputation_instance.size());
 }
 
-bool ObjectMgr::HandleInstanceReputationModifiers(PlayerPointer pPlayer, UnitPointer pVictim)
+bool ObjectMgr::HandleInstanceReputationModifiers(Player* pPlayer, Unit* pVictim)
 {
 	uint32 team = pPlayer->GetTeam();
 	bool is_boss, is_heroic;
@@ -2669,7 +2678,7 @@ void ObjectMgr::ResetDailies()
 	PlayerStorageMap::iterator itr = _players.begin();
 	for(; itr != _players.end(); itr++)
 	{
-		PlayerPointer pPlayer = itr->second;
+		Player* pPlayer = itr->second;
 		uint8 eflags = 0;
 		if( pPlayer->IsInWorld() )
 			eflags = EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT;
@@ -2687,3 +2696,244 @@ void ObjectMgr::GroupVoiceReconnected()
 	m_groupLock.ReleaseReadLock();
 }
 #endif
+
+void ObjectMgr::LoadPetLevelupSpellMap()
+{
+	CreatureFamilyEntry	* creatureFamily;
+	SpellEntry * sp;
+	skilllinespell * sk;
+	uint32 count = 0;
+
+//	static uint32 FamilySkillArray[]	=	{[FAMILY_BAT,SKILL_PET_BAT],[FAMILY_BEAR,SKILL_PET_BEAR],[FAMILY_BIRD_OF_PREY,KILL_PET_OWL],[FAMILY_BOAR,SKILL_PET_BOAR],[FAMILY_CARRION_BIRD,SKILL_PET_CARRION_BIRD],[FAMILY_CAT,SKILL_PET_CAT],[FAMILY_CHIMAERA,SKILL_PET_EXOTIC_CHIMAERA],[FAMILY_CORE_HOUND.SKILL_PET_EXOTIC_CORE_HOUND],[FAMILY_CRAB,SKILL_PET_CRAB],[FAMILY_CROCILISK,SKILL_PET_CROCILISK],[FAMILY_DEVILSAUR,SKILL_PET_EXOTIC_DEVILSAUR],[FAMILY_DRAGONHAWK,SKILL_PET_DRAGONHAWK],[FAMILY_GORILLA,SKILL_PET_GORILLA],[FAMILY_HYENA,SKILL_PET_HYENA],[FAMILY_MOTH,SKILL_PET_MOTH],[FAMILY_NETHER_RAY,SKILL_PET_NETHER_RAY],[FAMILY_RAPTOR,SKILL_PET_RAPTOR],[FAMILY_RAVAGER,SKILL_PET_RAVAGER],[FAMILY_RHINO,SKILL_PET_EXOTIC_RHINO],[FAMILY_SCORPID,SKILL_PET_SCORPID],[FAMILY_SERPENT,SKILL_PET_SERPENT],[FAMILY_SILITHID,SKILL_PET_EXOTIC_SILITHID],[FAMILY_SPIDER,SKILL_PET_SPIDER],[FAMILY_SPIRIT_BEAST,SKILL_PET_EXOTIC_SPIRIT_BEAST],[FAMILY_SPOREBAT,SKILL_PET_SPOREBAT],[FAMILY_TALLSTRIDER,SKILL_PET_TALLSTRIDER],[FAMILY_TURTLE,SKILL_PET_TURTLE],[FAMILY_WARP_STALKER,SKILL_PET_WARP_STALKER],[FAMILY_WASP,SKILL_PET_WASP],[FAMILY_WIND_SERPENT,SKILL_PET_WIND_SERPENT],[FAMILY_WOLF,SKILL_PET_WOLF],[FAMILY_WORM,SKILL_PET_EXOTIC_WORM]};
+
+	for	(uint32	i =	0; i < dbcCreatureFamily.GetNumRows(); ++i)
+	{
+		//Valid hunter pet family?
+		creatureFamily = dbcCreatureFamily.LookupEntry(i);
+		if(!creatureFamily || creatureFamily->pettalenttype < 0)
+			continue;
+
+		for(uint32 j = 0; j < dbcSkillLineSpell.GetNumRows(); ++j)
+		{
+			//Valid skill line?
+			sk = dbcSkillLineSpell.LookupEntry(j);
+			if(!sk || sk->racemask != 0 || sk->classmask != 0)
+				continue;
+
+			//Vaild pet-family spell?
+			sp = dbcSpell.LookupEntry(sk->spell);
+			if(!sp || sp->SpellFamilyName != SPELLFAMILY_HUNTER)
+				continue;
+
+			switch(sk->skilline)
+			{
+				case SKILL_PET_IMP:
+				{
+					mPetLevelupSpellMap[FAMILY_FAKE_IMP][sp->spellLevel] = sk->spell;
+				}break;
+				case SKILL_PET_VOIDWALKER:
+				{
+					mPetLevelupSpellMap[FAMILY_FAKE_VOIDWALKER][sp->spellLevel] = sk->spell;
+				}break;
+				case SKILL_PET_SUCCUBUS:
+				{
+					mPetLevelupSpellMap[FAMILY_FAKE_SUCCUBUS][sp->spellLevel] = sk->spell;
+				}break;
+				case SKILL_PET_FELHUNTER:
+				{
+					mPetLevelupSpellMap[FAMILY_FAKE_FELHUNTER][sp->spellLevel] = sk->spell;
+				}break;
+				case SKILL_PET_FELGUARD:
+				{
+					mPetLevelupSpellMap[FAMILY_FAKE_FELGUARD][sp->spellLevel] = sk->spell;
+				}break;
+				case SPELL_HASH_GROWL:
+				{
+					mPetLevelupSpellMap[creatureFamily->ID][sp->spellLevel] = sk->spell;
+				}break;
+				case SPELL_HASH_COWER:
+				{
+					mPetLevelupSpellMap[creatureFamily->ID][sp->spellLevel] = sk->spell;
+				}break;
+			}
+			switch(creatureFamily->ID)
+			{
+				case FAMILY_BAT:
+				{
+					if(sk->skilline !=	SKILL_PET_BAT)
+						continue;
+				}break;
+				case FAMILY_BEAR:
+				{
+					if(sk->skilline !=	SKILL_PET_BEAR)
+						continue;
+				}break;
+				case FAMILY_BIRD_OF_PREY:
+				{
+					if(sk->skilline !=	SKILL_PET_OWL)
+						continue;
+				}break;
+				case FAMILY_BOAR:	
+				{
+					if(sk->skilline	!= SKILL_PET_BOAR)
+						continue;
+				}break;
+				case FAMILY_CARRION_BIRD:
+				{
+					if(sk->skilline !=	SKILL_PET_CARRION_BIRD)
+						continue;
+				}break;
+				case FAMILY_CAT:
+				{
+					if(sk->skilline !=	SKILL_PET_CAT)
+						continue;
+				}break;
+				case FAMILY_CHIMAERA:
+				{
+					if(sk->skilline !=	SKILL_PET_EXOTIC_CHIMAERA)
+						continue;
+				}break;
+				case FAMILY_CORE_HOUND:
+				{
+					if(sk->skilline !=	SKILL_PET_EXOTIC_CORE_HOUND)
+						continue;
+				}break;
+				case FAMILY_CRAB:
+				{
+					if(sk->skilline !=	SKILL_PET_CRAB)
+						continue;
+				}break;
+				case FAMILY_CROCILISK:
+				{
+					if(sk->skilline !=	SKILL_PET_CROCILISK)
+						continue;
+				}break;
+				case FAMILY_DEVILSAUR:
+				{
+					if(sk->skilline !=	SKILL_PET_EXOTIC_DEVILSAUR)
+						continue;
+				}break;
+				case FAMILY_DRAGONHAWK:
+				{
+					if(sk->skilline !=	SKILL_PET_DRAGONHAWK)
+						continue;
+				}break;
+				case FAMILY_GORILLA:
+				{
+					if(sk->skilline !=	SKILL_PET_GORILLA)
+						continue;
+				}break;
+				case FAMILY_HYENA:
+				{
+					if(sk->skilline !=	SKILL_PET_HYENA)
+						continue;
+				}break;
+				case FAMILY_MOTH:
+				{
+					if(sk->skilline !=	SKILL_PET_MOTH)
+						continue;
+				}break;
+				case FAMILY_NETHER_RAY:
+				{
+					if(sk->skilline !=	SKILL_PET_NETHER_RAY)
+						continue;
+				}break;
+				case FAMILY_RAPTOR:
+				{
+					if(sk->skilline !=	SKILL_PET_RAPTOR)
+						continue;
+				}break;
+				case FAMILY_RAVAGER:
+				{
+					if(sk->skilline !=	SKILL_PET_RAVAGER)
+						continue;
+				}break;
+				case FAMILY_RHINO:
+				{
+					if(sk->skilline !=	SKILL_PET_EXOTIC_RHINO)
+						continue;
+				}break;
+				case FAMILY_SCORPID:
+				{
+					if(sk->skilline !=	SKILL_PET_SCORPID)
+						continue;
+				}break;
+				case FAMILY_SERPENT:
+				{
+					if(sk->skilline !=	SKILL_PET_SERPENT)
+						continue;
+				}break;
+				case FAMILY_SILITHID:
+				{
+					if(sk->skilline !=	SKILL_PET_EXOTIC_SILITHID)
+						continue;
+				}break;
+				case FAMILY_SPIDER:
+				{
+					if(sk->skilline !=	SKILL_PET_SPIDER)
+						continue;
+				}break;
+				case FAMILY_SPIRIT_BEAST:
+				{
+					if(sk->skilline !=	SKILL_PET_EXOTIC_SPIRIT_BEAST)
+						continue;
+				}break;
+				case FAMILY_SPOREBAT:
+				{
+					if(sk->skilline !=	SKILL_PET_SPOREBAT)
+						continue;
+				}break;
+				case FAMILY_TALLSTRIDER:
+				{
+					if(sk->skilline !=	SKILL_PET_TALLSTRIDER)
+						continue;
+				}break;
+				case FAMILY_TURTLE:
+				{
+					if(sk->skilline !=	SKILL_PET_TURTLE)
+						continue;
+				}break;
+				case FAMILY_WARP_STALKER:
+				{
+					if(sk->skilline !=	SKILL_PET_WARP_STALKER)
+						continue;
+				}break;
+				case FAMILY_WASP:
+				{
+					if(sk->skilline !=	SKILL_PET_WASP)
+						continue;
+				}break;
+				case FAMILY_WIND_SERPENT:
+				{
+					if(sk->skilline !=	SKILL_PET_WIND_SERPENT)
+						continue;
+				}break;
+				case FAMILY_WOLF:
+				{
+					if(sk->skilline !=	SKILL_PET_WOLF)
+						continue;
+				}break;
+				case FAMILY_WORM:
+				{
+					if(sk->skilline !=	SKILL_PET_EXOTIC_WORM)
+						continue;
+				}break;
+				default:
+				{
+					Log.Error("ObjectMgr",	"Unhandled creature	family %u",	creatureFamily->ID);
+				}break;
+			}
+			mPetLevelupSpellMap[creatureFamily->ID][sp->spellLevel]	=	sk->spell;
+			count++;
+		}
+	}
+	Log.Notice("ObjectMgr", "%u Pet LevelUp Spells loaded.",	count);
+}
+
+PetLevelupSpellSet const* ObjectMgr::GetPetLevelupSpellList(uint32 petFamily)	const
+{
+	PetLevelupSpellMap::const_iterator itr = mPetLevelupSpellMap.find(petFamily);
+	if(itr != mPetLevelupSpellMap.end())
+		return &itr->second;
+	return NULL;
+}

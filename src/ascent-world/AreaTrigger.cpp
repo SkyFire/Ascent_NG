@@ -1,21 +1,17 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
+
 #include "StdAfx.h"
 
 const char * AreaTriggerFailureMessages[] = {
@@ -84,6 +80,7 @@ void WorldSession::_HandleAreaTriggerOpcode(uint32 id)
 		return;
 	}
 
+	DEBUG_LOG( "WorldSession","HandleAreaTriggerOpcode: Type %u", pAreaTrigger->Type);
 	switch(pAreaTrigger->Type)
 	{
 	case ATTYPE_INSTANCE:
@@ -172,11 +169,12 @@ void WorldSession::_HandleAreaTriggerOpcode(uint32 id)
 				if( id != 4319 && pMi && ( pMi->type == INSTANCE_RAID || _player->iInstanceType >= MODE_HEROIC && pMi->type == INSTANCE_MULTIMODE ) )
 				{
 					//Do we have a saved instance we should use?
-					Instance * in = sInstanceMgr.GetSavedInstance( pMi->mapid,_player->GetLowGUID() );
-					if( in && in->m_instanceId )
+					Instance * in = NULL;
+					in = sInstanceMgr.GetSavedInstance( pMi->mapid,_player->GetLowGUID() );
+					if( in != NULL  && in->m_instanceId )
 					{
 						//If we are the first to enter this instance, also set our current group id.
-						if( !in->m_mapMgr || (!in->m_mapMgr->HasPlayers() && _player->GetGroup() && _player->GetGroupID() != in->m_creatorGroup))
+						if( in->m_mapMgr == NULL || (!in->m_mapMgr->HasPlayers() && _player->GetGroupID() != in->m_creatorGroup))
 							in->m_creatorGroup =_player->GetGroupID();
 						InstanceID = in->m_instanceId;
 					}

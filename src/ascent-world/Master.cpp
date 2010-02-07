@@ -1,25 +1,22 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
+
 
 #include "StdAfx.h"
+#include <Console/CConsole.h>
 
-#define BANNER "Ascent %s r%u/%s-%s-%s :: World Server"
+#define BANNER "AscentNG %s r%u/%s-%s-%s :: World Server"
 
 #ifndef WIN32
 #include <sched.h>
@@ -44,7 +41,6 @@ SERVER_DECL Database* Database_World;
 SessionLogWriter* GMCommand_Log;
 SessionLogWriter* Anticheat_Log;
 SessionLogWriter* Player_Log;
-extern DayWatcherThread * dw;
 extern CharacterLoaderThread * ctl;
 
 void Master::_OnSignal(int s)
@@ -163,11 +159,11 @@ bool Master::Run(int argc, char ** argv)
 	g_localTime = *localtime(&UNIXTIME);
 
 	printf(BANNER, BUILD_TAG, BUILD_REVISION, CONFIG, PLATFORM_TEXT, ARCH);
-	printf("\nCopyright (C) 2005-2009 Ascent Team. http://www.ascentemulator.net/\n");
-	printf("This program comes with ABSOLUTELY NO WARRANTY, and is FREE SOFTWARE.\n");
-	printf("You are welcome to redistribute it under the terms of the GNU Affero\n");
-	printf("General Public License, either version 3 or any later version. For a\n");
-	printf("copy of this license, see the COPYING file provided with this distribution.\n");
+	printf("\nCopyright (C) 2005-2010 Ascent Team. http://www.ascentemulator.net/\n");
+	printf("This software is  under the terms of the EULA License.\n");
+	printf("All title, including but not limited to copyrights, in and to the AscentNG Software and any copies there of are owned by ZEDCLANS INC.\n");
+	printf("This EULA grants you no rights to use such content.\n");
+	printf("All rights not expressly granted are reserved by ZEDCLANS INC.\n");
 	Log.Line();
 
 	if( do_check_conf )
@@ -246,7 +242,7 @@ bool Master::Run(int argc, char ** argv)
 	//ScriptSystem->Reload();
 
 	new EventMgr;
-	WorldPointer shWorld(new World); // Need this so we're not deleted.
+	new World;
 
 	// open cheat log file
 	Anticheat_Log = new SessionLogWriter(FormatOutputString( "logs", "cheaters", false).c_str(), false );
@@ -306,10 +302,10 @@ bool Master::Run(int argc, char ** argv)
 	else
 		DEBUG_LOG("RemoteConsole", "Not enabled or failed listen.");
 
-	sLog.outString(""); 
+	
 	LoadingTime = getMSTime() - LoadingTime;
 	Log.Success("Server","Ready for connections. Startup time: %ums\n", LoadingTime );
-	sLog.outString(""); 
+	
 
 	//Update sLog to obey config setting
 	sLog.Init(Config.MainConfig.GetIntDefault("LogLevel", "File", -1),Config.MainConfig.GetIntDefault("LogLevel", "Screen", 1));
@@ -397,16 +393,19 @@ bool Master::Run(int argc, char ** argv)
 #endif
 		}
 	}
-	_UnhookSignals();
-
-    wr->Terminate();
-	ThreadPool.ShowStats();
-	/* Shut down console system */
-	console->terminate();
-	delete console;
 
 	// begin server shutdown
 	Log.Notice( "Shutdown", "Initiated at %s", ConvertTimeStampToDataTime( (uint32)UNIXTIME).c_str() );
+	bServerShutdown = true;
+
+	_UnhookSignals();
+
+    wr->Terminate();
+	
+	/* Shut down console system */
+	CloseConsoleListener();
+	console->terminate();
+	delete console;
 
 	if( lootmgr.is_loading )
 	{
@@ -435,16 +434,10 @@ bool Master::Run(int argc, char ** argv)
 	CleanupRandomNumberGenerators();
 
 	Log.Notice( "DayWatcherThread", "Exiting..." );
-	dw->terminate();
-	dw = NULL;
+	sDayWatcher.terminate();
 
 #ifndef CLUSTERING
 	ls->Close();
-#endif
-
-	CloseConsoleListener();
-#ifndef CLUSTERING
-	delete ls;
 #endif
 
 	Log.Notice( "Network", "Shutting down network subsystem." );
@@ -465,8 +458,11 @@ bool Master::Run(int argc, char ** argv)
 	Log.Notice("MailSystem", "~MailSystem()");
 	delete MailSystem::getSingletonPtr();
 
-	bServerShutdown = true;
 	ThreadPool.Shutdown();
+
+#ifndef CLUSTERING
+	delete ls;
+#endif
 
 	sLog.outString( "" );
 
@@ -479,9 +475,6 @@ bool Master::Run(int argc, char ** argv)
 
 	sScriptMgr.UnloadScripts();
 	delete ScriptMgr::getSingletonPtr();
-
-	Log.Notice( "ChatHandler", "~ChatHandler()" );
-	delete ChatHandler::getSingletonPtr();
 
 	Log.Notice( "EventMgr", "~EventMgr()" );
 	delete EventMgr::getSingletonPtr();

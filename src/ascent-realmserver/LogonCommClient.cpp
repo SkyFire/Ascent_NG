@@ -1,19 +1,14 @@
 /*
  * Ascent MMORPG Server
- * Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
  *
  */
 
@@ -26,7 +21,9 @@ typedef struct
 }logonpacket;
 #pragma pack(pop)
 
-LogonCommClientSocket::LogonCommClientSocket(SOCKET fd) : Socket(fd, 524288, 65536)
+ASCENT_INLINE static void swap32(uint32* p) { *p = ((*p >> 24 & 0xff)) | ((*p >> 8) & 0xff00) | ((*p << 8) & 0xff0000) | (*p << 24); }
+
+LogonCommClientSocket::LogonCommClientSocket(SOCKET fd) : Socket(fd, 724288, 262444)
 {
 	// do nothing
 	last_ping = last_pong = uint32(time(NULL));
@@ -43,43 +40,45 @@ void LogonCommClientSocket::OnRead()
 	{
 		if(!remaining)
 		{
-			if(GetReadBuffer().GetSize() < 4)
+			if(readBuffer.GetSize() < 6)
 				return;	 // no header
 
 			// read header
-			GetReadBuffer().Read(&opcode, 2);
-			GetReadBuffer().Read(&remaining, 4);
+			readBuffer.Read(&opcode, 2);
+			readBuffer.Read(&remaining, 4);
 
-			// decrypt the first two bytes
 			if(use_crypto)
 			{
-				_recvCrypto.Process((uint8*)&opcode, (uint8*)&opcode, 2);
-				_recvCrypto.Process((uint8*)&remaining, (uint8*)&remaining, 4);
+				// decrypt the packet
+				_recvCrypto.Process((unsigned char*)&opcode, (unsigned char*)&opcode, 2);
+				_recvCrypto.Process((unsigned char*)&remaining, (unsigned char*)&remaining, 4);
 			}
 
-			// convert network byte order
-			remaining = ntohl(remaining);
+			/* reverse byte order */
+			swap32(&remaining);
 		}
 
 		// do we have a full packet?
-		if(GetReadBuffer().GetSize() < remaining)
+		if(readBuffer.GetSize() < remaining)
+		{
+			printf("LogonCommClient: Invalid packet size\n");
 			return;
+		}
 
 		// create the buffer
 		WorldPacket buff(opcode, remaining);
 		if(remaining)
 		{
 			buff.resize(remaining);
-			GetReadBuffer().Read((void*)buff.contents(), remaining);
+			readBuffer.Read((uint8*)buff.contents(), remaining);
 		}
 
-		// decrypt the rest of the packet
 		if(use_crypto && remaining)
 			_recvCrypto.Process((unsigned char*)buff.contents(), (unsigned char*)buff.contents(), remaining);
 
 		// handle the packet
 		HandlePacket(buff);
-		
+
 		remaining = 0;
 		opcode = 0;
 	}
@@ -102,11 +101,17 @@ void LogonCommClientSocket::HandlePacket(WorldPacket & recvData)
 		&LogonCommClientSocket::HandleRequestAccountMapping,// RSMSG_REQUEST_ACCOUNT_CHARACTER_MAPPING
 		NULL,												// RCMSG_ACCOUNT_CHARACTER_MAPPING_REPLY
 		NULL,												// RCMSG_UPDATE_CHARACTER_MAPPING_COUNT
+		NULL,												// RSMSG_DISCONNECT_ACCOUNT
+		NULL,												// RCMSG_TEST_CONSOLE_LOGIN
+		NULL,												// RSMSG_CONSOLE_LOGIN_RESULT
+		NULL,												// RCMSG_MODIFY_DATABASE
+		&LogonCommClientSocket::HandlePong,					// RCMSG_SERVER_PING
+		&LogonCommClientSocket::HandlePong,					// RSMSG_SERVER_PONG
 	};
 
 	if(recvData.GetOpcode() >= RMSG_COUNT || Handlers[recvData.GetOpcode()] == 0)
 	{
-		printf("Got unknwon packet from logoncomm: %u\n", recvData.GetOpcode());
+		printf("Got unknown packet from LogonComm: %u\n", recvData.GetOpcode());
 		return;
 	}
 
@@ -153,7 +158,7 @@ void LogonCommClientSocket::HandleSessionInfo(WorldPacket & recvData)
 void LogonCommClientSocket::HandlePong(WorldPacket & recvData)
 {
 	if(latency)
-		sLog.outDebug(">> logonserver latency: %ums", getMSTime() - pingtime);
+		OUT_DEBUG(">> LogonServer latency: %ums", getMSTime() - pingtime);
 	latency = getMSTime() - pingtime;
 	last_pong = uint32(time(NULL));
 }
@@ -167,24 +172,27 @@ void LogonCommClientSocket::SendPing()
 	last_ping = uint32(time(NULL));
 }
 
-void LogonCommClientSocket::SendPacket(WorldPacket * data)
+void LogonCommClientSocket::SendPacket(WorldPacket * data, bool no_crypto)
 {
 	logonpacket header;
 	bool rv;
+	if(!m_connected || m_deleted)
+		return;
 
 	BurstBegin();
 
 	header.opcode = data->GetOpcode();
-	header.size   = uint32(ntohl((u_long)data->size()));
+	header.size = (uint32)data->size();
+	swap32(&header.size);
 
-	if(use_crypto)
+	if(use_crypto && !no_crypto)
 		_sendCrypto.Process((unsigned char*)&header, (unsigned char*)&header, 6);
 
 	rv = BurstSend((const uint8*)&header, 6);
 
 	if(data->size() > 0 && rv)
 	{
-		if(use_crypto)
+		if(use_crypto && !no_crypto)
 			_sendCrypto.Process((unsigned char*)data->contents(), (unsigned char*)data->contents(), (unsigned int)data->size());
 
 		rv = BurstSend((const uint8*)data->contents(), (uint32)data->size());
@@ -212,12 +220,6 @@ void LogonCommClientSocket::SendChallenge()
 {
 	uint8 * key = sLogonCommHandler.sql_passhash;
 
-	WorldPacket data(RCMSG_AUTH_CHALLENGE, 20);
-	data.append(key, 20);
-	SendPacket(&data);
-
-	/* initialize rc4 keys */
-
 	printf("Key:");
 	sLog.outColor(TGREEN, " ");
 	for(int i = 0; i < 20; ++i)
@@ -229,12 +231,17 @@ void LogonCommClientSocket::SendChallenge()
 
 	/* packets are encrypted from now on */
 	use_crypto = true;
+
+	WorldPacket data(RCMSG_AUTH_CHALLENGE, 20);
+	data.append(key, 20);
+	SendPacket(&data, true);
 }
 
 void LogonCommClientSocket::HandleAuthResponse(WorldPacket & recvData)
 {
 	uint8 result;
 	recvData >> result;
+
 	if(result != 1)
 	{
 		authenticated = 0xFFFFFFFF;
@@ -243,6 +250,7 @@ void LogonCommClientSocket::HandleAuthResponse(WorldPacket & recvData)
 	{
 		authenticated = 1;
 	}
+	use_crypto = true;
 }
 
 void LogonCommClientSocket::UpdateAccountCount(uint32 account_id, uint8 add)
@@ -260,7 +268,7 @@ void LogonCommClientSocket::UpdateAccountCount(uint32 account_id, uint8 add)
 
 void LogonCommClientSocket::HandleRequestAccountMapping(WorldPacket & recvData)
 {
-	/*return;
+	return;
 	uint32 t= getMSTime();
 	uint32 realm_id;
 	uint32 account_id;
@@ -296,7 +304,7 @@ void LogonCommClientSocket::HandleRequestAccountMapping(WorldPacket & recvData)
 
 	ByteBuffer uncompressed(40000 * 5 + 8);
 	//uint32 Count = 0;
-	uint32 Remaining = mapping_to_send.size();
+	uint32 Remaining = uint32(mapping_to_send.size());
 	itr = mapping_to_send.begin();
 	for(;;)
 	{
@@ -321,7 +329,7 @@ void LogonCommClientSocket::HandleRequestAccountMapping(WorldPacket & recvData)
 
 		uncompressed.clear();
 	}	
-	sLog.outString("Took %u msec to build character mapping list for realm %u", getMSTime() - t, realm_id);*/
+	sLog.outString("Took %u msec to build character mapping list for realm %u", getMSTime() - t, realm_id);
 }
 
 void LogonCommClientSocket::CompressAndSend(ByteBuffer & uncompressed)
@@ -340,7 +348,7 @@ void LogonCommClientSocket::CompressAndSend(ByteBuffer & uncompressed)
 
 	if(deflateInit(&stream, 1) != Z_OK)
 	{
-		sLog.outError("deflateInit failed.");
+		printf("deflateInit failed.");
 		return;
 	}
 
@@ -354,21 +362,21 @@ void LogonCommClientSocket::CompressAndSend(ByteBuffer & uncompressed)
 	if(deflate(&stream, Z_NO_FLUSH) != Z_OK ||
 		stream.avail_in != 0)
 	{
-		sLog.outError("deflate failed.");
+		printf("deflate failed.");
 		return;
 	}
 
 	// finish the deflate
 	if(deflate(&stream, Z_FINISH) != Z_STREAM_END)
 	{
-		sLog.outError("deflate failed: did not end stream");
+		printf("deflate failed: did not end stream");
 		return;
 	}
 
 	// finish up
 	if(deflateEnd(&stream) != Z_OK)
 	{
-		sLog.outError("deflateEnd failed.");
+		printf("deflateEnd failed.");
 		return;
 	}
 

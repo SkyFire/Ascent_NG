@@ -1,27 +1,22 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 
 set<uint32> m_completedRealmFirstAchievements;
 
-AchievementInterface::AchievementInterface(PlayerPointer plr)
+AchievementInterface::AchievementInterface(Player* plr)
 {
 	m_player = plr;
 	m_achievementInspectPacket = NULL;
@@ -29,7 +24,7 @@ AchievementInterface::AchievementInterface(PlayerPointer plr)
 
 AchievementInterface::~AchievementInterface()
 {
-	m_player = NULLPLR;
+	m_player = NULL;
 
 	if( m_achivementDataMap.size() > 0 )
 	{
@@ -184,7 +179,7 @@ void AchievementInterface::GiveRewardsForAchievement(AchievementEntry * ae)
 		MailMessage msg;
 		memset(&msg, 0, sizeof(MailMessage));
 		
-		ItemPointer pItem = objmgr.CreateItem( ar->ItemID, NULLPLR );
+		Item* pItem = objmgr.CreateItem( ar->ItemID, NULL );
 		if(!pItem) return;
 
 		pItem->SaveToDB( INVENTORY_SLOT_NOT_SET, 0, true, NULL );
@@ -202,7 +197,6 @@ void AchievementInterface::GiveRewardsForAchievement(AchievementEntry * ae)
 //		sMailSystem.DeliverMessage(&msg);
 
 		pItem->Destructor();
-		pItem = NULLITEM;
 	}
 
 	// Reward: Title. We don't yet support titles due to a lack of uint128.
@@ -450,7 +444,7 @@ void AchievementInterface::HandleAchievementCriteriaKillCreature(uint32 killedMo
 	}
 }
 
-void AchievementInterface::HandleAchievementCriteriaWinBattleground(uint32 bgMapId, uint32 scoreMargin, uint32 time, BattlegroundPointer bg)
+void AchievementInterface::HandleAchievementCriteriaWinBattleground(uint32 bgMapId, uint32 scoreMargin, uint32 time, CBattleground* bg)
 {
 	AchievementCriteriaMap::iterator itr = objmgr.m_achievementCriteriaMap.find( ACHIEVEMENT_CRITERIA_TYPE_WIN_BG );
 	if(itr == objmgr.m_achievementCriteriaMap.end())
@@ -491,7 +485,7 @@ void AchievementInterface::HandleAchievementCriteriaWinBattleground(uint32 bgMap
 				// AV stuff :P
 				if( bg->GetType() == BATTLEGROUND_ALTERAC_VALLEY )
 				{
-					AlteracValleyPointer pAV(TO_ALTERACVALLEY(bg));
+					AlteracValley* pAV(TO_ALTERACVALLEY(bg));
 					if( pAchievementEntry->ID == 225 ||  pAchievementEntry->ID == 1164) // AV: Everything Counts
 					{
 						continue; // We do not support mines yet in AV
@@ -1148,7 +1142,7 @@ void AchievementInterface::HandleAchievementCriteriaHonorableKill()
 }
 
 #define SCRIPTOK_FALSE { scriptOk = false; break; }
-void AchievementInterface::HandleAchievementCriteriaDoEmote(uint32 emoteId, UnitPointer pTarget)
+void AchievementInterface::HandleAchievementCriteriaDoEmote(uint32 emoteId, Unit* pTarget)
 {
 	AchievementCriteriaMap::iterator itr = objmgr.m_achievementCriteriaMap.find( ACHIEVEMENT_CRITERIA_TYPE_DO_EMOTE );
 	if(itr == objmgr.m_achievementCriteriaMap.end())
@@ -1176,8 +1170,8 @@ void AchievementInterface::HandleAchievementCriteriaDoEmote(uint32 emoteId, Unit
 		bool scriptOk = false;
 		if( pTarget && pTarget->IsCreature() )
 		{
-			CreaturePointer pCreature = TO_CREATURE(pTarget);
-			if( !(!ace->name || strlen(ace->name) == 0 || !pCreature->GetCreatureName() || stricmp(pCreature->GetCreatureName()->Name, ace->name) != 0) )
+			Creature* pCreature = TO_CREATURE(pTarget);
+			if( !(!ace->name || strlen(ace->name) == 0 || !pCreature->GetCreatureInfo() || stricmp(pCreature->GetCreatureInfo()->Name, ace->name) != 0) )
 			{
 				scriptOk = true;
 			}
@@ -1253,7 +1247,8 @@ void AchievementInterface::HandleAchievementCriteriaCompleteQuestsInZone(uint32 
 			continue;
 
 		AchievementEntry * pAchievementEntry = dbcAchievement.LookupEntryForced(AchievementID);
-		if(!pAchievementEntry) continue;
+		if(!pAchievementEntry) 
+			continue;
 
 		AchievementCriteriaEntry * compareCriteria = NULL;
 		AchievementData * ad = GetAchievementDataByAchievementID(AchievementID);
@@ -1267,7 +1262,8 @@ void AchievementInterface::HandleAchievementCriteriaCompleteQuestsInZone(uint32 
 			if( compareCriteria == ace )
 			{
 				ad->counter[i] = ad->counter[i] + 1;
-				SendCriteriaUpdate(ad, i); break;
+				SendCriteriaUpdate(ad, i); 
+				break;
 			}
 		}
 

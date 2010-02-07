@@ -1,21 +1,17 @@
 /*
  * Ascent MMORPG Server
- * Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
  *
  */
+
 
 #include "RStdAfx.h"
 initialiseSingleton(LogonCommHandler);
@@ -24,8 +20,8 @@ LogonCommHandler::LogonCommHandler()
 {
 	idhigh = 1;
 	next_request = 1;
-	pings = !Config.MainConfig.GetBoolDefault("LogonServer", "DisablePings", false);
-	string logon_pass = Config.MainConfig.GetStringDefault("LogonServer", "RemotePassword", "r3m0t3");
+	pings = !Config.RealmConfig.GetBoolDefault("LogonServer", "DisablePings", false);
+	string logon_pass = Config.RealmConfig.GetStringDefault("LogonServer", "RemotePassword", "r3m0t3");
 	
 	// sha1 hash it
 	Sha1Hash hash;
@@ -61,10 +57,10 @@ void LogonCommHandler::RequestAddition(LogonCommClientSocket * Socket)
 		Realm * realm = *itr;
 		data << realm->Name;
 		data << realm->Address;
-		data << realm->Colour;
 		data << realm->Icon;
-		data << realm->TimeZone;
+		data << realm->WorldRegion;
 		data << realm->Population;
+		data << realm->Lock;
 		Socket->SendPacket(&data);
 	}
 }
@@ -106,7 +102,6 @@ void LogonCommHandler::Connect(LogonServer * server)
 		if((uint32)time(NULL) >= tt)
 		{
 			sLog.outColor(TYELLOW, " timeout.\n");
-			logons.find(server)->second = 0;
 			return;
 		}
 
@@ -234,7 +229,7 @@ void LogonCommHandler::ConnectionDropped(uint32 ID)
 uint32 LogonCommHandler::ClientConnected(string AccountName, WorldSocket * Socket)
 {
 	uint32 request_id = next_request++;
-	sLog.outDebug ( " >> sending request for account information: `%s` (request %u).", AccountName.c_str(), request_id);
+	printf( " >> sending request for account information: `%s` (request %u).", AccountName.c_str(), request_id);
   //  sLog.outColor(TNORMAL, "\n");
 	
 	// Send request packet to server.
@@ -243,15 +238,23 @@ uint32 LogonCommHandler::ClientConnected(string AccountName, WorldSocket * Socke
 	{
 		// No valid logonserver is connected.
 		return (uint32)-1;
+		printf("No valid loginserver is connected.\n");
 	}
 	pendingLock.Acquire();
 
 	WorldPacket data(RCMSG_REQUEST_SESSION, 100);
 	data << request_id;
-	data << AccountName;
+
+	// strip the shitty hash from it
+	uint32 i = 0;
+	for(; AccountName[i] != '#' && AccountName[i] != '\0'; ++i )
+		data.append( &AccountName[i], 1 );
+
+	data.append( "\0", 1 );
 	itr->second->SendPacket(&data);
 
 	pending_logons[request_id] = Socket;
+
 	pendingLock.Release();
 
 	return request_id;
@@ -262,11 +265,13 @@ void LogonCommHandler::UnauthedSocketClose(uint32 id)
 	pendingLock.Acquire();
 	pending_logons.erase(id);
 	pendingLock.Release();
+	//printf("Unauth'd socket closed ID: %u", id);
 }
 
 void LogonCommHandler::RemoveUnauthedSocket(uint32 id)
 {
 	pending_logons.erase(id);
+	//printf("RemoveUnauthedSocket called with ID %u", id);
 }
 
 void LogonCommHandler::LogonDatabaseSQLExecute(const char* str, ...)
@@ -326,7 +331,7 @@ void LogonCommHandler::LoadRealmConfiguration()
 			realm->Name = Config.RealmConfig.GetStringVA("Name", "SomeRealm", "Realm%u", i);
 			realm->Address = Config.RealmConfig.GetStringVA("Address", "127.0.0.1:8129", "Realm%u", i);
 			realm->Colour = Config.RealmConfig.GetIntVA("Colour", 1, "Realm%u", i);
-			realm->TimeZone = Config.RealmConfig.GetIntVA("TimeZone", 1, "Realm%u", i);
+			realm->WorldRegion = Config.RealmConfig.GetIntVA("WorldRegion", 1, "Realm%u", i);
 			realm->Population = Config.RealmConfig.GetFloatVA("Population", 0, "Realm%u", i);
 			string rt = Config.RealmConfig.GetStringVA("Icon", "Normal", "Realm%u", i);
 			uint32 type;
@@ -360,4 +365,85 @@ void LogonCommHandler::UpdateAccountCount(uint32 account_id, uint8 add)
 		return;
 	}
 	itr->second->UpdateAccountCount(account_id, add);
+}
+
+// db funcs
+void LogonCommHandler::Account_SetBanned(const char * account, uint32 banned, const char* reason)
+{
+	map<LogonServer*, LogonCommClientSocket*>::iterator itr = logons.begin();
+	if(logons.size() == 0 || itr->second == 0)
+	{
+		// No valid logonserver is connected.
+		return;
+	}
+
+	WorldPacket data(RCMSG_MODIFY_DATABASE, 50);
+	data << uint32(1);		// 1 = ban
+	data << account;
+	data << banned;
+	data << reason;
+	itr->second->SendPacket(&data, false);
+}
+
+void LogonCommHandler::Account_SetGM(const char * account, const char * flags)
+{
+	map<LogonServer*, LogonCommClientSocket*>::iterator itr = logons.begin();
+	if(logons.size() == 0 || itr->second == 0)
+	{
+		// No valid logonserver is connected.
+		return;
+	}
+
+	WorldPacket data(RCMSG_MODIFY_DATABASE, 50);
+	data << uint32(2);		// 2 = set gm
+	data << account;
+	data << flags;
+	itr->second->SendPacket(&data, false);
+}
+
+void LogonCommHandler::Account_SetMute(const char * account, uint32 muted)
+{
+	map<LogonServer*, LogonCommClientSocket*>::iterator itr = logons.begin();
+	if(logons.size() == 0 || itr->second == 0)
+	{
+		// No valid logonserver is connected.
+		return;
+	}
+
+	WorldPacket data(RCMSG_MODIFY_DATABASE, 50);
+	data << uint32(3);		// 3 = mute
+	data << account;
+	data << muted;
+	itr->second->SendPacket(&data, false);
+}
+
+void LogonCommHandler::IPBan_Add(const char * ip, uint32 duration)
+{
+	map<LogonServer*, LogonCommClientSocket*>::iterator itr = logons.begin();
+	if(logons.size() == 0 || itr->second == 0)
+	{
+		// No valid logonserver is connected.
+		return;
+	}
+
+	WorldPacket data(RCMSG_MODIFY_DATABASE, 50);
+	data << uint32(4);		// 4 = ipban add
+	data << ip;
+	data << duration;
+	itr->second->SendPacket(&data, false);
+}
+
+void LogonCommHandler::IPBan_Remove(const char * ip)
+{
+	map<LogonServer*, LogonCommClientSocket*>::iterator itr = logons.begin();
+	if(logons.size() == 0 || itr->second == 0)
+	{
+		// No valid logonserver is connected.
+		return;
+	}
+
+	WorldPacket data(RCMSG_MODIFY_DATABASE, 50);
+	data << uint32(5);		// 5 = ipban remove
+	data << ip;
+	itr->second->SendPacket(&data, false);
 }

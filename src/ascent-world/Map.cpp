@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 // Class Map
 // Holder for all instances of each mapmgr, handles transferring
@@ -93,7 +88,7 @@ Map::~Map()
 bool first_table_warning = true;
 bool CheckResultLengthCreatures(QueryResult * res)
 {
-	if( res->GetFieldCount() != 22 )
+	if( res->GetFieldCount() != 23 )
 	{
 		if( first_table_warning )
 		{
@@ -112,7 +107,7 @@ bool CheckResultLengthCreatures(QueryResult * res)
 bool first_table_warningg = true;
 bool CheckResultLengthGameObject(QueryResult * res)
 {
-	if( res->GetFieldCount() != 16 )
+	if( res->GetFieldCount() != 17 )
 	{
 		if( first_table_warningg )
 		{
@@ -148,6 +143,7 @@ void Map::LoadSpawns(bool reload)
 		}
 
 	QueryResult * result;
+	QueryResult * result2;
 	set<string>::iterator tableiterator;
 	for(tableiterator=ExtraMapCreatureTables.begin(); tableiterator!=ExtraMapCreatureTables.end();++tableiterator)
 	{
@@ -181,6 +177,24 @@ void Map::LoadSpawns(bool reload)
 					cspawn->MountedDisplayID = fields[19].GetUInt32();
 					cspawn->phase = fields[20].GetInt32();
 					cspawn->vehicle = fields[21].GetInt32();
+					cspawn->eventid = fields[22].GetUInt8();
+					if(cspawn->eventid)
+					{
+						result2 = WorldDatabase.Query("SELECT * FROM events_creature WHERE id = '%u' AND eventid = '%u'", cspawn->id, cspawn->eventid);
+						if(result2)
+						{
+							cspawn->eventinfo = new EventIdInfo;
+							Field * fields2 = result2->Fetch();
+							cspawn->eventinfo->eventid = fields2[0].GetUInt8();
+							cspawn->eventinfo->eventchangesflag = fields2[2].GetUInt8();
+							cspawn->eventinfo->eventphase = fields2[3].GetUInt32();
+							cspawn->eventinfo->eventdisplayid = fields2[4].GetUInt32();
+							cspawn->eventinfo->eventitem1 = fields2[5].GetUInt32();
+							cspawn->eventinfo->eventitem2 = fields2[6].GetUInt32();
+							cspawn->eventinfo->eventitem3 = fields2[7].GetUInt32();
+							delete result2;
+						}
+					}		
 
 					uint32 cellx=CellHandler<MapMgr>::GetPosX(cspawn->x);
 					uint32 celly=CellHandler<MapMgr>::GetPosY(cspawn->y);
@@ -234,6 +248,25 @@ void Map::LoadSpawns(bool reload)
 				cspawn->stand_state = fields[18].GetUInt16();
 				cspawn->MountedDisplayID = fields[19].GetUInt32();
 				cspawn->phase = fields[20].GetInt32();
+				cspawn->vehicle = fields[21].GetInt32();
+				cspawn->eventid = fields[22].GetUInt8();
+				if(cspawn->eventid)
+				{
+					result2 = WorldDatabase.Query("SELECT * FROM events_creature WHERE id = '%u' AND eventid = '%u'", cspawn->id, cspawn->eventid);
+					if(result2)
+					{
+						cspawn->eventinfo = new EventIdInfo;
+						Field * fields2 = result2->Fetch();
+						cspawn->eventinfo->eventid = fields2[0].GetUInt8();
+						cspawn->eventinfo->eventchangesflag = fields2[2].GetUInt8();
+						cspawn->eventinfo->eventphase = fields2[3].GetUInt32();
+						cspawn->eventinfo->eventdisplayid = fields2[4].GetUInt32();
+						cspawn->eventinfo->eventitem1 = fields2[5].GetUInt32();
+						cspawn->eventinfo->eventitem2 = fields2[6].GetUInt32();
+						cspawn->eventinfo->eventitem3 = fields2[7].GetUInt32();
+						delete result2;
+					}
+				}		
 				staticSpawns.CreatureSpawns.push_back(cspawn);
 				++CreatureSpawnCount;
 			}while(result->NextRow());
@@ -266,6 +299,21 @@ void Map::LoadSpawns(bool reload)
 				gspawn->faction=fields[13].GetUInt32();
 				gspawn->scale = fields[14].GetFloat();
 				gspawn->MountDisplayID = 0; //gameobjects don't mount
+				gspawn->eventid = fields[16].GetUInt8();
+				if(gspawn->eventid)
+				{
+					result2 = WorldDatabase.Query("SELECT * FROM events_gameobject WHERE id = '%u' AND eventid = '%u'", gspawn->id, gspawn->eventid);
+					if(result2)
+					{
+						gspawn->eventinfo = new EventIdInfo;
+						Field * fields2 = result2->Fetch();
+						gspawn->eventinfo->eventid = fields2[0].GetUInt8();
+						gspawn->eventinfo->eventchangesflag = fields2[2].GetUInt8();
+						gspawn->eventinfo->eventphase = fields2[3].GetUInt32();
+						gspawn->eventinfo->eventdisplayid = fields2[4].GetUInt32();
+						delete result2;
+					}
+				}
 				staticSpawns.GOSpawns.push_back(gspawn);
 				++GameObjectSpawnCount;
 			}while(result->NextRow());
@@ -300,6 +348,21 @@ void Map::LoadSpawns(bool reload)
 					gspawn->scale = fields[14].GetFloat();
 					gspawn->phase = fields[15].GetInt32();
 					gspawn->MountDisplayID = 0; //gameobjects don't mount
+					gspawn->eventid = fields[16].GetUInt8();
+					if(gspawn->eventid)
+					{
+						result2 = WorldDatabase.Query("SELECT * FROM events_gameobject WHERE id = '%u' AND eventid = '%u'", gspawn->id, gspawn->eventid);
+						if(result2)
+						{
+							gspawn->eventinfo = new EventIdInfo;
+							Field * fields2 = result2->Fetch();
+							gspawn->eventinfo->eventid = fields2[0].GetUInt8();
+							gspawn->eventinfo->eventchangesflag = fields2[2].GetUInt8();
+							gspawn->eventinfo->eventphase = fields2[3].GetUInt32();
+							gspawn->eventinfo->eventdisplayid = fields2[4].GetUInt32();
+							delete result2;
+						}
+					}
 					uint32 cellx=CellHandler<MapMgr>::GetPosX(gspawn->x);
 					uint32 celly=CellHandler<MapMgr>::GetPosY(gspawn->y);
 					if(spawns[cellx]==NULL)

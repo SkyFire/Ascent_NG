@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "Network.h"
 #ifdef CONFIG_USE_IOCP
@@ -43,10 +38,9 @@ void SocketMgr::SpawnWorkerThreads()
 	SYSTEM_INFO si;
 	GetSystemInfo(&si);
 
-	threadcount = si.dwNumberOfProcessors*2;
-
-	DEBUG_LOG("IOCP","Spawning %u worker threads.", threadcount);
-	for(long x = 0; x < threadcount; ++x)
+	uint8 threadcnt = uint8(si.dwNumberOfProcessors*2);
+	DEBUG_LOG("IOCP","Spawning %u worker threads.", threadcnt);
+	for(long x = 0; x < threadcnt; ++x)
 		ThreadPool.ExecuteTask(new SocketWorkerThread());
 }
 
@@ -143,9 +137,14 @@ void SocketMgr::CloseAll()
 
 void SocketMgr::ShutdownThreads()
 {
-	for(int i = 0; i < threadcount; ++i)
+	SYSTEM_INFO si;
+	GetSystemInfo(&si);
+
+	uint8 threadcnt = uint8(si.dwNumberOfProcessors*2);
+	for(int i = 0; i < threadcnt; ++i)
 	{
-		OverlappedStruct * ov = new OverlappedStruct(SOCKET_IO_THREAD_SHUTDOWN);
+		OverlappedStruct * ov = NULL;
+		ov = new OverlappedStruct(SOCKET_IO_THREAD_SHUTDOWN);
 		PostQueuedCompletionStatus(m_completionPort, 0, (ULONG_PTR)0, &ov->m_overlap);
 	}
 }

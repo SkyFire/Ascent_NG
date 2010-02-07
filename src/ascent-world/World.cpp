@@ -1,27 +1,21 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 
 initialiseSingleton( World );
 
-DayWatcherThread* dw = NULL;
 CharacterLoaderThread* ctl = NULL;
 
 float World::m_movementCompressThreshold;
@@ -107,7 +101,7 @@ World::World()
 	}
 }
 
-uint32 World::GetMaxLevel(PlayerPointer plr)
+uint32 World::GetMaxLevel(Player* plr)
 {
 	uint32 level = 60; // Classic World of Warcraft
 
@@ -140,10 +134,6 @@ void World::LogoutPlayers()
 }
 
 World::~World()
-{
-}
-
-void World::Destructor()
 {
 	Log.Notice("LocalizationMgr", "~LocalizationMgr()");
 	sLocalizationMgr.Shutdown();
@@ -197,6 +187,10 @@ void World::Destructor()
 		delete *itr;
 }
 
+void World::Destructor()
+{
+	delete this;
+}
 
 WorldSession* World::FindSession(uint32 id)
 {
@@ -324,13 +318,49 @@ bool BasicTaskExecutor::run()
 
 void ApplyNormalFixes();
 
+void PreStartQueries()
+{
+	QueryResult * result;
+
+	result = WorldDatabase.Query("SELECT * FROM prestartqueries ORDER BY seq ASC");
+	if(result)
+	{
+		Log.Notice("DataBase","Found and executing %u prestart queries on World tables.",result->GetRowCount());
+		do
+		{
+			Field * f = result->Fetch();
+			string e_query =  f[0].GetString();
+			WorldDatabase.Execute(e_query.c_str());
+		}while(result->NextRow());
+
+		delete result;
+		WorldDatabase.Execute("DELETE FROM prestartqueries WHERE SingleShot = 1;");
+	}
+
+	result = CharacterDatabase.Query("SELECT * FROM prestartqueries ORDER BY seq ASC");
+	if(result)
+	{
+		Log.Notice("DataBase","Found and executing %u prestart queries on Character tables.",result->GetRowCount());
+		do
+		{
+			Field * f = result->Fetch();
+			string e_query =  f[0].GetString();
+			CharacterDatabase.Execute(e_query.c_str());
+		}while(result->NextRow());
+
+		delete result;
+		CharacterDatabase.Execute("DELETE FROM prestartqueries WHERE SingleShot = 1;");
+	}
+}
+
 bool World::SetInitialWorldSettings()
 {
-	Log.Line();
+	//Perform pre-starting queries on World- and Character-DataBase
+	PreStartQueries();
+
 	CharacterDatabase.WaitExecute("UPDATE characters SET online = 0 WHERE online = 1");
 
 	Log.Notice("World", "Starting up...");  
-	Log.Line();
 
 	Player::InitVisibleUpdateBits();
 
@@ -434,6 +464,8 @@ bool World::SetInitialWorldSettings()
 	new WorldLog;
 	new ChatHandler;
 
+	ThreadPool.ExecuteTask( new DayWatcherThread() );
+
 	// grep: this only has to be done once between version updates
 	// to re-fill the table.
 
@@ -441,7 +473,7 @@ bool World::SetInitialWorldSettings()
 	FillSpellReplacementsTable();
 	sLog.outString("");*/
 
-#define MAKE_TASK(sp, ptr) tl.AddTask(new Task(new NoSharedPtrCallbackP0<sp>(sp::getSingletonPtr(), &sp::ptr)))
+#define MAKE_TASK(sp, ptr) tl.AddTask(new Task(new CallbackP0<sp>(sp::getSingletonPtr(), &sp::ptr)))
 	// Fill the task list with jobs to do.
 	TaskList tl;
 	Storage_FillTaskList(tl);
@@ -463,7 +495,15 @@ bool World::SetInitialWorldSettings()
 	ApplyNormalFixes();
 
 	MAKE_TASK(ObjectMgr, LoadAchievements);
-	MAKE_TASK(ObjectMgr, LoadCreatureWaypoints);
+	if(Config.MainConfig.GetBoolDefault("Startup", "BackgroundWaypointLoading", false))
+	{
+		ThreadPool.ExecuteTask(new BasicTaskExecutor(new CallbackP0<ObjectMgr>(ObjectMgr::getSingletonPtr(), &ObjectMgr::LoadCreatureWaypoints), 
+			BTE_PRIORITY_MED));
+	}
+	else
+	{
+		MAKE_TASK(ObjectMgr, LoadCreatureWaypoints);
+	}
 	MAKE_TASK(ObjectMgr, LoadTrainers);
 	MAKE_TASK(ObjectMgr, LoadTotemSpells);
 	MAKE_TASK(ObjectMgr, LoadSpellOverride);
@@ -471,6 +511,7 @@ bool World::SetInitialWorldSettings()
 	MAKE_TASK(ObjectMgr, LoadAIThreatToSpellId);
 	MAKE_TASK(ObjectMgr, LoadGuildCharters);
 	MAKE_TASK(ObjectMgr, LoadGMTickets);
+	MAKE_TASK(ObjectMgr, LoadPetLevelupSpellMap);
 	MAKE_TASK(AddonMgr, LoadFromDB);
 	MAKE_TASK(ObjectMgr, SetHighestGuids);
 	MAKE_TASK(ObjectMgr, LoadReputationModifiers);
@@ -498,11 +539,7 @@ bool World::SetInitialWorldSettings()
 	g_characterNameFilter->Load("wordfilter_character_names");
 	g_chatFilter->Load("wordfilter_chat");
 
-	Log.Notice("WordFilter", "Done.");
-
-	sLog.outString("");
-	Log.Notice("World", "Database loaded in %ums.", getMSTime() - start_time);
-	sLog.outString("");
+	Log.Success("World", "Database loaded in %ums.", getMSTime() - start_time);
 
 	if (sWorld.Collision)
 		CollideInterface.Init();
@@ -546,7 +583,7 @@ bool World::SetInitialWorldSettings()
 		Log.Notice("World", "Backgrounding loot loading...");
 
 		// loot background loading in a lower priority thread.
-		ThreadPool.ExecuteTask(new BasicTaskExecutor(new NoSharedPtrCallbackP0<LootMgr>(LootMgr::getSingletonPtr(), &LootMgr::LoadCreatureLoot), 
+		ThreadPool.ExecuteTask(new BasicTaskExecutor(new CallbackP0<LootMgr>(LootMgr::getSingletonPtr(), &LootMgr::LoadCreatureLoot), 
 			BTE_PRIORITY_LOW));
 	}
 	else
@@ -555,23 +592,21 @@ bool World::SetInitialWorldSettings()
 		lootmgr.LoadCreatureLoot();
 	}
 
+#ifndef CLUSTERING
 	Log.Notice("World", "Loading Channel config...");
 	Channel::LoadConfSettings();
+#endif
 
 	Log.Notice("World", "Starting BattlegroundManager...");
-	BattlegroundMgrPointer BattlegroundMgr(new CBattlegroundManager);
+	CBattlegroundManager* BattlegroundMgr(new CBattlegroundManager);
 	BattlegroundMgr->Init();
 
-	Log.Notice("World", "Starting Daywatcher...");
-	dw = new DayWatcherThread();
-	ThreadPool.ExecuteTask( dw );
-
-	Log.Notice("World", "Starting ChracterLoader...");
+	Log.Notice("World", "Starting CharacterLoaderThread...");
 	ctl = new CharacterLoaderThread();
 	ThreadPool.ExecuteTask( ctl );
 
 #ifdef ENABLE_COMPRESSED_MOVEMENT
-	Log.Notice("World", "Starting MovementCompressor...");
+	Log.Notice("World", "Starting MovementCompressorThread...");
 	MovementCompressor = new CMovementCompressorThread();
 	ThreadPool.ExecuteTask( MovementCompressor );
 #endif
@@ -637,7 +672,7 @@ bool World::SetInitialWorldSettings()
 		}
 	}
 
-	sEventMgr.AddEvent(CAST(World,shared_from_this()), &World::CheckForExpiredInstances, EVENT_WORLD_UPDATEAUCTIONS, 120000, 0, 0);
+	sEventMgr.AddEvent(CAST(World,this), &World::CheckForExpiredInstances, EVENT_WORLD_UPDATEAUCTIONS, 120000, 0, 0);
 	return true;
 }
 
@@ -697,7 +732,7 @@ void World::SendFactionMessage(WorldPacket *packet, uint8 teamId)
 {
 	m_sessionlock.AcquireReadLock();
 	SessionMap::iterator itr;
-	PlayerPointer plr;
+	Player* plr;
 	for(itr = m_sessions.begin(); itr != m_sessions.end(); itr++)
 	{
 		plr = itr->second->GetPlayer();
@@ -1076,9 +1111,7 @@ void TaskList::spawn()
 	else
 		threadcount = 1;
 
-	Log.Line();
-	Log.Notice("World", "Beginning %s server startup with %u threads.", (threadcount == 1) ? "progressive" : "parallel", threadcount);
-	Log.Line();
+		Log.Notice("World", "Beginning %s server startup with %u thread(s).", (threadcount == 1) ? "progressive" : "parallel", threadcount);
 
 	for(uint32 x = 0; x < threadcount; ++x)
 		ThreadPool.ExecuteTask(new TaskExecutor(this));
@@ -1151,10 +1184,9 @@ void TaskList::waitForThreadsToExit()
 	}
 }
 
-void World::DeleteObject(ObjectPointer obj)
+void World::DeleteObject(Object* obj)
 {
 	obj->Destructor();
-	obj = NULLOBJ;
 }
 
 void World::Rehash(bool load)
@@ -1168,19 +1200,24 @@ void World::Rehash(bool load)
 		#endif
 	}
 
+#ifndef CLUSTERING
 	if(!ChannelMgr::getSingletonPtr())
 		new ChannelMgr;
+#endif
 
 	if(!MailSystem::getSingletonPtr())
 		new MailSystem;
 
+#ifndef CLUSTERING
 	channelmgr.seperatechannels = Config.MainConfig.GetBoolDefault("Server", "SeperateChatChannels", false);
+#endif
 	MapPath = Config.MainConfig.GetStringDefault("Terrain", "MapPath", "maps");
 	vMapPath = Config.MainConfig.GetStringDefault("Terrain", "vMapPath", "vmaps");
 	UnloadMapFiles = Config.MainConfig.GetBoolDefault("Terrain", "UnloadMapFiles", true);
 	BreathingEnabled = Config.MainConfig.GetBoolDefault("Server", "EnableBreathing", true);
 	SendStatsOnJoin = Config.MainConfig.GetBoolDefault("Server", "SendStatsOnJoin", true);
 	compression_threshold = Config.MainConfig.GetIntDefault("Server", "CompressionThreshold", 1000);
+	display_free_items = Config.MainConfig.GetBoolDefault("Server", "DisplayFreeItems", false);
 	
 	// load regeneration rates.
 	setRate(RATE_HEALTH,Config.MainConfig.GetFloatDefault("Rates", "Health",1));
@@ -1365,8 +1402,10 @@ void World::Rehash(bool load)
 	if( !s.empty() )
 		m_banTable = strdup( s.c_str() );
 
+#ifndef CLUSTERING
 	if( load )
 		Channel::LoadConfSettings();
+#endif
 }
 
 void World::LoadNameGenData()
@@ -1441,6 +1480,99 @@ CharacterLoaderThread::~CharacterLoaderThread()
 #endif
 }
 
+bool CharacterLoaderThread::run()
+{
+	SetThreadName("Char Loader");
+#ifdef WIN32
+	hEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
+#else
+	struct timeval now;
+	struct timespec tv;
+
+	pthread_mutex_init(&mutex,NULL);
+	pthread_cond_init(&cond,NULL);
+#endif
+	for(;;)
+	{
+		// Get a single connection to maintain for the whole process.
+		DatabaseConnection * con = CharacterDatabase.GetFreeConnection();
+
+		// External Character Import. Updated for character structure r1590
+		sWorld.PollCharacterInsertQueue(con);
+
+		// External mail Import.
+		sWorld.PollMailboxInsertQueue(con);
+
+		//release the lock obtained in GetFreeConnection
+		con->Busy.Release();
+
+#ifdef WIN32
+		// While this looks weird, it ensures the system doesn't waste time switching to these contexts.
+		// WaitForSingleObject will suspend the thread,
+		if (hEvent)
+			WaitForSingleObject(hEvent,LOAD_THREAD_SLEEP*1000);
+#else
+		//and on unix, select will as well
+		gettimeofday(&now, NULL);
+		tv.tv_sec = now.tv_sec + LOAD_THREAD_SLEEP;
+		tv.tv_nsec = now.tv_usec * 1000;
+		pthread_mutex_lock(&mutex);
+		pthread_cond_timedwait(&cond, &mutex, &tv);
+		pthread_mutex_unlock(&mutex);
+#endif
+		if(!m_threadRunning)
+			break;
+	}
+
+	return true;
+}
+
+void World::PollMailboxInsertQueue(DatabaseConnection * con)
+{
+	QueryResult * result;
+	Field * f;
+	Item* pItem;
+	uint32 itemid;
+	uint32 stackcount;
+
+	result = CharacterDatabase.FQuery("SELECT * FROM mailbox_insert_queue", con);
+	if( result != NULL )
+	{
+		Log.Notice("MailboxQueue", "Sending queued messages....");
+		do 
+		{
+			f = result->Fetch();
+			itemid = f[6].GetUInt32();
+			stackcount = f[7].GetUInt32();
+
+			if( itemid != 0 )
+			{
+				pItem = objmgr.CreateItem( itemid, NULL );
+				if( pItem != NULL )
+				{
+					pItem->SetUInt32Value( ITEM_FIELD_STACK_COUNT, stackcount );
+					pItem->SaveToDB( 0, 0, true, NULL );
+				}
+			}
+			else
+				pItem = NULL;
+
+			Log.Notice("MailboxQueue", "Sending message to %u (item: %u)...", f[1].GetUInt32(), itemid);
+			sMailSystem.DeliverMessage( 0, f[0].GetUInt64(), f[1].GetUInt64(), f[2].GetString(), f[3].GetString(), f[5].GetUInt32(),
+				0, pItem ? pItem->GetGUID() : 0, f[4].GetUInt32(), true );
+
+			if( pItem != NULL )
+			{
+				pItem->Destructor();
+			}
+
+		} while ( result->NextRow() );
+		delete result;
+		Log.Notice("MailboxQueue", "Done.");
+		CharacterDatabase.FWaitExecute("DELETE FROM mailbox_insert_queue", con);
+	}
+}
+
 struct insert_playeritem
 {
 	uint32 ownerguid;
@@ -1460,114 +1592,98 @@ struct insert_playeritem
 	string enchantments;
 };
 
-bool CharacterLoaderThread::run()
+struct insert_playerskill
 {
-	SetThreadName("Char Loader");
-#ifdef WIN32
-	hEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
-#else
-	struct timeval now;
-	struct timespec tv;
+	uint32 player_guid;
+	uint32 skill_id;
+	uint32 type;
+	uint32 currentlvl;
+	uint32 maxlvl;
+};
 
-	pthread_mutex_init(&mutex,NULL);
-	pthread_cond_init(&cond,NULL);
-#endif
-	for(;;)
-	{
-		// Get a single connection to maintain for the whole process.
-		DatabaseConnection * con = CharacterDatabase.GetFreeConnection();
+struct insert_playerquest 
+{ 
+	uint32 player_guid; 
+	uint32 quest_id; 
+	uint32 slot; 
+	uint32 time_left; 
+	uint32 explored_area1; 
+	uint32 explored_area2; 
+	uint32 explored_area3; 
+	uint32 explored_area4; 
+	uint32 mob_kill1; 
+	uint32 mob_kill2; 
+	uint32 mob_kill3; 
+	uint32 mob_kill4; 
+	uint32 slain;
+};
 
-		// this hasn't been updated in some time, enable it if you want to fix/use it
-#if 0
-		sWorld.PollCharacterInsertQueue(con);
-#endif
+struct insert_playerglyph 
+{ 
+	uint32 player_guid; 
+	uint32 spec; 
+	uint32 glyph1; 
+	uint32 glyph2; 
+	uint32 glyph3; 
+	uint32 glyph4; 
+	uint32 glyph5; 
+	uint32 glyph6; 
+};
 
-		sWorld.PollMailboxInsertQueue(con);
-		/* While this looks weird, it ensures the system doesn't waste time switching to these contexts.
-		WaitForSingleObject will suspend the thread,
-		and on unix, select will as well. - Burlex
-		*/
-		con->Busy.Release();
-#ifdef WIN32
-		if (hEvent)
-			WaitForSingleObject(hEvent,LOAD_THREAD_SLEEP*1000);
-#else
-		gettimeofday(&now, NULL);
-		tv.tv_sec = now.tv_sec + LOAD_THREAD_SLEEP;
-		tv.tv_nsec = now.tv_usec * 1000;
-		pthread_mutex_lock(&mutex);
-		pthread_cond_timedwait(&cond, &mutex, &tv);
-		pthread_mutex_unlock(&mutex);
-#endif
-		if(!m_threadRunning)
-			break;
-	}
+struct insert_playertalent 
+{ 
+	uint32 player_guid; 
+	uint32 spec; 
+	uint32 tid; 
+	uint32 rank; 
+};
 
-	return true;
-}
-
-void World::PollMailboxInsertQueue(DatabaseConnection * con)
-{
-	QueryResult * result;
-	Field * f;
-	ItemPointer pItem;
-	uint32 itemid;
-	uint32 stackcount;
-
-	result = CharacterDatabase.FQuery("SELECT * FROM mailbox_insert_queue", con);
-	if( result != NULL )
-	{
-		Log.Notice("MailboxQueue", "Sending queued messages....");
-		do 
-		{
-			f = result->Fetch();
-			itemid = f[6].GetUInt32();
-			stackcount = f[7].GetUInt32();
-
-			if( itemid != 0 )
-			{
-				pItem = objmgr.CreateItem( itemid, NULLPLR );
-				if( pItem != NULL )
-				{
-					pItem->SetUInt32Value( ITEM_FIELD_STACK_COUNT, stackcount );
-					pItem->SaveToDB( 0, 0, true, NULL );
-				}
-			}
-			else
-				pItem = NULLITEM;
-
-			Log.Notice("MailboxQueue", "Sending message to %u (item: %u)...", f[1].GetUInt32(), itemid);
-			sMailSystem.DeliverMessage( 0, f[0].GetUInt64(), f[1].GetUInt64(), f[2].GetString(), f[3].GetString(), f[5].GetUInt32(),
-				0, pItem ? pItem->GetGUID() : 0, f[4].GetUInt32(), true );
-
-			if( pItem != NULL )
-			{
-				pItem->Destructor();
-				pItem = NULLITEM;
-			}
-
-		} while ( result->NextRow() );
-		delete result;
-		Log.Notice("MailboxQueue", "Done.");
-		CharacterDatabase.FWaitExecute("DELETE FROM mailbox_insert_queue", con);
-	}
-}
+struct insert_playerspell 
+{ 
+	uint32 player_guid; 
+	uint32 spellid; 
+};
 
 void World::PollCharacterInsertQueue(DatabaseConnection * con)
 {
+	QueryResult * result = CharacterDatabase.FQuery("SELECT guid FROM characters_insert_queue", con);
+	if(!result)
+		return;
+	else
+		delete result;
+
 	// Our local stuff..
-	bool has_results = false;
-	map<uint32, vector<insert_playeritem> > itemMap;
-	map<uint32,vector<insert_playeritem> >::iterator itr;
 	Field * f;
-	insert_playeritem ipi;                          
-	static const char * characterTableFormat = "uSuuuuuussuuuuuuuuuuuuuuffffuususuufffuuuuusuuuUssuuuuuuffffuuuuufffssssssuuuuuuuu";
+	map<uint32, vector<insert_playeritem> > itemMap;
+	map<uint32, vector<insert_playeritem> >::iterator itr;
+	map<uint32, vector<insert_playerskill> > skillMap;
+	map<uint32, vector<insert_playerskill> >::iterator itr1;
+	map<uint32, vector<insert_playerquest> > questMap;
+	map<uint32, vector<insert_playerquest> >::iterator itr2;
+	map<uint32, vector<insert_playerglyph> > glyphMap;
+	map<uint32, vector<insert_playerglyph> >::iterator itr3;
+	map<uint32, vector<insert_playertalent> > talentMap;
+	map<uint32, vector<insert_playertalent> >::iterator itr4;
+	map<uint32, vector<insert_playerspell> > spellMap;
+	map<uint32, vector<insert_playerspell> >::iterator itr5;
+	insert_playeritem ipi;
+	insert_playerskill ips;
+	insert_playerquest ipq;
+	insert_playerglyph ipg;
+	insert_playertalent ipt;
+	insert_playerspell ipsp;
 
-	// Lock the table to prevent any more inserts
-	CharacterDatabase.FWaitExecute("LOCK TABLES `playeritems_insert_queue` WRITE", con);
+	bool has_results = false;
 
-	// Cache all items in memory. This will save us doing additional queries and slowing down the db.
-	QueryResult * result = CharacterDatabase.FQuery("SELECT * FROM playeritems_insert_queue", con);
+	//The format of our character database (applies to revision 1740)
+	static const char * characterTableFormat = "xuSuuuuuussuuuuuuuuuuuuuuuffffuususuufffuuuuusuuuUuuuuffffuuuuufffssssssuuuuuuuuuuu";
+
+	// Lock the tables to prevent any more inserts
+	CharacterDatabase.FWaitExecute("LOCK TABLES characters_insert_queue WRITE, playeritems_insert_queue WRITE, playerskills_insert_queue WRITE, questlog_insert_queue WRITE, playerglyphs_insert_queue WRITE, playerspells_insert_queue WRITE, playertalents_insert_queue WRITE", con);
+
+	// Caching will save us doing additional queries and slowing down the db.
+	// Cache all items in memory.
+	result = CharacterDatabase.FQuery("SELECT * FROM playeritems_insert_queue", con);
 	if(result)
 	{
 		do 
@@ -1575,20 +1691,21 @@ void World::PollCharacterInsertQueue(DatabaseConnection * con)
 			f = result->Fetch();
 
 			ipi.ownerguid = f[0].GetUInt32();
-			ipi.entry = f[1].GetUInt32();
-			ipi.wrapped_item_id = f[2].GetUInt32();
-			ipi.wrapped_creator = f[3].GetUInt32();
-			ipi.creator = f[4].GetUInt32();
-			ipi.count = f[5].GetUInt32();
-			ipi.charges = f[6].GetUInt32();
-			ipi.flags = f[7].GetUInt32();
-			ipi.randomprop = f[8].GetUInt32();
-			ipi.randomsuffix = f[9].GetUInt32();
-			ipi.itemtext = f[10].GetUInt32();
-			ipi.durability = f[11].GetUInt32();
-			ipi.containerslot = f[12].GetInt32();
-			ipi.slot = f[13].GetInt32();
-			ipi.enchantments = string(f[14].GetString());
+			//skip itemguid, we'll generate a new one.
+			ipi.entry = f[2].GetUInt32();
+			ipi.wrapped_item_id = f[3].GetUInt32();
+			ipi.wrapped_creator = f[4].GetUInt32();
+			ipi.creator = f[5].GetUInt32();
+			ipi.count = f[6].GetUInt32();
+			ipi.charges = f[7].GetUInt32();
+			ipi.flags = f[8].GetUInt32();
+			ipi.randomprop = f[9].GetUInt32();
+			ipi.randomsuffix = f[10].GetUInt32();
+			ipi.itemtext = f[11].GetUInt32();
+			ipi.durability = f[12].GetUInt32();
+			ipi.containerslot = f[13].GetInt32();
+			ipi.slot = f[14].GetInt32();
+			ipi.enchantments = string(f[15].GetString());
 
 			itr = itemMap.find(ipi.ownerguid);
 			if(itr == itemMap.end())
@@ -1601,16 +1718,165 @@ void World::PollCharacterInsertQueue(DatabaseConnection * con)
 			{
 				itr->second.push_back(ipi);
 			}
+		} while(result->NextRow());
+		delete result;
+	}
+
+	// Cache all skills in memory.
+	result = CharacterDatabase.FQuery("SELECT * FROM playerskills_insert_queue", con);
+	if(result)
+	{
+		do 
+		{
+			f = result->Fetch();
+
+			ips.player_guid = f[0].GetUInt32();
+			ips.skill_id = f[1].GetUInt32();
+			ips.type = f[2].GetUInt32();
+			ips.currentlvl = f[3].GetUInt32();
+			ips.maxlvl = f[4].GetUInt32();
+
+			itr1 = skillMap.find(ips.player_guid);
+			if(itr1 == skillMap.end())
+			{
+				vector<insert_playerskill> to_insert;
+				to_insert.push_back(ips);
+				skillMap.insert(make_pair(ips.player_guid,to_insert));
+			}
+			else
+			{
+				itr1->second.push_back(ips);
+			}
+		} while(result->NextRow());
+		delete result;
+	}
+
+	// Cache all questlogs in memory.
+	result = CharacterDatabase.FQuery("SELECT * FROM questlog_insert_queue", con);
+	if(result)
+	{
+		do 
+		{
+			f = result->Fetch();
+
+			ipq.player_guid = f[0].GetUInt32();
+			ipq.quest_id = f[1].GetUInt32();
+			ipq.slot = f[2].GetUInt32();
+			ipq.time_left = f[3].GetUInt32();
+			ipq.explored_area1 = f[4].GetUInt32();
+			ipq.explored_area2 = f[5].GetUInt32();
+			ipq.explored_area3 = f[6].GetUInt32();
+			ipq.explored_area4 = f[7].GetUInt32();
+			ipq.mob_kill1 = f[8].GetUInt32();
+			ipq.mob_kill2 = f[9].GetUInt32();
+			ipq.mob_kill3 = f[10].GetUInt32();
+			ipq.mob_kill4 = f[11].GetUInt32();
+			ipq.slain = f[12].GetUInt32();
+
+			itr2 = questMap.find(ipq.player_guid);
+			if(itr2 == questMap.end())
+			{
+				vector<insert_playerquest> to_insert;
+				to_insert.push_back(ipq);
+				questMap.insert(make_pair(ipq.player_guid,to_insert));
+			}
+			else
+			{
+				itr2->second.push_back(ipq);
+			}
 
 		} while(result->NextRow());
 		delete result;
 	}
 
-	// Unlock the item table
-	CharacterDatabase.FWaitExecute("UNLOCK TABLES", con);
+	// Cache all glyphs in memory.
+	result = CharacterDatabase.FQuery("SELECT * FROM playerglyphs_insert_queue", con);
+	if(result)
+	{
+		do 
+		{
+			f = result->Fetch();
 
-	// Lock the character table
-	CharacterDatabase.FWaitExecute("LOCK TABLES `characters_insert_queue` WRITE", con);
+			ipg.player_guid = f[0].GetUInt32();
+			ipg.spec = f[1].GetUInt32();
+			ipg.glyph1 = f[2].GetUInt32();
+			ipg.glyph2 = f[3].GetUInt32();
+			ipg.glyph3 = f[4].GetUInt32();
+			ipg.glyph4 = f[5].GetUInt32();
+			ipg.glyph5 = f[6].GetUInt32();
+			ipg.glyph6 = f[7].GetUInt32();
+
+			itr3 = glyphMap.find(ipg.player_guid);
+			if(itr3 == glyphMap.end())
+			{
+				vector<insert_playerglyph> to_insert;
+				to_insert.push_back(ipg);
+				glyphMap.insert(make_pair(ipg.player_guid,to_insert));
+			}
+			else
+			{
+				itr3->second.push_back(ipg);
+			}
+
+		} while(result->NextRow());
+		delete result;
+	}
+
+	// Cache all talents in memory.
+	result = CharacterDatabase.FQuery("SELECT * FROM playertalents_insert_queue", con);
+	if(result)
+	{
+		do 
+		{
+			f = result->Fetch();
+
+			ipt.player_guid = f[0].GetUInt32();
+			ipt.spec = f[1].GetUInt32();
+			ipt.tid = f[2].GetUInt32();
+			ipt.rank = f[3].GetUInt32();
+
+			itr4 = talentMap.find(ipt.player_guid);
+			if(itr4 == talentMap.end())
+			{
+				vector<insert_playertalent> to_insert;
+				to_insert.push_back(ipt);
+				talentMap.insert(make_pair(ipt.player_guid,to_insert));
+			}
+			else
+			{
+				itr4->second.push_back(ipt);
+			}
+
+		} while(result->NextRow());
+		delete result;
+	}
+
+	// Cache all spells in memory.
+	result = CharacterDatabase.FQuery("SELECT * FROM playerspells_insert_queue", con);
+	if(result)
+	{
+		do 
+		{
+			f = result->Fetch();
+
+			ipsp.player_guid = f[0].GetUInt32();
+			ipsp.spellid = f[1].GetUInt32();
+
+			itr5 = spellMap.find(ipsp.player_guid);
+			if(itr5 == spellMap.end())
+			{
+				vector<insert_playerspell> to_insert;
+				to_insert.push_back(ipsp);
+				spellMap.insert(make_pair(ipsp.player_guid,to_insert));
+			}
+			else
+			{
+				itr5->second.push_back(ipsp);
+			}
+
+		} while(result->NextRow());
+		delete result;
+	}
 
 	// Load the characters, and assign them their new guids, and insert them into the main db.
 	result = CharacterDatabase.FQuery("SELECT * FROM characters_insert_queue", con);
@@ -1622,23 +1888,48 @@ void World::PollCharacterInsertQueue(DatabaseConnection * con)
 	{
 		uint32 guid;
 		std::stringstream ss;
+		uint32 queuesize = result->GetRowCount();
 		do 
 		{
 			f = result->Fetch();
 			char * p = (char*)characterTableFormat;
-			uint32 i = 1;
+			uint32 i = 0;
 			guid = f[0].GetUInt32();
-			uint32 new_guid = objmgr.GenerateLowGuid(HIGHGUID_TYPE_PLAYER);
-			uint32 new_item_guid;
-			ss << "INSERT INTO characters VALUES(" << new_guid;
 
-			// create his playerinfo in the server
+			//Generate a new player guid
+			uint32 new_guid = objmgr.GenerateLowGuid(HIGHGUID_TYPE_PLAYER);
+			
+			// Create his playerinfo in the server
 			PlayerInfo * inf = new PlayerInfo();
+			memset(inf, 0, sizeof(PlayerInfo));
+			inf->guid = new_guid;
 			inf->acct = f[1].GetUInt32();
 #ifdef VOICE_CHAT
 			inf->groupVoiceId = -1;
 #endif
+			inf->cl = f[4].GetUInt32();
+			inf->race=f[3].GetUInt32();
+			inf->gender = f[5].GetUInt32();
+			inf->lastLevel = f[7].GetUInt32();
+			inf->lastOnline = UNIXTIME;
+			switch(inf->race)
+			{
+			case RACE_HUMAN:
+			case RACE_GNOME:
+			case RACE_DWARF:
+			case RACE_NIGHTELF:
+			case RACE_DRAENEI:
+				{
+					inf->team=0;
+				}break;
+			default:
+				{
+					inf->team=1;
+				}break;
+			}
 
+			// Build our query
+			ss << "INSERT INTO characters VALUES(" << new_guid;
 			while(*p != 0)
 			{
 				switch(*p)
@@ -1666,6 +1957,10 @@ void World::PollCharacterInsertQueue(DatabaseConnection * con)
 						ss << ",1";
 					}break;
 
+				case 'x':
+					{
+						// players guid (we generate a new one) 
+					}break;
 				default:
 					ss << "," << f[i].GetUInt32();
 					break;
@@ -1676,37 +1971,10 @@ void World::PollCharacterInsertQueue(DatabaseConnection * con)
 			}
 
 			ss << ")";
+			//Execute the query
 			CharacterDatabase.FWaitExecute(ss.str().c_str(),con);
 
-			inf->cl = f[4].GetUInt32();
-			inf->gender = f[5].GetUInt32();
-			inf->guid = new_guid;
-			inf->lastLevel = f[7].GetUInt32();
-			inf->lastOnline = UNIXTIME;
-			inf->lastZone = 0;
-			inf->m_Group=NULL;
-			inf->m_loggedInPlayer=NULLPLR;
-			inf->guild=NULL;
-			inf->guildRank=NULL;
-			inf->guildMember=NULL;
-			inf->race=f[3].GetUInt32();
-			inf->subGroup=0;
-			switch(inf->race)
-			{
-			case RACE_HUMAN:
-			case RACE_GNOME:
-			case RACE_DWARF:
-			case RACE_NIGHTELF:
-			case RACE_DRAENEI:
-				inf->team=0;
-				break;
-
-			default:
-				inf->team=1;
-				break;
-			}
-
-			// add playerinfo to objectmgr
+			// Add playerinfo to the objectmgr
 			objmgr.AddPlayerInfo(inf);
 
 			// grab all his items, assign them their new guids and insert them
@@ -1715,9 +1983,15 @@ void World::PollCharacterInsertQueue(DatabaseConnection * con)
 			{
 				for(vector<insert_playeritem>::iterator vtr = itr->second.begin(); vtr != itr->second.end(); ++vtr)
 				{
+					//Generate a new item guid
+					uint32 new_item_guid = objmgr.GenerateLowGuid(HIGHGUID_TYPE_ITEM);
+
+					//empty our query string
 					ss.rdbuf()->str("");
+
+					// Build query
+
 					ss << "INSERT INTO playeritems VALUES(";
-					new_item_guid = objmgr.GenerateLowGuid(HIGHGUID_TYPE_ITEM);
 					ss << new_guid << ","
 						<< new_item_guid << ","
 						<< (*vtr).entry << ","
@@ -1734,12 +2008,128 @@ void World::PollCharacterInsertQueue(DatabaseConnection * con)
 						<< (*vtr).containerslot << ","
 						<< (*vtr).slot << ",'"
 						<< (*vtr).enchantments << "')";
+					//Execute query
 					CharacterDatabase.FWaitExecute(ss.str().c_str(),con);
 				}
 			}
+
+			// grab all his skills, assign them their new guids and insert them
+			itr1 = skillMap.find(guid);
+			if(itr1 != skillMap.end())
+			{
+				for(vector<insert_playerskill>::iterator vtr1 = itr1->second.begin(); vtr1 != itr1->second.end(); ++vtr1)
+				{
+					//empty our query string
+					ss.rdbuf()->str("");
+
+					// Build query
+					ss << "INSERT INTO playerskills VALUES(";
+					ss << new_guid << ","
+						<< (*vtr1).skill_id << ","
+						<< (*vtr1).type << ","
+						<< (*vtr1).currentlvl << ","
+						<< (*vtr1).maxlvl << " )";
+					//Execute query
+					CharacterDatabase.FWaitExecute(ss.str().c_str(),con);
+				}
+			}
+
+			// grab all his quests, assign them their new guids and insert them
+			itr2 = questMap.find(guid);
+			if(itr2 != questMap.end())
+			{
+				for(vector<insert_playerquest>::iterator vtr2 = itr2->second.begin(); vtr2 != itr2->second.end(); ++vtr2)
+				{
+					//empty our query string
+					ss.rdbuf()->str("");
+
+					// Build query
+					ss << "INSERT INTO questlog VALUES(";
+					ss << new_guid << ","
+						<< (*vtr2).quest_id << ","
+						<< (*vtr2).slot << ","
+						<< (*vtr2).time_left << ","
+						<< (*vtr2).explored_area1 << ","
+						<< (*vtr2).explored_area2 << ","
+						<< (*vtr2).explored_area3 << ","
+						<< (*vtr2).explored_area4 << ","
+						<< (*vtr2).mob_kill1 << ","
+						<< (*vtr2).mob_kill2 << ","
+						<< (*vtr2).mob_kill3 << ","
+						<< (*vtr2).mob_kill4 << ","
+						<< (*vtr2).slain << ")";
+					//Execute query
+					CharacterDatabase.FWaitExecute(ss.str().c_str(),con);
+				}
+			}
+
+			// grab all his glyphs, assign them their new guids and insert them
+			itr3 = glyphMap.find(guid);
+			if(itr3 != glyphMap.end())
+			{
+				for(vector<insert_playerglyph>::iterator vtr3 = itr3->second.begin(); vtr3 != itr3->second.end(); ++vtr3)
+				{
+					//empty our query string
+					ss.rdbuf()->str("");
+
+					// Build query
+					ss << "INSERT INTO playerglyphs VALUES(";
+					ss << new_guid << ","
+						<< (*vtr3).spec << ","
+						<< (*vtr3).glyph1 << ","
+						<< (*vtr3).glyph2 << ","
+						<< (*vtr3).glyph3 << ","
+						<< (*vtr3).glyph4 << ","
+						<< (*vtr3).glyph5 << ","
+						<< (*vtr3).glyph6 << " )";
+					//Execute query
+					CharacterDatabase.FWaitExecute(ss.str().c_str(),con);
+				}
+			}
+
+			// grab all his talents, assign them their new guids and insert them
+			itr4 = talentMap.find(guid);
+			if(itr4 != talentMap.end())
+			{
+				for(vector<insert_playertalent>::iterator vtr4 = itr4->second.begin(); vtr4 != itr4->second.end(); ++vtr4)
+				{
+					//empty our query string
+					ss.rdbuf()->str("");
+
+					// Build query
+					ss << "INSERT INTO playertalents VALUES(";
+					ss << new_guid << ","
+						<< (*vtr4).spec << ","
+						<< (*vtr4).tid << ","
+						<< (*vtr4).rank << " )";
+					//Execute query
+					CharacterDatabase.FWaitExecute(ss.str().c_str(),con);
+				}
+			}
+
+			// grab all his spells, assign them their new guids and insert them
+			itr5 = spellMap.find(guid);
+			if(itr5 != spellMap.end())
+			{
+				for(vector<insert_playerspell>::iterator vtr5 = itr5->second.begin(); vtr5 != itr5->second.end(); ++vtr5)
+				{
+					//empty our query string
+					ss.rdbuf()->str("");
+
+					// Build query
+					ss << "INSERT INTO playerspells VALUES(";
+					ss << new_guid << ","
+						<< (*vtr5).spellid << " )";
+					//Execute query
+					CharacterDatabase.FWaitExecute(ss.str().c_str(),con);
+				}
+			}
+
+			//empty our query string
 			ss.rdbuf()->str("");
 		} while(result->NextRow());
 		has_results = true;
+		Log.Notice("CharacterLoader","Imported %u character(s) from external queue",queuesize);
 		delete result;
 	}
 
@@ -1748,6 +2138,11 @@ void World::PollCharacterInsertQueue(DatabaseConnection * con)
 	{
 		CharacterDatabase.FWaitExecute("DELETE FROM characters_insert_queue", con);
 		CharacterDatabase.FWaitExecute("DELETE FROM playeritems_insert_queue", con);
+		CharacterDatabase.FWaitExecute("DELETE FROM playerskills_insert_queue", con);
+		CharacterDatabase.FWaitExecute("DELETE FROM questlog_insert_queue", con);
+		CharacterDatabase.FWaitExecute("DELETE FROM playerglyphs_insert_queue", con);
+		CharacterDatabase.FWaitExecute("DELETE FROM playertalents_insert_queue", con);
+		CharacterDatabase.FWaitExecute("DELETE FROM playerspells_insert_queue", con);
 	}
 }
 
@@ -1878,7 +2273,7 @@ void World::UpdateShutdownStatus()
 	else
 	{
 		// shutting down?
-		sEventMgr.RemoveEvents(CAST(World,shared_from_this()), EVENT_WORLD_SHUTDOWN);
+		sEventMgr.RemoveEvents(CAST(World,this), EVENT_WORLD_SHUTDOWN);
 		if( m_shutdownTime )
 		{
 			SendWorldText("Server is saving and shutting down. You will be disconnected shortly.", NULL);
@@ -1913,7 +2308,7 @@ void World::QueueShutdown(uint32 delay, uint32 type)
 	m_shutdownType = type;
 
 	// add event
-	sEventMgr.AddEvent(CAST(World,shared_from_this()), &World::UpdateShutdownStatus, EVENT_WORLD_SHUTDOWN, 50, 0, 0);
+	sEventMgr.AddEvent(this, &World::UpdateShutdownStatus, EVENT_WORLD_SHUTDOWN, 50, 0, 0);
 
 	// send message
 	char buf[1000];
@@ -1932,7 +2327,7 @@ void World::BackupDB()
 	  "guild_data", "guild_logs", "guild_ranks", "guilds",
 	  "instances", "mailbox", "mailbox_insert_queue",
 	  "playercooldowns", "playeritems", "playeritems_insert_queue", "playerpets",
-	  "playerpetspells", "playersummons", "playersummonspells", "questlog",
+	  "playerpetspells", "playerpettalents", "playersummons", "playersummonspells", "questlog",
 	  "server_settings", "social_friends", "social_ignores", "tutorials",
 	  "worldstate_save_data", NULL };
 	char cmd[1024];

@@ -1,19 +1,14 @@
 /*
  * Ascent MMORPG Server
- * Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
  *
  */
 
@@ -57,43 +52,37 @@ void WSSocket::OnRead()
 	{
 		if(!_cmd)
 		{
-			if(GetReadBuffer().GetContiguiousBytes() < 6)
+			if(readBuffer.GetSize() < 6)
 				break;
 
-			GetReadBuffer().Read((uint8*)&_cmd, 2);
-			GetReadBuffer().Read((uint8*)&_remaining, 4);
+			readBuffer.Read(&_cmd, 2);
+			readBuffer.Read(&_remaining, 4);
 			//_remaining = ntohl(_remaining);
 		}
 
-        if(!_remaining || GetReadBuffer().GetSize() < _remaining)
+        if(_remaining && readBuffer.GetSize() < _remaining)
 			break;
 
 		if(_cmd == ICMSG_WOW_PACKET)
 		{
 			/* optimized version for packet passing, to reduce latency! ;) */
-/*			uint32 sid = *(uint32*)&m_readBuffer[0];
-			uint16 op  = *(uint16*)&m_readBuffer[4];
-			uint32 sz  = *(uint32*)&m_readBuffer[6];*/
-			
 			/*uint32 sid = *(uint32*)&m_readBuffer[0];
 			uint16 op  = *(uint16*)&m_readBuffer[4];
 			uint32 sz  = *(uint32*)&m_readBuffer[6];
-
 			Session * session = sClientMgr.GetSession(sid);
 			if(session != NULL && session->GetSocket() != NULL)
-				session->GetSocket()->OutPacket(op, sz, m_readBuffer + 10);
+				session->GetSocket()->OutPacket(op, sz, m_readBuffer + 10);*/
 
-			RemoveReadBufferBytes(sz + 10, false);*/
-
+			//RemoveReadBufferBytes(sz + 10/*header*/, false);
 			uint32 sid;
 			uint16 op;
 			uint32 sz;
-			
+
 
 			GetReadBuffer().Read(&sid, 4);
 			GetReadBuffer().Read(&op, 2);
 			GetReadBuffer().Read(&sz, 4);
-		
+
 			Session * session = sClientMgr.GetSession(sid);
 			if(session != NULL && session->GetSocket() != NULL)
 			{
@@ -104,15 +93,15 @@ void WSSocket::OnRead()
 			}
 			else
 				GetReadBuffer().Remove(sz);
-			
+
 			_cmd = 0;
+
 			continue;
 		}
 		WorldPacket * pck = new WorldPacket(_cmd, _remaining);
 		_cmd = 0;
 		pck->resize(_remaining);
-		//Read(_remaining, (uint8*)pck->contents());
-		GetReadBuffer().Read((uint8*)pck->contents(), _remaining);
+		readBuffer.Read((uint8*)pck->contents(), _remaining);
 
 		if(_authenticated)
 		{

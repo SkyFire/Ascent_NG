@@ -1,19 +1,14 @@
 /*
  * Ascent MMORPG Server
- * Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
  *
  */
 
@@ -30,6 +25,8 @@ ClientMgr::ClientMgr()
 
 ClientMgr::~ClientMgr()
 {
+	Log.Debug("ClientMgr", "~ClientMgr");
+
 	for (SessionMap::iterator itr=m_sessions.begin(); itr!=m_sessions.end(); ++itr)
 		delete itr->second;
 
@@ -42,8 +39,9 @@ void ClientMgr::SendPackedClientInfo(WServer * server)
 	if(!m_clients.size())
 		return;
 
-	WorldPacket data(ISMSG_PACKED_PLAYER_INFO, sizeof(RPlayerInfo) * m_clients.size() + 4);
-	data << uint32(m_clients.size());
+	ByteBuffer uncompressed(40000 * 19 + 8);
+	
+	uncompressed << uint32(m_clients.size());
 
 	/* pack them all togther, w000t! */
 	ClientMap::iterator itr = m_clients.begin();
@@ -51,10 +49,58 @@ void ClientMgr::SendPackedClientInfo(WServer * server)
 	for(; itr != m_clients.end(); ++itr)
 	{
 		pi = itr->second;
-		pi->Pack(data);
+		pi->Pack(uncompressed);
 	}
 
-    /* TODO: compress the packet */
+	// I still got no idea where this came from :p
+	size_t destsize = uncompressed.size() + uncompressed.size()/10 + 16;
+
+	WorldPacket data(ISMSG_PACKED_PLAYER_INFO, destsize + 4);
+	data.resize(destsize + 4);
+
+	z_stream stream;
+	stream.zalloc = 0;
+	stream.zfree  = 0;
+	stream.opaque = 0;
+
+	if(deflateInit(&stream, 1) != Z_OK)
+	{
+		printf("deflateInit failed.");
+		return;
+	}
+
+	// set up stream pointers
+	stream.next_out  = (Bytef*)((uint8*)data.contents())+4;
+	stream.avail_out = (uInt)destsize;
+	stream.next_in   = (Bytef*)uncompressed.contents();
+	stream.avail_in  = (uInt)uncompressed.size();
+
+	// call the actual process
+	if(deflate(&stream, Z_NO_FLUSH) != Z_OK ||
+		stream.avail_in != 0)
+	{
+		printf("deflate failed.");
+		return;
+	}
+
+	// finish the deflate
+	if(deflate(&stream, Z_FINISH) != Z_STREAM_END)
+	{
+		printf("deflate failed: did not end stream");
+		return;
+	}
+
+	// finish up
+	if(deflateEnd(&stream) != Z_OK)
+	{
+		printf("deflateEnd failed.");
+		return;
+	}
+
+	// put real size at the beginning of the packet
+	*(uint32*)data.contents() = (uint32)uncompressed.size();
+	data.resize(stream.total_out + 4);
+
 	server->SendPacket(&data);
 }
 
@@ -105,7 +151,7 @@ void ClientMgr::Update()
 			continue;
 		Session* s=itr2->second;
 
-		//use a reference int incase a player times out and logs in again :), were under a write lock here, were synced
+		//use a reference int incase a player times out and logs in again
 		if (s->GetPlayer() != NULL && --s->GetPlayer()->references == 0)
 		{
 			m_sessionsbyinfo.erase(s->GetPlayer());
@@ -153,9 +199,7 @@ RPlayerInfo * ClientMgr::CreateRPlayer(uint32 guid)
 	}
 	else
 	{
-		//no need for sync here, were under a write lock
 		++itr->second->references;
-		//Sync_Add(&itr->second->references);
 		m_lock.ReleaseWriteLock();
 		return itr->second;
 	}

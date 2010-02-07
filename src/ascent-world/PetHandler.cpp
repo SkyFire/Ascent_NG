@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 
@@ -36,7 +31,7 @@ void WorldSession::HandlePetAction(WorldPacket & recv_data)
 
 	if(GET_TYPE_FROM_GUID(petGuid) == HIGHGUID_TYPE_UNIT)
 	{
-		CreaturePointer pCharm = GetPlayer()->GetMapMgr()->GetCreature(GET_LOWGUID_PART(petGuid));
+		Creature* pCharm = GetPlayer()->GetMapMgr()->GetCreature(GET_LOWGUID_PART(petGuid));
 		if(!pCharm) 
 			return;
 
@@ -61,11 +56,11 @@ void WorldSession::HandlePetAction(WorldPacket & recv_data)
 		}
 		return;
 	}
-	PetPointer pPet = _player->GetMapMgr()->GetPet(GET_LOWGUID_PART(petGuid));
+	Pet* pPet = _player->GetMapMgr()->GetPet(GET_LOWGUID_PART(petGuid));
 	if(!pPet || !pPet->isAlive())
 		return;
 
-	UnitPointer pTarget = NULLUNIT;
+	Unit* pTarget = NULL;
 
 	if(action == PET_ACTION_SPELL || action == PET_ACTION_SPELL_1 || action == PET_ACTION_SPELL_2 || (action == PET_ACTION_ACTION && misc == PET_ACTION_ATTACK )) // >> target
 	{
@@ -128,7 +123,7 @@ void WorldSession::HandlePetAction(WorldPacket & recv_data)
 					pPet->GetAIInterface()->WipeHateList();
 
 					// Stop following the owner, and sit.
-					pPet->GetAIInterface()->SetUnitToFollow(NULLUNIT);
+					pPet->GetAIInterface()->SetUnitToFollow(NULL);
 					pPet->SetStandState(STANDSTATE_SIT);
 				}break;
 			case PET_ACTION_DISMISS:
@@ -179,9 +174,9 @@ void WorldSession::HandlePetAction(WorldPacket & recv_data)
 					if(sp->autocast_type != AUTOCAST_EVENT_ATTACK)
 					{
 						if(sp->autocast_type == AUTOCAST_EVENT_OWNER_ATTACKED)
-							pPet->CastSpell(_player, sp->spell, false);
+							sEventMgr.AddEvent(TO_UNIT( pPet ), &Unit::EventCastSpell, TO_UNIT( _player ), sp->spell, EVENT_AURA_APPLY, 250, 1,EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
 						else
-							pPet->CastSpell(pPet, sp->spell, false);
+							sEventMgr.AddEvent(TO_UNIT( _player ), &Unit::EventCastSpell, TO_UNIT( pPet ), sp->spell, EVENT_AURA_APPLY, 250, 1,EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
 					}
 					else
 					{
@@ -194,29 +189,6 @@ void WorldSession::HandlePetAction(WorldPacket & recv_data)
 					}
 				}
 			}
-
-			/*// cast spell
-			SpellCastTargets targets;
-			
-			//HACK HACK HACK
-			switch (misc)
-			{
-				case 7812:
-				case 19438:
-				case 19440:
-				case 19441:
-				case 19442:
-				case 19443:
-					targets.m_unitTarget = pPet->GetGUID(); // dono maybe it should be NULL;
-					break;
-				default:
-					targets.m_unitTarget = (pTarget ? pTarget->GetGUID() : pPet->GetGUID());
-					break;
-			}
-						
-			targets.m_targetMask = 0x2; // unit
-
-			pPet->GetAIInterface()->CastSpell(pPet, entry, targets);*/
 		}break;
 	case PET_ACTION_STATE:
 		{
@@ -224,7 +196,7 @@ void WorldSession::HandlePetAction(WorldPacket & recv_data)
 		}break;
 	default:
 		{
-			printf("WARNING: Unknown pet action received. Action = %.4X, Misc = %.4X\n", action, misc);
+			DEBUG_LOG("Pet","WARNING: Unknown pet action received. Action = %.4X, Misc = %.4X\n", action, misc);
 		}break;
 	}
 
@@ -247,7 +219,7 @@ void WorldSession::HandlePetNameQuery(WorldPacket & recv_data)
 	uint64 petGuid = 0;
 
 	recv_data >> reqNumber >> petGuid;
-	PetPointer pPet = _player->GetMapMgr()->GetPet(GET_LOWGUID_PART(petGuid));
+	Pet* pPet = _player->GetMapMgr()->GetPet(GET_LOWGUID_PART(petGuid));
 	if(!pPet) return;
 
 	WorldPacket data(8 + pPet->GetName().size());
@@ -264,12 +236,13 @@ void WorldSession::HandleStablePet(WorldPacket & recv_data)
 	CHECK_INWORLD_RETURN;
 
 	// remove pet from world and association with player
-	PetPointer pPet = _player->GetSummon();
+	Pet* pPet = _player->GetSummon();
 	if(pPet && pPet->GetUInt32Value(UNIT_CREATED_BY_SPELL) != 0) 
 		return;
 	
 	PlayerPet *pet = _player->GetPlayerPet(_player->GetUnstabledPetNumber());
-	if(!pet) return;
+	if(!pet) 
+		return;
 	pet->stablestate = STABLE_STATE_PASSIVE;
 	
 	if(pPet) pPet->Remove(false, true, true);	// no safedelete needed
@@ -299,8 +272,15 @@ void WorldSession::HandleUnstablePet(WorldPacket & recv_data)
 
 	WorldPacket data(1);
 	data.SetOpcode(SMSG_STABLE_RESULT);
-	data << uint8(0x9); // success?
+	data << uint8(STABLERESULT_UNSTABLE_SUCCESS); // success?
 	SendPacket(&data);
+
+	Pet* pPet = _player->GetSummon();
+	if(pPet && pPet->GetUInt32Value(UNIT_CREATED_BY_SPELL) != 0) return;
+
+	uint32 pLevel = (_player->getLevel() - 5);
+	if(pPet->getLevel() < pLevel)
+		pPet->LevelUpTo(pLevel);
 }
 void WorldSession::HandleStableSwapPet(WorldPacket & recv_data)
 {
@@ -316,12 +296,15 @@ void WorldSession::HandleStableSwapPet(WorldPacket & recv_data)
 		OUT_DEBUG("PET SYSTEM: Player "I64FMT" tried to unstable non-existant pet %d", _player->GetGUID(), petnumber);
 		return;
 	}
-	PetPointer pPet = _player->GetSummon();
+	Pet* pPet = _player->GetSummon();
 	if(pPet && pPet->GetUInt32Value(UNIT_CREATED_BY_SPELL) != 0) return;
 
 	//stable current pet
 	PlayerPet *pet2 = _player->GetPlayerPet(_player->GetUnstabledPetNumber());
-	if(!pet2) return;
+
+	if(!pet2) 
+		return;
+
 	if(pPet)
 		pPet->Remove(false, true, true);	// no safedelete needed
 	pet2->stablestate = STABLE_STATE_PASSIVE;
@@ -332,8 +315,15 @@ void WorldSession::HandleStableSwapPet(WorldPacket & recv_data)
 
 	WorldPacket data;
 	data.SetOpcode(SMSG_STABLE_RESULT);
-	data << uint8(0x09);
+	data << uint8(STABLERESULT_UNSTABLE_SUCCESS);
 	SendPacket(&data);
+
+	Pet* pPet2 = _player->GetSummon();
+	if(pPet2 && pPet2->GetUInt32Value(UNIT_CREATED_BY_SPELL) != 0) return;
+
+	uint32 pLevel = (_player->getLevel() - 5);
+	if(pPet2->getLevel() < pLevel)
+		pPet2->LevelUpTo(pLevel);
 }
 
 void WorldSession::HandleStabledPetList(WorldPacket & recv_data)
@@ -348,21 +338,25 @@ void WorldSession::HandleStabledPetList(WorldPacket & recv_data)
 
 	data << uint8(_player->m_Pets.size());
 	data << uint8(_player->m_StableSlotCount);
-	char i=0;
+	uint8 i=0;
+	bool HasActive = false;
 	for(std::map<uint32, PlayerPet*>::iterator itr = _player->m_Pets.begin(); itr != _player->m_Pets.end(); ++itr)
 	{
 		data << uint32(itr->first); // pet no
 		data << uint32(itr->second->entry); // entryid
 		data << uint32(itr->second->level); // level
 		data << itr->second->name;		  // name
-		data << uint32(itr->second->loyaltylvl);
-		if(itr->second->stablestate == STABLE_STATE_ACTIVE)
-			data << uint8(STABLE_STATE_ACTIVE);
-		else
+		if(!HasActive && itr->second->stablestate == STABLE_STATE_ACTIVE)
 		{
-			data << uint8(STABLE_STATE_PASSIVE + i);
-			i++;
+			data << uint8(STABLE_STATE_ACTIVE);
+			HasActive = true;
+			continue;
 		}
+		data << uint8(STABLE_STATE_PASSIVE + i);
+		itr->second->stablestate = STABLE_STATE_PASSIVE; //if it ain't active it must be passive ;)
+		i++;
+		if(i>3)//we only have 4 stable slots
+			break;
 	}
 
 	SendPacket(&data);
@@ -370,21 +364,28 @@ void WorldSession::HandleStabledPetList(WorldPacket & recv_data)
 
 void WorldSession::HandleBuyStableSlot(WorldPacket &recv_data)
 {
-	if(!_player->IsInWorld() || _player->GetStableSlotCount() == 2) return;
+	if(!_player->IsInWorld() || _player->GetStableSlotCount() == MAX_STABLE_SLOTS)
+		return;
 	uint8 scount = _player->GetStableSlotCount();
 	BankSlotPrice* bsp = dbcStableSlotPrices.LookupEntry(scount+1);
 	int32 cost = (bsp != NULL) ? bsp->Price : 99999999;
 	if(cost > (int32)_player->GetUInt32Value(PLAYER_FIELD_COINAGE))
+	{
+		WorldPacket data(1);
+		data.SetOpcode(SMSG_STABLE_RESULT);
+		data << uint8(STABLERESULT_FAIL_CANT_AFFORD);
+		SendPacket(&data);
 		return;
+	}
 
 	_player->ModUnsigned32Value(PLAYER_FIELD_COINAGE, -cost);
 	
 	WorldPacket data(1);
 	data.SetOpcode(SMSG_STABLE_RESULT);
-	data << uint8(0x0A);
+	data << uint8(STABLERESULT_BUY_SLOT_SUCCESS);
 	SendPacket(&data);
-	if(_player->GetStableSlotCount() > 2)
-		_player->m_StableSlotCount = 2;
+	if(_player->GetStableSlotCount() > MAX_STABLE_SLOTS)
+		_player->m_StableSlotCount = MAX_STABLE_SLOTS;
 	else
 		_player->m_StableSlotCount++;
 #ifdef OPTIMIZED_PLAYER_SAVING
@@ -405,7 +406,7 @@ void WorldSession::HandlePetSetActionOpcode(WorldPacket& recv_data)
 	if(!_player->GetSummon())
 		return;
 
-	PetPointer pet = _player->GetSummon();
+	Pet* pet = _player->GetSummon();
 	SpellEntry * spe = dbcSpell.LookupEntryForced( spell );
 	if( spe == NULL )
 		return;
@@ -432,7 +433,7 @@ void WorldSession::HandlePetRename(WorldPacket & recv_data)
 		return;
 	}
 
-	PetPointer pet = _player->GetSummon();
+	Pet* pet = _player->GetSummon();
 	pet->Rename(name);
 
 	// Disable pet rename.
@@ -442,7 +443,7 @@ void WorldSession::HandlePetRename(WorldPacket & recv_data)
 void WorldSession::HandlePetAbandon(WorldPacket & recv_data)
 {
 	CHECK_INWORLD_RETURN;
-	PetPointer pet = _player->GetSummon();
+	Pet* pet = _player->GetSummon();
 	if(!pet) return;
 
 	pet->Dismiss(false);
@@ -454,7 +455,7 @@ void WorldSession::HandlePetUnlearn(WorldPacket & recv_data)
 	uint64 guid;
 	recv_data >> guid;
 
-	PetPointer pPet = _player->GetSummon();
+	Pet* pPet = _player->GetSummon();
 	if( pPet == NULL || pPet->GetGUID() != guid )
 	{
 		sChatHandler.SystemMessage(this, "That pet is not your current pet, or you do not have a pet.");
@@ -472,6 +473,7 @@ void WorldSession::HandlePetUnlearn(WorldPacket & recv_data)
 	}
 	_player->ModUnsigned32Value( PLAYER_FIELD_COINAGE, -cost );
 	pPet->WipeSpells();
+	_player->smsg_TalentsInfo(true);
 }
 
 void WorldSession::HandleTotemDestroyed(WorldPacket & recv_data)
@@ -484,8 +486,104 @@ void WorldSession::HandleTotemDestroyed(WorldPacket & recv_data)
 	uint8 slot;
 	recv_data >> slot;
 	slot++;
-	if(slot == 0 || slot > 4 || !_player->m_SummonSlots[slot])
+	if(slot == 0 || slot > 4 || _player->m_SummonSlots[slot] == NULL)
 		return;
-	_player->m_SummonSlots[slot]->TotemExpire();
-	_player->m_SummonSlots[slot] = NULLCREATURE;*/
+	_player->SummonExpireSlot(slot);*/
+}
+
+void WorldSession::HandlePetLearnTalent( WorldPacket & recvPacket )  
+{  
+	CHECK_INWORLD_RETURN;
+
+	uint64 guid = 0;
+	uint32 talentid, rank = 0;
+
+	recvPacket >> guid >> talentid >> rank;
+
+	// get a pointer to our current pet
+	Pet * pPet = _player->GetSummon();
+	if( pPet == NULL )
+		return;
+
+	// check the guid to add the talent to is the same as our pets
+	// we don't want any cheating now do we
+	if( pPet->GetGUID() != guid )
+		return;
+
+	// check we have talent points to spend
+	uint8 talentPoints = pPet->GetByte( UNIT_FIELD_BYTES_1, 1 );
+	if(!talentPoints)
+		return;
+	else
+	{
+		// deduct a point now from our stored value
+		// we will set this later in case one of our checks fails
+		talentPoints--;
+	}
+
+	// find our talent
+	TalentEntry *talentEntry = dbcTalent.LookupEntry( talentid );
+	if( talentEntry == NULL )
+		return;
+
+	PetTalentMap::iterator itr;
+	// check if we require another talent first to be able to learn this one
+	if( talentEntry->DependsOn )
+	{
+		// find the talent that we require
+		// to be able to add this one
+		TalentEntry *requiredTalent = dbcTalent.LookupEntryForced( talentEntry->DependsOn );
+		if( requiredTalent == NULL )
+			return;
+
+		// get the rank of the talent that we require
+		// to be able to add this one
+		uint32 requiredRank = talentEntry->DependsOnRank;
+
+		// do we have the required talent in our map
+		itr = pPet->m_talents.find(talentEntry->DependsOn);
+		if (itr != pPet->m_talents.end())
+		{
+			// is the rank less that the rank we require?
+			if(itr->second < requiredRank)
+				return; // if so abort
+
+			// if we didn't hit the if case then we have the talent
+			// do nothing and continue adding the talent
+		}
+		else
+			return; // we don't have the talent in our map, abort!
+	}
+
+	itr = pPet->m_talents.find(talentid);
+	// do we have a lower rank of this talent?
+	if (itr != pPet->m_talents.end())
+	{
+		// Remove the lower rank spell from our pet
+		pPet->RemoveSpell( talentEntry->RankID[ rank - 1 ] );
+		// Replace the rank in our map with the new one, we'll add the spell later
+		itr->second = rank;
+	}
+	else
+		pPet->m_talents.insert( make_pair( talentid, rank ) );
+
+	// find spell
+	SpellEntry* sp = dbcSpell.LookupEntry( talentEntry->RankID[ rank ] );
+	if( sp )
+	{
+		// set the new talent points, remember we deducted a point earlier ;)
+		DEBUG_LOG("Pet","Setting available talent points to %u", talentPoints);
+		//pPet->SetUInt32Value(UNIT_FIELD_BYTES_1, 1 | (talentPoints << 24));
+		pPet->SetByte( UNIT_FIELD_BYTES_1, 1, talentPoints );
+
+		// add the talent spell to our pet
+		pPet->AddSpell( sp, true );
+
+		// send the packet to the client saying we've learned it :D
+		OutPacket( SMSG_PET_LEARNED_SPELL, 4, &sp->Id );
+
+		// finally re-send our actionbar/spells to the player xD
+		pPet->SendSpellsToOwner();
+	}
+	_player->smsg_TalentsInfo(true);
 }

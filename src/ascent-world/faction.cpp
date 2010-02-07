@@ -1,25 +1,20 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 
-bool isHostile(ObjectPointer objA, ObjectPointer objB)// B is hostile for A?
+bool isHostile(Object* objA, Object* objB)// B is hostile for A?
 {
 	bool hostile = false;
 
@@ -59,8 +54,8 @@ bool isHostile(ObjectPointer objA, ObjectPointer objB)// B is hostile for A?
 	// We check this after the normal isHostile test, that way if we're
 	// on the opposite team we'll already know :p
 
-	PlayerPointer player_objA = GetPlayerFromObject(objA);
-	PlayerPointer player_objB = GetPlayerFromObject(objB);
+	Player* player_objA = GetPlayerFromObject(objA);
+	Player* player_objB = GetPlayerFromObject(objB);
 
 	//BG or PVP?
 	if( player_objA && player_objB )
@@ -101,7 +96,7 @@ bool isHostile(ObjectPointer objA, ObjectPointer objB)// B is hostile for A?
 
 /// Where we check if we object A can attack object B. This is used in many feature's
 /// Including the spell class and the player class.
-bool isAttackable(ObjectPointer objA, ObjectPointer objB, bool CheckStealth)// A can attack B?
+bool isAttackable(Object* objA, Object* objB, bool CheckStealth)// A can attack B?
 {
 	// can't attack self.. this causes problems with buffs if we don't have it :p
 	if( !objA || !objB || objA == objB )
@@ -127,13 +122,20 @@ bool isAttackable(ObjectPointer objA, ObjectPointer objB, bool CheckStealth)// A
 		return false;
 
 	//Get players (or owners of pets/totems)
-	PlayerPointer player_objA = GetPlayerFromObject(objA);
-	PlayerPointer player_objB = GetPlayerFromObject(objB);
+	Player* player_objA = GetPlayerFromObject(objA);
+	Player* player_objB = GetPlayerFromObject(objB);
 	if( player_objA && player_objB )
 	{
 		//Handle duels
 		if( player_objA->DuelingWith == player_objB && player_objA->GetDuelState() == DUEL_STATE_STARTED )
 			return true;
+
+		//These area's are sanctuaries
+		for(uint32 i = 0; i < NUM_SANCTUARIES ; ++i)
+		{
+			if( player_objA->GetAreaID() == SANCTUARY_ZONES[i] || player_objB->GetAreaID() == SANCTUARY_ZONES[i])
+				return false;
+		}
 
 		// Players with feign death flags can't be attacked
 		// But they can be attacked by another players. -- Dvlpr
@@ -165,9 +167,6 @@ bool isAttackable(ObjectPointer objA, ObjectPointer objB, bool CheckStealth)// A
 			if( player_objA->GetTeam() != player_objB->GetTeam() )
 				return true;
 		}
-
-		if( player_objA->DuelingWith == player_objB && player_objA->GetDuelState() == DUEL_STATE_STARTED )
-			return true;
 
 		if(player_objA->IsFFAPvPFlagged() && player_objB->IsFFAPvPFlagged())
 		{
@@ -235,9 +234,9 @@ bool isAttackable(ObjectPointer objA, ObjectPointer objB, bool CheckStealth)// A
 	}
 	return hostile;
 }
-PlayerPointer GetPlayerFromObject(ObjectPointer obj)
+Player* GetPlayerFromObject(Object* obj)
 {
-	PlayerPointer player_obj = NULLPLR;
+	Player* player_obj = NULL;
 
 	if( obj->IsPlayer() )
 	{
@@ -245,20 +244,20 @@ PlayerPointer GetPlayerFromObject(ObjectPointer obj)
 	}
 	else if( obj->IsPet() )
 	{
-		PetPointer pet_obj = TO_PET(obj);
+		Pet* pet_obj = TO_PET(obj);
 		if( pet_obj )
 			player_obj =  pet_obj->GetPetOwner();
 	}
 	else if( obj->IsUnit() )
 	{
 		// If it's not a player nor a pet, it can still be a totem.
-		CreaturePointer creature_obj = TO_CREATURE(obj);
+		Creature* creature_obj = TO_CREATURE(obj);
 		if( creature_obj && creature_obj->IsTotem()) 
-			player_obj =  creature_obj->GetTotemOwner();
+			player_obj =  TO_PLAYER(creature_obj->GetSummonOwner());
 	}
 	return player_obj;
 }
-bool isCombatSupport(ObjectPointer objA, ObjectPointer objB)// B combat supports A?
+bool isCombatSupport(Object* objA, Object* objB)// B combat supports A?
 {
 	if( !objA || !objB )
 		return false;   
@@ -297,21 +296,23 @@ bool isCombatSupport(ObjectPointer objA, ObjectPointer objB)// B combat supports
 }
 
 
-bool isAlliance(ObjectPointer objA)// A is alliance?
+bool isAlliance(Object* objA)// A is alliance?
 {
-	FactionTemplateDBC * m_sw_faction = dbcFactionTemplate.LookupEntry(11);
-	FactionDBC * m_sw_factionDBC = dbcFaction.LookupEntry(72);
 	if(!objA || objA->m_factionDBC == NULL || objA->m_faction == NULL)
 		return true;
+
+	//Get stormwind faction frm dbc (11/72)
+	FactionTemplateDBC * m_sw_faction = dbcFactionTemplate.LookupEntry(11);
+	FactionDBC * m_sw_factionDBC = dbcFaction.LookupEntry(72);
 
 	if(m_sw_faction == objA->m_faction || m_sw_factionDBC == objA->m_factionDBC)
 		return true;
 
-	//bool hostile = false;
+	//Is StormWind hostile to ObjectA?
 	uint32 faction = m_sw_faction->Faction;
-	uint32 host = objA->m_faction->HostileMask;
+	uint32 hostilemask = objA->m_faction->HostileMask;
 
-	if(faction & host)
+	if(faction & hostilemask)
 		return false;
 
 	// check friend/enemy list
@@ -321,10 +322,11 @@ bool isAlliance(ObjectPointer objA)// A is alliance?
 			return false;
 	}
 
+	//Is ObjectA hostile to StormWind?
 	faction = objA->m_faction->Faction;
-	host = m_sw_faction->HostileMask;
+	hostilemask = m_sw_faction->HostileMask;
 
-	if(faction & host)
+	if(faction & hostilemask)
 		return false;
 
 	// check friend/enemy list
@@ -334,6 +336,7 @@ bool isAlliance(ObjectPointer objA)// A is alliance?
 			return false;
 	}
 
+	//We're not hostile towards SW, so we are allied
 	return true;
 }
 

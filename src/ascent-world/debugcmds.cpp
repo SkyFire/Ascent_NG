@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 /////////////////////////////////////////////////
 //  Debug Chat Commands
@@ -25,7 +20,7 @@
 
 bool ChatHandler::HandleDebugInFrontCommand(const char* args, WorldSession *m_session)
 {
-	ObjectPointer obj;
+	Object* obj;
 
 	uint64 guid = m_session->GetPlayer()->GetSelection();
 	if (guid != 0)
@@ -49,7 +44,7 @@ bool ChatHandler::HandleDebugInFrontCommand(const char* args, WorldSession *m_se
 
 bool ChatHandler::HandleShowReactionCommand(const char* args, WorldSession *m_session)
 {
-	ObjectPointer obj = NULLOBJ;
+	Object* obj = NULL;
 
 	uint64 guid = m_session->GetPlayer()->GetSelection();
 	if (guid != 0)
@@ -83,7 +78,7 @@ bool ChatHandler::HandleShowReactionCommand(const char* args, WorldSession *m_se
 
 bool ChatHandler::HandleDistanceCommand(const char* args, WorldSession *m_session)
 {
-	ObjectPointer obj;
+	Object* obj;
 
 	uint64 guid = m_session->GetPlayer()->GetSelection();
 	if (guid != 0)
@@ -107,7 +102,7 @@ bool ChatHandler::HandleDistanceCommand(const char* args, WorldSession *m_sessio
 
 bool ChatHandler::HandleMoveInfoCommand(const char* args, WorldSession *m_session)
 {
-	ObjectPointer obj;
+	Object* obj;
 
 	uint64 guid = m_session->GetPlayer()->GetSelection();
 	if(!(obj = TO_OBJECT(m_session->GetPlayer())->GetMapMgr()->GetCreature(GET_LOWGUID_PART(guid))))
@@ -124,7 +119,7 @@ bool ChatHandler::HandleMoveInfoCommand(const char* args, WorldSession *m_sessio
 	uint32 attackerscount = (uint32)TO_CREATURE(obj)->GetAIInterface()->getAITargetsCount();
 	uint32 creatureState = TO_CREATURE(obj)->GetAIInterface()->m_creatureState;
 	uint32 curwp = TO_CREATURE(obj)->GetAIInterface()->getCurrentWaypoint();
-	//UnitPointer unitToFollow = TO_CREATURE(obj)->GetAIInterface()->getUnitToFollow();
+	//Unit unitToFollow = TO_CREATURE(obj)->GetAIInterface()->getUnitToFollow();
 	uint32 aistate = TO_CREATURE(obj)->GetAIInterface()->getAIState();
 	uint32 aitype = TO_CREATURE(obj)->GetAIInterface()->getAIType();
 	uint32 aiagent = TO_CREATURE(obj)->GetAIInterface()->getCurrentAgent();
@@ -159,7 +154,7 @@ bool ChatHandler::HandleMoveInfoCommand(const char* args, WorldSession *m_sessio
 
 bool ChatHandler::HandleDebugSetPhase(const char* args, WorldSession *m_session)
 {
-	UnitPointer pUnit = getSelectedChar(m_session, false);
+	Unit* pUnit = getSelectedChar(m_session, false);
 	if(!pUnit)
 	{
 		pUnit = getSelectedCreature(m_session, false);
@@ -183,7 +178,7 @@ bool ChatHandler::HandleDebugSetPhase(const char* args, WorldSession *m_session)
 
 bool ChatHandler::HandleAIMoveCommand(const char* args, WorldSession *m_session)
 {
-	ObjectPointer obj = NULLOBJ;
+	Object* obj = NULL;
 
 	uint64 guid = m_session->GetPlayer()->GetSelection();
 	if (guid != 0)
@@ -320,7 +315,7 @@ bool ChatHandler::HandleAIMoveCommand(const char* args, WorldSession *m_session)
 bool ChatHandler::HandleFaceCommand(const char* args, WorldSession *m_session)
 {
 
-	ObjectPointer obj = NULLOBJ;
+	Object* obj = NULL;
 
 	uint64 guid = m_session->GetPlayer()->GetSelection();
 	if (guid != 0)
@@ -372,7 +367,7 @@ bool ChatHandler::HandleFaceCommand(const char* args, WorldSession *m_session)
 bool ChatHandler::HandleAIMoveCommand(const char* args)
 {
 WorldPacket data;
-ObjectPointer obj = NULL;
+Object* obj = NULL;
 
 uint64 guid = m_session->GetPlayer()->GetSelection();
 if (guid != 0)
@@ -482,7 +477,7 @@ return true;
 */
 bool ChatHandler::HandleSetBytesCommand(const char* args, WorldSession *m_session)
 {
-	ObjectPointer obj;
+	Object* obj;
 
 	uint64 guid = m_session->GetPlayer()->GetSelection();
 	if (guid != 0)
@@ -535,7 +530,7 @@ bool ChatHandler::HandleSetBytesCommand(const char* args, WorldSession *m_sessio
 
 bool ChatHandler::HandleGetBytesCommand(const char* args, WorldSession *m_session)
 {
-	ObjectPointer obj;
+	Object* obj;
 
 	uint64 guid = m_session->GetPlayer()->GetSelection();
 	if (guid != 0)
@@ -578,7 +573,7 @@ bool ChatHandler::HandleGetBytesCommand(const char* args, WorldSession *m_sessio
 }
 bool ChatHandler::HandleDebugLandWalk(const char* args, WorldSession *m_session)
 {
-	PlayerPointer chr = getSelectedChar(m_session);
+	Player* chr = getSelectedChar(m_session);
 	char buf[256];
 
 	if (chr == NULL) // Ignatich: what should NOT happen but just in case...
@@ -594,7 +589,7 @@ bool ChatHandler::HandleDebugLandWalk(const char* args, WorldSession *m_session)
 
 bool ChatHandler::HandleDebugWaterWalk(const char* args, WorldSession *m_session)
 {
-	PlayerPointer chr = getSelectedChar(m_session);
+	Player* chr = getSelectedChar(m_session);
 	char buf[256];
 
 	if (chr == NULL) // Ignatich: what should NOT happen but just in case...
@@ -610,7 +605,7 @@ bool ChatHandler::HandleDebugWaterWalk(const char* args, WorldSession *m_session
 
 bool ChatHandler::HandleDebugUnroot(const char* args, WorldSession *m_session)
 {
-	PlayerPointer chr = getSelectedChar(m_session);
+	Player* chr = getSelectedChar(m_session);
 	char buf[256];
 
 	if (chr == NULL) // Ignatich: what should NOT happen but just in case...
@@ -628,7 +623,7 @@ bool ChatHandler::HandleDebugUnroot(const char* args, WorldSession *m_session)
 
 bool ChatHandler::HandleDebugRoot(const char* args, WorldSession *m_session)
 {
-	PlayerPointer chr = getSelectedChar(m_session);
+	Player* chr = getSelectedChar(m_session);
 	char buf[256];
 
 	if (chr == NULL) // Ignatich: what should NOT happen but just in case...
@@ -644,7 +639,7 @@ bool ChatHandler::HandleDebugRoot(const char* args, WorldSession *m_session)
 
 bool ChatHandler::HandleAggroRangeCommand(const char* args, WorldSession *m_session)
 {
-	UnitPointer obj = NULLUNIT;
+	Unit* obj = NULL;
 
 	uint64 guid = m_session->GetPlayer()->GetSelection();
 	if (guid != 0)
@@ -692,7 +687,7 @@ bool ChatHandler::HandleKnockBackCommand(const char* args, WorldSession *m_sessi
 	m_session->GetPlayer()->SendMessageToSet(&data, true);*/
 
 	float hspeed, vspeed;
-	UnitPointer target = m_session->GetPlayer()->GetMapMgr()->GetUnit(m_session->GetPlayer()->GetSelection());
+	Unit* target = m_session->GetPlayer()->GetMapMgr()->GetUnit(m_session->GetPlayer()->GetSelection());
 	if(!target || !target->IsPlayer())
 		target = m_session->GetPlayer();
 	if(sscanf(args, "%f %f", &hspeed, &vspeed) != 2)
@@ -715,7 +710,7 @@ bool ChatHandler::HandleKnockBackCommand(const char* args, WorldSession *m_sessi
 
 bool ChatHandler::HandleFadeCommand(const char* args, WorldSession *m_session)
 {
-	UnitPointer target = m_session->GetPlayer()->GetMapMgr()->GetUnit(m_session->GetPlayer()->GetSelection());
+	Unit* target = m_session->GetPlayer()->GetMapMgr()->GetUnit(m_session->GetPlayer()->GetSelection());
 	if(!target)
 		target = m_session->GetPlayer();
 	char* v = strtok((char*)args, " ");
@@ -733,7 +728,7 @@ bool ChatHandler::HandleFadeCommand(const char* args, WorldSession *m_session)
 
 bool ChatHandler::HandleThreatModCommand(const char* args, WorldSession *m_session)
 {
-	UnitPointer target = m_session->GetPlayer()->GetMapMgr()->GetUnit(m_session->GetPlayer()->GetSelection());
+	Unit* target = m_session->GetPlayer()->GetMapMgr()->GetUnit(m_session->GetPlayer()->GetSelection());
 	if(!target)
 		target = m_session->GetPlayer();
 	char* v = strtok((char*)args, " ");
@@ -751,7 +746,7 @@ bool ChatHandler::HandleThreatModCommand(const char* args, WorldSession *m_sessi
 
 bool ChatHandler::HandleCalcThreatCommand(const char* args, WorldSession *m_session)
 {
-	UnitPointer target = m_session->GetPlayer()->GetMapMgr()->GetUnit(m_session->GetPlayer()->GetSelection());
+	Unit* target = m_session->GetPlayer()->GetMapMgr()->GetUnit(m_session->GetPlayer()->GetSelection());
 	if(!target)
 	{
 		SystemMessage(m_session, "You should select a creature.");
@@ -775,7 +770,7 @@ bool ChatHandler::HandleCalcThreatCommand(const char* args, WorldSession *m_sess
 
 bool ChatHandler::HandleThreatListCommand(const char* args, WorldSession *m_session)
 {
-	UnitPointer target = NULLUNIT;
+	Unit* target = NULL;
 	target = m_session->GetPlayer()->GetMapMgr()->GetUnit(m_session->GetPlayer()->GetSelection());
 	if(!target)
 	{
@@ -836,7 +831,7 @@ bool ChatHandler::HandleSendItemPushResult(const char* args, WorldSession* m_ses
 bool ChatHandler::HandleModifyBitCommand(const char* args, WorldSession* m_session)
 {
 
-	ObjectPointer obj;
+	Object* obj;
 
 	uint64 guid = m_session->GetPlayer()->GetSelection();
 	if (guid != 0)
@@ -892,7 +887,7 @@ bool ChatHandler::HandleModifyBitCommand(const char* args, WorldSession* m_sessi
 
 bool ChatHandler::HandleModifyValueCommand(const char* args,  WorldSession* m_session)
 {
-	ObjectPointer obj;
+	Object* obj;
 
 	uint64 guid = m_session->GetPlayer()->GetSelection();
 	if (guid != 0)
@@ -946,7 +941,7 @@ bool ChatHandler::HandleModifyValueCommand(const char* args,  WorldSession* m_se
 
 bool ChatHandler::HandleDebugDumpCoordsCommmand(const char * args, WorldSession * m_session)
 {
-	PlayerPointer p = m_session->GetPlayer();
+	Player* p = m_session->GetPlayer();
 	//char buffer[200] = {0};
 	FILE * f = fopen("C:\\script_dump.txt", "a");
 	if(!f) return true;

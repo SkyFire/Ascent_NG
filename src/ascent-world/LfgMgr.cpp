@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 
@@ -49,7 +44,7 @@ LfgMgr::~LfgMgr()
 	
 }
 
-bool LfgMgr::AttemptLfgJoin(PlayerPointer pl, uint32 LfgDungeonId)
+bool LfgMgr::AttemptLfgJoin(Player* pl, uint32 LfgDungeonId)
 {
 	if( pl == NULL )
 		return false;
@@ -61,10 +56,10 @@ bool LfgMgr::AttemptLfgJoin(PlayerPointer pl, uint32 LfgDungeonId)
 	// search for any groups that have auto add members enabled, also have this dungeon, and add him
 	// if one is found.
 	/*LfgPlayerList itr;
-	PlayerPointer plr;
+	Player* plr;
 
 	// make sure the dungeon is usable by autojoin (should never be true)
-	if(LfgDungeonTypes[LfgDungeonId] != LFG_INSTANCE && LfgDungeonTypes[LfgDungeonId] != LFG_HEROIC_DUNGEON)
+	if(LfgDungeonTypes[LfgDungeonId] != LFG_DUNGEON && LfgDungeonTypes[LfgDungeonId] != LFG_HEROIC_DUNGEON)
 		return false;
 
 	m_lock.Acquire();
@@ -85,7 +80,7 @@ bool LfgMgr::AttemptLfgJoin(PlayerPointer pl, uint32 LfgDungeonId)
 	return false;
 }
 
-void LfgMgr::SetPlayerInLFGqueue(PlayerPointer pl,uint32 LfgDungeonId)
+void LfgMgr::SetPlayerInLFGqueue(Player* pl,uint32 LfgDungeonId)
 {
 	if( pl == NULL )
 		return;
@@ -102,7 +97,7 @@ void LfgMgr::SetPlayerInLFGqueue(PlayerPointer pl,uint32 LfgDungeonId)
 	m_lock.Release();
 }
 
-void LfgMgr::RemovePlayerFromLfgQueues(PlayerPointer pl)
+void LfgMgr::RemovePlayerFromLfgQueues(Player* pl)
 {
 	if( pl == NULL )
 		return;
@@ -135,7 +130,7 @@ void LfgMgr::RemovePlayerFromLfgQueues(PlayerPointer pl)
 	m_lock.Release();
 }
 
-void LfgMgr::RemovePlayerFromLfgQueue( PlayerPointer plr, uint32 LfgDungeonId )
+void LfgMgr::RemovePlayerFromLfgQueue( Player* plr, uint32 LfgDungeonId )
 {
 	if( plr == NULL )
 		return;
@@ -161,12 +156,12 @@ void LfgMgr::UpdateLfgQueue(uint32 LfgDungeonId)
 	LfgPlayerList::iterator itr;
 	LfgPlayerList::iterator it2;
 	LfgPlayerList::iterator it3;
-	PlayerPointer plr;
+	Player* plr;
 	uint32 i;
 	//LfgMatch * pMatch;
 
 	// only update on autojoinable dungeons
-	if(LfgDungeonTypes[LfgDungeonId] != LFG_INSTANCE && LfgDungeonTypes[LfgDungeonId] != LFG_HEROIC_DUNGEON)
+	if(LfgDungeonTypes[LfgDungeonId] != LFG_DUNGEON && LfgDungeonTypes[LfgDungeonId] != LFG_HEROIC_DUNGEON)
 		return;
 
 	m_lock.Acquire();
@@ -259,7 +254,7 @@ void LfgMgr::UpdateLfgQueue(uint32 LfgDungeonId)
 	m_lock.Release();
 }
 
-void LfgMgr::SendLfgList( PlayerPointer plr, uint32 Dungeon )
+void LfgMgr::SendLfgList( Player* plr, uint32 Dungeon )
 {
 	if( plr == NULL )
 		return;
@@ -270,7 +265,7 @@ void LfgMgr::SendLfgList( PlayerPointer plr, uint32 Dungeon )
 	LfgPlayerList::iterator itr;
 	GroupMembersSet::iterator it2;
 	uint32 count = 0;
-	PlayerPointer pl;
+	Player* pl;
 	uint32 i;
 	uint64 tguid;
 	SubGroup * sgrp;
@@ -353,7 +348,7 @@ void LfgMgr::SendLfgList( PlayerPointer plr, uint32 Dungeon )
     plr->GetSession()->SendPacket(&data);
 }
 
-void LfgMgr::SetPlayerInLfmList(PlayerPointer pl, uint32 LfgDungeonId)
+void LfgMgr::SetPlayerInLfmList(Player* pl, uint32 LfgDungeonId)
 {
 	if( pl == NULL )
 		return;
@@ -369,7 +364,7 @@ void LfgMgr::SetPlayerInLfmList(PlayerPointer pl, uint32 LfgDungeonId)
 	m_lock.Release();
 }
 
-void LfgMgr::RemovePlayerFromLfmList(PlayerPointer pl, uint32 LfmDungeonId)
+void LfgMgr::RemovePlayerFromLfmList(Player* pl, uint32 LfmDungeonId)
 {
 	if( pl == NULL )
 		return;

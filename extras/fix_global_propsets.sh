@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# Ascent 2007, Aim
+# AscentNG 2010, Zed
 
 # WARNING:
 #  Running this script will wipe all previous svn:ignore propsets

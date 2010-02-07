@@ -1,3 +1,18 @@
+/*
+ * Scripts for Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
+
+
 #include "StdAfx.h"
 #include "../../../ascent-shared/svn_revision.h"
 
@@ -310,7 +325,7 @@ void StatDumper::DumpStats()
 	uint32 classes[DRUID+1];
 	memset(&races[0], 0, sizeof(uint32)*(RACE_DRAENEI+1));
 	memset(&classes[0], 0, sizeof(uint32)*(RACE_DRAENEI+1));
-    std::deque<PlayerPointer> gms;
+    std::deque<Player*> gms;
     {
         // Dump server information.
 #ifdef WIN32
@@ -329,7 +344,7 @@ void StatDumper::DumpStats()
         // lock players reader
         objmgr._playerslock.AcquireReadLock();
 
-        HM_NAMESPACE::hash_map<uint32, PlayerPointer>::const_iterator itr;
+        HM_NAMESPACE::hash_map<uint32, Player*>::const_iterator itr;
         for (itr = objmgr._players.begin(); itr != objmgr._players.end(); itr++)
         {
             if(itr->second->GetSession() && itr->second->IsInWorld())
@@ -415,7 +430,7 @@ void StatDumper::DumpStats()
 	}
 	fprintf(f, "  </statsummary>\n");
 
-    PlayerPointer  plr;
+    Player*  plr;
     uint32 t = (uint32)time(NULL);
 
     char otime[100];
@@ -464,7 +479,7 @@ void StatDumper::DumpStats()
     fprintf(f, "  <sessions>\n");
         // Dump Player Information
         objmgr._playerslock.AcquireReadLock();
-        HM_NAMESPACE::hash_map<uint32, PlayerPointer>::const_iterator itr;
+        HM_NAMESPACE::hash_map<uint32, Player*>::const_iterator itr;
 
         for (itr = objmgr._players.begin(); itr != objmgr._players.end(); itr++)
         {

@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 
 #ifndef _EOTS_H
@@ -27,25 +22,25 @@
 class EyeOfTheStorm : public CBattleground
 {
 public:
-	EyeOfTheStorm( MapMgrPointer mgr, uint32 id, uint32 lgroup, uint32 t);
+	EyeOfTheStorm( MapMgr* mgr, uint32 id, uint32 lgroup, uint32 t);
 	~EyeOfTheStorm();
 	virtual void Init();
 
-	void HookOnPlayerDeath(PlayerPointer plr);
-	void HookFlagDrop(PlayerPointer plr, GameObjectPointer obj);
-	void HookFlagStand(PlayerPointer plr, GameObjectPointer obj);
-	void HookOnMount(PlayerPointer plr);
-	void HookOnAreaTrigger(PlayerPointer plr, uint32 id);
-	bool HookHandleRepop(PlayerPointer plr);
-	void OnAddPlayer(PlayerPointer plr);
-	void OnRemovePlayer(PlayerPointer plr);
+	void HookOnPlayerDeath(Player* plr);
+	void HookFlagDrop(Player* plr, GameObject* obj);
+	void HookFlagStand(Player* plr, GameObject* obj);
+	void HookOnMount(Player* plr);
+	void HookOnAreaTrigger(Player* plr, uint32 id);
+	bool HookHandleRepop(Player* plr);
+	void OnAddPlayer(Player* plr);
+	void OnRemovePlayer(Player* plr);
 	void OnCreate();
-	void HookOnPlayerKill(PlayerPointer plr, UnitPointer pVictim);
-	void HookOnHK(PlayerPointer plr);
+	void HookOnPlayerKill(Player* plr, Unit* pVictim);
+	void HookOnHK(Player* plr);
 	void HookOnShadowSight();
 	void SpawnBuff(uint32 x);
 	LocationVector GetStartingCoords(uint32 Team);
-	static BattlegroundPointer Create( MapMgrPointer m, uint32 i, uint32 l, uint32 t) { return EyeOfTheStormPointer(new EyeOfTheStorm(m, i, l, t)); }
+	static CBattleground* Create( MapMgr* m, uint32 i, uint32 l, uint32 t) { return new EyeOfTheStorm(m, i, l, t); }
 	uint32 GetFlagHolderGUID() { return m_flagHolder; }
 
 	const char * GetName() { return "Eye of the Storm"; }
@@ -59,14 +54,14 @@ public:
 
 	void RespawnCPFlag(uint32 i, uint32 id);		// 0 = Neutral, <0 = Leaning towards alliance, >0 Leaning towards horde
 
-	bool HookSlowLockOpen( GameObjectPointer pGo, PlayerPointer pPlayer, SpellPointer pSpell);
-	void DropFlag(PlayerPointer plr);
+	bool HookSlowLockOpen( GameObject* pGo, Player* pPlayer, Spell* pSpell);
+	void DropFlag(Player* plr);
 	void EventResetFlag();
-	void RepopPlayersOfTeam(int32 team, CreaturePointer sh);
+	void RepopPlayersOfTeam(int32 team, Creature* sh);
 
 	/* looooooot */
 	bool SupportsPlayerLoot() { return true; }
-	void HookGenerateLoot(PlayerPointer plr, CorpsePointer pCorpse);
+	void HookGenerateLoot(Player* plr, Corpse* pCorpse);
 
 	void SetIsWeekend(bool isweekend);
 
@@ -75,20 +70,23 @@ protected:
 	int32 m_CPStatus[EOTS_TOWER_COUNT];		
 	uint32 m_flagHolder;
 
-	GameObjectPointer m_standFlag;
-	GameObjectPointer m_dropFlag;
+	int m_bonusHonor;
+	uint32 m_resToGainBH;
 
-	GameObjectPointer m_CPStatusGO[EOTS_TOWER_COUNT];
-	GameObjectPointer m_CPBanner[EOTS_TOWER_COUNT];
-	GameObjectPointer m_bubbles[2];
-	GameObjectPointer m_EOTSbuffs[4];
+	GameObject* m_standFlag;
+	GameObject* m_dropFlag;
+
+	GameObject* m_CPStatusGO[EOTS_TOWER_COUNT];
+	GameObject* m_CPBanner[EOTS_TOWER_COUNT];
+	GameObject* m_bubbles[2];
+	GameObject* m_EOTSbuffs[4];
 
 	typedef map<uint32, uint32> EOTSStoredPlayerMap;
 	EOTSStoredPlayerMap m_CPStored[EOTS_TOWER_COUNT];
 	int32 m_towerCount[2];
 
 	uint32 m_points[2];
-	CreaturePointer m_spiritGuides[EOTS_TOWER_COUNT];
+	Creature* m_spiritGuides[EOTS_TOWER_COUNT];
 };
 
 #endif		// _EOTS_H

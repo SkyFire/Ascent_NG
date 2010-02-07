@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #define AB_BUFF_RESPAWN_TIME 90000
 
@@ -52,13 +47,13 @@ enum ABSpawnTypes
 class ArathiBasin : public CBattleground
 {
 public:
-	GameObjectPointer m_buffs[AB_NUM_BUFFS];
-	GameObjectPointer m_controlPoints[AB_NUM_CONTROL_POINTS];
-	GameObjectPointer m_controlPointAuras[AB_NUM_CONTROL_POINTS];
+	GameObject* m_buffs[AB_NUM_BUFFS];
+	GameObject* m_controlPoints[AB_NUM_CONTROL_POINTS];
+	GameObject* m_controlPointAuras[AB_NUM_CONTROL_POINTS];
 	bool m_nearingVictory[2];
 
 protected:
-	list< GameObjectPointer > m_gates;
+	list< GameObject* > m_gates;
 	
 	uint32 m_resources[2];
 	uint32 m_capturedBases[2];
@@ -66,47 +61,49 @@ protected:
 	int32 m_basesLastOwnedBy[AB_NUM_CONTROL_POINTS];
 	int32 m_basesOwnedBy[AB_NUM_CONTROL_POINTS];
 	int32 m_basesAssaultedBy[AB_NUM_CONTROL_POINTS];
+	int m_bonusHonor;
+	uint32 m_resToGainBH;
 	bool m_flagIsVirgin[AB_NUM_CONTROL_POINTS];
-	CreaturePointer m_spiritGuides[AB_NUM_CONTROL_POINTS];
+	Creature* m_spiritGuides[AB_NUM_CONTROL_POINTS];
 	uint32 m_lgroup;
 
 public:
-	ArathiBasin( MapMgrPointer mgr, uint32 id, uint32 lgroup, uint32 t);
+	ArathiBasin( MapMgr* mgr, uint32 id, uint32 lgroup, uint32 t);
 	~ArathiBasin();
 	virtual void Init();
 
-	void HookOnPlayerDeath(PlayerPointer plr);
-	void HookFlagDrop(PlayerPointer plr, GameObjectPointer obj);
-	void HookFlagStand(PlayerPointer plr, GameObjectPointer obj);
-	void HookOnMount(PlayerPointer plr);
-	void HookOnAreaTrigger(PlayerPointer plr, uint32 id);
-	bool HookHandleRepop(PlayerPointer plr);
-	void OnAddPlayer(PlayerPointer plr);
-	void OnRemovePlayer(PlayerPointer plr);
+	void HookOnPlayerDeath(Player* plr);
+	void HookFlagDrop(Player* plr, GameObject* obj);
+	void HookFlagStand(Player* plr, GameObject* obj);
+	void HookOnMount(Player* plr);
+	void HookOnAreaTrigger(Player* plr, uint32 id);
+	bool HookHandleRepop(Player* plr);
+	void OnAddPlayer(Player* plr);
+	void OnRemovePlayer(Player* plr);
 	void OnCreate();
-	void HookOnPlayerKill(PlayerPointer plr, UnitPointer pVictim);
-	void HookOnHK(PlayerPointer plr);
+	void HookOnPlayerKill(Player* plr, Unit* pVictim);
+	void HookOnHK(Player* plr);
 	void HookOnShadowSight();
 	void SpawnBuff(uint32 x);
 	LocationVector GetStartingCoords(uint32 Team);
-	void DropFlag(PlayerPointer plr);
+	void DropFlag(Player* plr);
 
-	static BattlegroundPointer Create( MapMgrPointer m, uint32 i, uint32 l, uint32 t) { return ArathiBasinPointer(new ArathiBasin(m, i, l, t)); }
+	static CBattleground* Create( MapMgr* m, uint32 i, uint32 l, uint32 t) { return new ArathiBasin(m, i, l, t); }
 
 	const char * GetName() { return "Arathi Basin"; }
 	void OnStart();
 
 	void EventUpdateResources(uint32 Team);
-	bool HookSlowLockOpen( GameObjectPointer pGo, PlayerPointer pPlayer, SpellPointer pSpell);
+	bool HookSlowLockOpen( GameObject* pGo, Player* pPlayer, Spell* pSpell);
 
 	/* AB Game Mechanics */
 	void SpawnControlPoint(uint32 Id, uint32 Type);
 	void CaptureControlPoint(uint32 Id, uint32 Team);
-	void AssaultControlPoint(PlayerPointer pPlayer, uint32 Id);
+	void AssaultControlPoint(Player* pPlayer, uint32 Id);
 
 	/* looooooot */
 	bool SupportsPlayerLoot() { return true; }
-	void HookGenerateLoot(PlayerPointer plr, CorpsePointer pCorpse);
+	void HookGenerateLoot(Player* plr, Corpse* pCorpse);
 
 	void SetIsWeekend(bool isweekend);
 };

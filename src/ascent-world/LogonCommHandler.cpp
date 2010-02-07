@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 initialiseSingleton(LogonCommHandler);
@@ -163,21 +158,13 @@ void LogonCommHandler::Connect(LogonServer * server)
 	if(bServerShutdown)
 		return;
 
-	//if we reach 25 connect attemps, restart server.
-	//Temporary work around until we find out socket get's jammed.
 	++ReConCounter;
-	if(ReConCounter >25)
-	{
-		sWorld.QueueShutdown(0, SERVER_SHUTDOWN_TYPE_RESTART);
-		return;
-	}
-
-	Log.Notice("LogonCommClient", "Attempt %u out of 25 to logonserver on `%s:%u`", ReConCounter, server->Address.c_str(), server->Port );
+	Log.Notice("LogonCommClient", "Connecting to logonserver on `%s:%u, attempt %u`", server->Address.c_str(), server->Port, ReConCounter );
 	server->RetryTime = (uint32)UNIXTIME + 10;
 	server->Registered = false;
 	LogonCommClientSocket * conn = ConnectToLogon(server->Address, server->Port);
 	logons[server] = conn;
-	if(conn == 0)
+	if(conn == NULL)
 	{
 		Log.Notice("LogonCommClient", "Connection failed. Will try again in 10 seconds.");
 		return;
@@ -190,6 +177,7 @@ void LogonCommHandler::Connect(LogonServer * server)
 		if((uint32)UNIXTIME >= tt || bServerShutdown)
 		{
 			Log.Notice("LogonCommClient", "Authentication timed out.");
+			conn->_id = 0;
 			conn->Disconnect();
 			logons[server]=NULL;
 			return;
@@ -198,15 +186,16 @@ void LogonCommHandler::Connect(LogonServer * server)
 		Sleep(50);
 	}
 
-	if(conn->authenticated != 1)
+	if(conn->authenticated == 1)
+		Log.Notice("LogonCommClient","Authentication succeeded.");
+	else
 	{
 		Log.Notice("LogonCommClient","Authentication failed.");
-		logons[server] = NULL;
+		conn->_id = 0;
 		conn->Disconnect();
+		logons[server] = NULL;
 		return;
 	}
-	else
-		Log.Notice("LogonCommClient","Authentication succeeded.");
 
 	// Send the initial ping
 	conn->SendPing();
@@ -225,8 +214,9 @@ void LogonCommHandler::Connect(LogonServer * server)
 		if((uint32)UNIXTIME >= st)
 		{
 			Log.Notice("LogonCommClient", "Realm registration timed out.");
-			logons[server] = NULL;
+			conn->_id = 0;
 			conn->Disconnect();
+			logons[server] = NULL;
 			break;
 		}
 		Sleep(50);
@@ -263,41 +253,39 @@ void LogonCommHandler::UpdateSockets()
 	mapLock.Acquire();
 
 	map<LogonServer*, LogonCommClientSocket*>::iterator itr = logons.begin();
-	LogonCommClientSocket * cs;
+	LogonCommClientSocket * cs = NULL;
 	uint32 t = (uint32)UNIXTIME;
 	for(; itr != logons.end(); ++itr)
 	{
 		cs = itr->second;
-		if(cs != 0)
+		if(cs != NULL)
 		{
-			if(!pings) continue;
-
-            if(cs->IsDeleted() || !cs->IsConnected())
-            {
-                cs->_id = 0;
-                itr->second = 0;
-                continue;
-            }
-
-			if(cs->last_pong < t && ((t - cs->last_pong) > 60))
+			if(cs->IsDeleted() || !cs->IsConnected())
 			{
-				// no pong for 60 seconds -> remove the socket
-				printf(" >> realm id %u connection dropped due to pong timeout.\n", (unsigned int)itr->first->ID);
+				Log.Error("LogonCommClient","Realm id %u lost connection.", (unsigned int)itr->first->ID);
 				cs->_id = 0;
-				cs->Disconnect();
 				itr->second = 0;
 				continue;
 			}
-            
-			if( (t - cs->last_ping) > 15 )
+
+			if(pings)
 			{
-				// send a ping packet.
-				cs->SendPing();
+				if(cs->last_pong < t && ((t - cs->last_pong) > 60))
+				{
+					// no pong for 60 seconds -> remove the socket
+					Log.Error("LogonCommClient","Realm id %u connection dropped due to pong timeout.", (unsigned int)itr->first->ID);
+					cs->_id = 0;
+					cs->Disconnect();
+					itr->second = 0;
+					continue;
+				}
+				if( (t - cs->last_ping) > 15 )//ping every 15 seconds when connected
+					cs->SendPing();
 			}
 		}
 		else
 		{
-			// check retry time
+			// Try to reconnect
 			if(t >= itr->first->RetryTime && !bServerShutdown)
 			{
 				Connect(itr->first);
@@ -317,9 +305,11 @@ void LogonCommHandler::ConnectionDropped(uint32 ID)
 	{
 		if(itr->first->ID == ID && itr->second != 0)
 		{
-			sLog.outColor(TNORMAL, " >> realm id %u connection was dropped unexpectedly. reconnecting next loop.", ID);
-			sLog.outColor(TNORMAL, "\n");
-			itr->second = 0;
+			if(!bServerShutdown)
+				Log.Error("LogonCommHandler"," Realm id %u connection was dropped unexpectedly. reconnecting next loop.", ID);
+			itr->second->_id = 0;
+			itr->second->Disconnect();
+			itr->second = NULL;
 			break;
 		}
 	}
@@ -377,7 +367,8 @@ void LogonCommHandler::RemoveUnauthedSocket(uint32 id)
 
 void LogonCommHandler::LoadRealmConfiguration()
 {
-	LogonServer * ls = new LogonServer;
+	LogonServer * ls = NULL;
+	ls = new LogonServer;
 	ls->ID = idhigh++;
 	ls->Name = Config.RealmConfig.GetStringDefault("LogonServer", "Name", "UnkLogon");
 	ls->Address = Config.RealmConfig.GetStringDefault("LogonServer", "Address", "127.0.0.1");
@@ -393,7 +384,8 @@ void LogonCommHandler::LoadRealmConfiguration()
 	{
 		for(uint32 i = 1; i < realmcount+1; ++i)
 		{
-			Realm * realm = new Realm;
+			Realm * realm = NULL;
+			realm = new Realm;
 			realm->Name = Config.RealmConfig.GetStringVA("Name", "SomeRealm", "Realm%u", i);
 			realm->Address = Config.RealmConfig.GetStringVA("Address", "127.0.0.1:8129", "Realm%u", i);
 			realm->WorldRegion = Config.RealmConfig.GetIntVA("WorldRegion", 1, "Realm%u", i);

@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 initialiseSingleton(WorldStateTemplateManager);
@@ -66,23 +61,26 @@ void WorldStateManager::UpdateWorldState(uint32 uWorldStateId, uint32 uValue)
 	// lockit!
 	//m_lock.Acquire();
 
+	if( !m_states.size() )
+		return;
+
 	// we should be existant.
 	itr = m_states.find(uWorldStateId);
 
-	// otherwise abort
 	if( itr == m_states.end() )
 	{
-		printf("!!! WARNING: We are setting world state %u to %u on map %u, but uninitialized !!!\n", uWorldStateId, uValue, m_mapMgr->GetMapId());
+		// otherwise try to create it
+		DEBUG_LOG("WorldState","Creating new world state %u with value %u for map %u.", uWorldStateId, uValue, m_mapMgr->GetMapId());
 		CreateWorldState(uWorldStateId, uValue);
 		itr = m_states.find(uWorldStateId);
 		if( itr == m_states.end() )
 		{
+			//Creation of worldstate failed, abort !
 			//m_lock.Release();
+			Log.Error("WorldState","Creation of world state %u with value %u for map %u failed!", uWorldStateId, uValue, m_mapMgr->GetMapId());
 			return;
 		}
-
 		//m_lock.Release();
-		//return;
 	}
 
 	// set the new value
@@ -98,10 +96,13 @@ void WorldStateManager::UpdateWorldState(uint32 uWorldStateId, uint32 uValue)
 	//m_lock.Release();
 }
 
-void WorldStateManager::SendWorldStates(PlayerPointer pPlayer)
+void WorldStateManager::SendWorldStates(Player* pPlayer)
 {
 	// be threadsafe! wear a mutex!
 	//m_lock.Acquire();
+
+	if( !m_states.size() )
+		return;
 
 	WorldPacket data(SMSG_INIT_WORLD_STATES, (m_states.size() * 8) + 32);
 	WorldStateMap::iterator itr;
@@ -141,7 +142,7 @@ void WorldStateManager::SendWorldStates(PlayerPointer pPlayer)
 	pPlayer->GetSession()->SendPacket(&data);	
 }
 
-void WorldStateManager::ClearWorldStates(PlayerPointer pPlayer)
+void WorldStateManager::ClearWorldStates(Player* pPlayer)
 {
 	// clears the clients view of world states for this map
 	uint8 msgdata[10];
@@ -224,7 +225,7 @@ void WorldStateTemplateManager::LoadFromDB()
 	delete pResult;
 }
 
-void WorldStateTemplateManager::ApplyMapTemplate(MapMgrPointer pmgr)
+void WorldStateTemplateManager::ApplyMapTemplate(MapMgr* pmgr)
 {
 	WorldStateTemplateList::iterator itr = m_templatesForMaps[pmgr->GetMapId()].begin();
 	WorldStateTemplateList::iterator itrend = m_templatesForMaps[pmgr->GetMapId()].end();

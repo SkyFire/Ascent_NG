@@ -1,24 +1,19 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
-void WorldSession::SendTradeStatus(uint8 TradeStatus)
+void WorldSession::SendTradeStatus(uint32 TradeStatus)
 {
 	OutPacket(SMSG_TRADE_STATUS, 4, &TradeStatus);
 };
@@ -34,7 +29,7 @@ void WorldSession::HandleInitiateTrade(WorldPacket & recv_data)
 
 	uint32 TradeStatus = TRADE_STATUS_PROPOSED;
 
-	PlayerPointer pTarget = _player->GetMapMgr()->GetPlayer((uint32)guid);
+	Player* pTarget = _player->GetMapMgr()->GetPlayer((uint32)guid);
 	if(pTarget == NULL || !pTarget->IsInWorld())
 		TradeStatus = TRADE_STATUS_PLAYER_NOT_FOUND;
 	else
@@ -79,7 +74,7 @@ void WorldSession::HandleInitiateTrade(WorldPacket & recv_data)
 
 void WorldSession::HandleBeginTrade(WorldPacket & recv_data)
 {
-	PlayerPointer pTarget = NULLPLR;
+	Player* pTarget = NULL;
 	uint32 TradeStatus = TRADE_STATUS_INITIATED;
 
 	if(!_player->IsInWorld() || _player->mTradeTarget == 0)
@@ -122,7 +117,7 @@ void WorldSession::HandleBusyTrade(WorldPacket & recv_data)
 
 	uint32 TradeStatus = TRADE_STATUS_PLAYER_BUSY;
 
-	PlayerPointer pTarget = _player->GetTradeTarget();
+	Player* pTarget = _player->GetTradeTarget();
 	if(pTarget == NULL || !pTarget->IsInWorld())
 		TradeStatus = TRADE_STATUS_PLAYER_NOT_FOUND;
 
@@ -138,7 +133,7 @@ void WorldSession::HandleIgnoreTrade(WorldPacket & recv_data)
 
 	uint32 TradeStatus = TRADE_STATUS_PLAYER_IGNORED;
 
-	PlayerPointer pTarget = _player->GetTradeTarget();
+	Player* pTarget = _player->GetTradeTarget();
 	if(pTarget == NULL || !pTarget->IsInWorld())
 		TradeStatus = TRADE_STATUS_PLAYER_NOT_FOUND;
 
@@ -160,7 +155,7 @@ void WorldSession::HandleCancelTrade(WorldPacket & recv_data)
 
 	uint32 TradeStatus = TRADE_STATUS_CANCELLED;
 
-	PlayerPointer pTarget = _player->GetTradeTarget();
+	Player* pTarget = _player->GetTradeTarget();
 	if(pTarget == NULL || !pTarget->IsInWorld())
 	{
 		TradeStatus = TRADE_STATUS_PLAYER_NOT_FOUND;
@@ -185,7 +180,7 @@ void WorldSession::HandleUnacceptTrade(WorldPacket & recv_data)
 
 	uint32 TradeStatus = TRADE_STATUS_UNACCEPTED;
 
-	PlayerPointer pTarget = _player->GetTradeTarget();
+	Player* pTarget = _player->GetTradeTarget();
 	if(pTarget == NULL || !pTarget->IsInWorld())
 	{
 		TradeStatus = TRADE_STATUS_PLAYER_NOT_FOUND;
@@ -214,11 +209,11 @@ void WorldSession::HandleSetTradeItem(WorldPacket & recv_data)
 	int8 SourceBag = recv_data.contents()[1];
 	uint8 SourceSlot = recv_data.contents()[2];
 
-	PlayerPointer pTarget = _player->GetTradeTarget();
+	Player* pTarget = _player->GetTradeTarget();
 	if(pTarget == NULL || !pTarget->IsInWorld() || TradeSlot > 6)
 		return;
 
-	ItemPointer pItem = _player->GetItemInterface()->GetInventoryItem(SourceBag, SourceSlot);
+	Item* pItem = _player->GetItemInterface()->GetInventoryItem(SourceBag, SourceSlot);
 	if( pItem == NULL )
 		return;
 
@@ -226,7 +221,7 @@ void WorldSession::HandleSetTradeItem(WorldPacket & recv_data)
 	{
 		if( pItem->IsContainer() && TO_CONTAINER(pItem)->HasItems() )
 		{
-			_player->GetItemInterface()->BuildInventoryChangeError( pItem, NULLITEM, INV_ERR_CANT_TRADE_EQUIP_BAGS);
+			_player->GetItemInterface()->BuildInventoryChangeError( pItem, NULL, INV_ERR_CANT_TRADE_EQUIP_BAGS);
 			return;
 		}
 	}
@@ -275,7 +270,7 @@ void WorldSession::HandleClearTradeItem(WorldPacket & recv_data)
 	if(TradeSlot > 6)
 		return;
 
-	_player->mTradeItems[TradeSlot] = NULLITEM;
+	_player->mTradeItems[TradeSlot] = NULL;
 	_player->SendTradeUpdate();
 }
 
@@ -286,7 +281,7 @@ void WorldSession::HandleAcceptTrade(WorldPacket & recv_data)
 
 	uint32 TradeStatus = TRADE_STATUS_ACCEPTED;
 
-	PlayerPointer pTarget = _player->GetTradeTarget();
+	Player* pTarget = _player->GetTradeTarget();
 	if(pTarget == NULL || !pTarget->IsInWorld())
 		TradeStatus = TRADE_STATUS_PLAYER_NOT_FOUND;
 
@@ -302,7 +297,7 @@ void WorldSession::HandleAcceptTrade(WorldPacket & recv_data)
 		// Ready!
 		uint32 ItemCount = 0;
 		uint32 TargetItemCount = 0;
-		ItemPointer pItem;
+		Item* pItem;
 
 		// Count items on both sides, check if bags are empty.
 		for(uint32 Index = 0; Index < 6; ++Index)
@@ -313,7 +308,7 @@ void WorldSession::HandleAcceptTrade(WorldPacket & recv_data)
 				if( pItem != NULL && pItem->IsContainer() && TO_CONTAINER(pItem)->HasItems())
 				{
 					sCheatLog.writefromsession(this, "%s involved in bag-trick trade with %s", _player->GetName(),pTarget->GetName());
-					_player->GetItemInterface()->BuildInventoryChangeError(	pItem, NULLITEM, INV_ERR_CANT_TRADE_EQUIP_BAGS);
+					_player->GetItemInterface()->BuildInventoryChangeError(	pItem, NULL, INV_ERR_CANT_TRADE_EQUIP_BAGS);
 					TradeStatus = TRADE_STATUS_CANCELLED;
 					break;
 				}
@@ -326,7 +321,7 @@ void WorldSession::HandleAcceptTrade(WorldPacket & recv_data)
 				if( pItem != NULL && pItem->IsContainer() && TO_CONTAINER(pItem)->HasItems() )
 				{
 					sCheatLog.writefromsession(this, "%s involved in bag-trick trade with %s.", pTarget->GetName(),_player->GetName());
-					pTarget->GetItemInterface()->BuildInventoryChangeError(	pItem, NULLITEM, INV_ERR_CANT_TRADE_EQUIP_BAGS);
+					pTarget->GetItemInterface()->BuildInventoryChangeError(	pItem, NULL, INV_ERR_CANT_TRADE_EQUIP_BAGS);
 					TradeStatus = TRADE_STATUS_CANCELLED;
 					break;
 				}
@@ -352,7 +347,7 @@ void WorldSession::HandleAcceptTrade(WorldPacket & recv_data)
 				if(Guid != 0)
 				{
 					if( _player->mTradeItems[Index]->IsSoulbound())
-						_player->GetItemInterface()->BuildInventoryChangeError(	_player->mTradeItems[Index], NULLITEM, INV_ERR_CANNOT_TRADE_THAT);
+						_player->GetItemInterface()->BuildInventoryChangeError(	_player->mTradeItems[Index], NULL, INV_ERR_CANNOT_TRADE_THAT);
 					else
 					{
 						//Remove from player
@@ -365,7 +360,6 @@ void WorldSession::HandleAcceptTrade(WorldPacket & recv_data)
 							if( !pTarget->m_ItemInterface->AddItemToFreeSlot(pItem) )
 							{
 								pItem->Destructor();
-								pItem = NULLITEM;
 							}
 						}
 
@@ -378,7 +372,7 @@ void WorldSession::HandleAcceptTrade(WorldPacket & recv_data)
 				if(Guid != 0)
 				{
 					if( pTarget->mTradeItems[Index]->IsSoulbound())
-						pTarget->GetItemInterface()->BuildInventoryChangeError(	pTarget->mTradeItems[Index], NULLITEM, INV_ERR_CANNOT_TRADE_THAT);
+						pTarget->GetItemInterface()->BuildInventoryChangeError(	pTarget->mTradeItems[Index], NULL, INV_ERR_CANNOT_TRADE_THAT);
 					else
 					{
 						//Remove from pTarget
@@ -391,7 +385,6 @@ void WorldSession::HandleAcceptTrade(WorldPacket & recv_data)
 							if( !_player->m_ItemInterface->AddItemToFreeSlot(pItem) )
 							{
 								pItem->Destructor();
-								pItem = NULLITEM;
 							}
 
 						}

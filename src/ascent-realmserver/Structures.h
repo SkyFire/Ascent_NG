@@ -1,21 +1,21 @@
 /*
  * Ascent MMORPG Server
- * Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
  *
  */
+
+#ifndef __STRUCTURES_H
+#define __STRUCTURES_H
+
+#define CHECK_PACKET_SIZE(pckp, ssize) if(ssize && pckp.size() < ssize) { Disconnect(); return; }
 
 struct RPlayerInfo
 {
@@ -35,25 +35,34 @@ struct RPlayerInfo
 	uint32 Account_Flags;
 	uint32 InstanceId;
 	uint32 MapId;
+	uint32 iInstanceType;
 	uint32 references;
+	uint32 ClientBuild;
+	uint32 Team;
 
 	void Pack(ByteBuffer& buf)
 	{
 		buf << Guid << AccountId << Name << PositionX << PositionY << ZoneId << Race << Class << Gender << Latency << GMPermissions
-			<< Account_Flags << InstanceId << Level << GuildId << MapId;
+			<< Account_Flags << InstanceId << Level << GuildId << MapId << iInstanceType << ClientBuild << Team;
 	}
 
-	void Unpack(ByteBuffer & buf)
+	size_t Unpack(ByteBuffer & buf)
 	{
 		buf >> Guid >> AccountId >> Name >> PositionX >> PositionY >> ZoneId >> Race >> Class >> Gender >> Latency >> GMPermissions
-			>> Account_Flags >> InstanceId << Level << GuildId << MapId;
+			>> Account_Flags >> InstanceId >> Level >> GuildId >> MapId >> iInstanceType >> ClientBuild >> Team;
+		return buf.rpos();
 	}
+
+	uint32 getClassMask() { return 1 << (Class - 1); }
+	uint32 getRaceMask() { return 1 << (Race - 1); }
 
 #ifndef _GAME
 	/* This stuff is used only by the realm server */
+	Session * session;
+	Session * GetSession() { return session; }
 	uint32 RecoveryMapId;
 	LocationVector RecoveryPosition;
-#endif
+#endif //_GAME
 };
 
 #ifndef _GAME
@@ -146,12 +155,11 @@ struct ItemPrototype
 	uint32 ZoneNameID;
 	uint32 MapID;
 	uint32 BagFamily;
-	uint32 ToolCategory;
+	uint32 TotemCategory;
 	SocketInfo Sockets[3];
 	uint32 SocketBonus;
 	uint32 GemProperties;
-	uint32 ItemExtendedCost;
-	uint32 DisenchantReqSkill;
+	int32 DisenchantReqSkill;
 	uint32 ArmorDamageModifier;
 };
 
@@ -163,6 +171,7 @@ struct CreatureInfo
 	char * info_str;
 	uint32 Flags1;
 	uint32 Type;
+	uint32 TypeFlags;
 	uint32 Family;
 	uint32 Rank;
 	uint32 Unknown1;
@@ -175,92 +184,6 @@ struct CreatureInfo
 	float unkfloat2;
 	uint8  Civilian;
 	uint8  Leader;
-
-	std::string lowercase_name;
-	//GossipScript * gossip_script;
-	uint32 GenerateModelId(uint32 * dest)
-	{
-		/* only M */
-		if(( Male_DisplayID || Male_DisplayID2 ) && !Female_DisplayID && !Female_DisplayID2 )
-		{
-			if (Male_DisplayID2)
-			{
-				if(Rand(50.0f))
-				{
-					*dest = Male_DisplayID;
-				}
-				else
-				{
-					*dest = Male_DisplayID2;
-				}
-			}
-			else
-			{
-				*dest = Male_DisplayID;
-			}
-			return 0;
-		}
-		/* only F */
-		if(( Female_DisplayID || Female_DisplayID2 ) && !Male_DisplayID && !Male_DisplayID2 )
-		{
-			if (Female_DisplayID2)
-			{
-				if(Rand(50.0f))
-				{
-					*dest = Female_DisplayID;
-				}
-				else
-				{
-					*dest = Female_DisplayID2;
-				}
-			}
-			else
-			{
-				*dest = Female_DisplayID;
-			}
-			return 1;
-		}
-
-		/* make a random one */
-		if(Rand(50.0f))
-		{
-			if (Female_DisplayID2)
-			{
-				if(Rand(50.0f))
-				{
-					*dest = Female_DisplayID;
-				}
-				else
-				{
-					*dest = Female_DisplayID2;
-				}
-			}
-			else
-			{
-				*dest = Female_DisplayID;
-			}
-			return 1;
-		}
-		else
-		{
-			if (Male_DisplayID2)
-			{
-				if(Rand(50.0f))
-				{
-					*dest = Male_DisplayID;
-				}
-				else
-				{
-					*dest = Male_DisplayID2;
-				}
-			}
-			else
-			{
-				*dest = Male_DisplayID;
-			}
-			return 0;
-		}
-	}
 };
 
 
@@ -320,9 +243,11 @@ struct Quest
 	uint32 required_rep_faction;
 	uint32 required_rep_value;
 
+	uint32 suggested_players;
+
 	uint32 time;
 	uint32 special_flags;
-	
+
 	uint32 previous_quest_id;
 	uint32 next_quest_id;
 
@@ -341,6 +266,8 @@ struct Quest
 	uint32 required_item[4];
 	uint32 required_itemcount[4];
 
+	uint32 required_kill_player;
+
 	uint32 required_mob[4];
 	uint32 required_mobcount[4];
 	uint32 required_spell[4];
@@ -351,15 +278,19 @@ struct Quest
 	uint32 reward_item[4];
 	uint32 reward_itemcount[4];
 
-	uint32 reward_repfaction[6];
-	int32 reward_repvalue[6];
+	uint32 reward_repfaction[5];
+	int32 reward_repvalue[5];
 	uint32 reward_replimit;
 
+	uint32 reward_title;
+
 	uint32 reward_money;
+	uint32 reward_honor;
 	uint32 reward_xp;
 	uint32 reward_spell;
+	uint32 reward_talents;
 	uint32 effect_on_player;
-	
+
 	uint32 point_mapid;
 	uint32 point_x;
 	uint32 point_y;
@@ -368,20 +299,13 @@ struct Quest
 	uint32 required_money;
 	uint32 required_triggers[4];
 	uint32 required_quests[4];
+	uint32 required_quest_and_or;
 	uint32 receive_items[4];
 	uint32 receive_itemcount[4];
-	int is_repeatable;
+	uint8 is_repeatable;
 
-	uint32 count_required_mob;
-	uint32 count_requiredquests;
-	uint32 count_requiredtriggers;
-	uint32 count_receiveitems;
-	uint32 count_reward_choiceitem;
-	uint32 count_required_item;
-	uint32 required_mobtype[4];
-	uint32 count_reward_item;
-	uint32 reward_xp_as_money;
 };
+
 
 struct GossipText_Text
 {
@@ -411,15 +335,12 @@ struct MapInfo
 	char * name;
 	uint32 flags;
 	uint32 cooldown;
-    uint32 lvl_mod_a;
 	uint32 required_quest;
 	uint32 required_item;
-	uint32 heroic_key_1;
-	uint32 heroic_key_2;
+	uint32 heroic_key[2];
 	float update_distance;
 	uint32 checkpoint_id;
-	uint32 collision;
-	uint32 clustering_handled;
+	bool collision;
 
 	bool HasFlag(uint32 flag)
 	{
@@ -427,4 +348,6 @@ struct MapInfo
 	}
 };
 
-#endif
+#endif //_GAME
+
+#endif //__STRUCTURES_H

@@ -1,17 +1,14 @@
-/****************************************************************************
+/*
+ * Scripts for Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
- * SpellHandler Plugin
- * Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
- *
- * This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 3.0
- * License. To view a copy of this license, visit
- * http://creativecommons.org/licenses/by-nc-sa/3.0/ or send a letter to Creative Commons,
- * 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
- *
- * EXCEPT TO THE EXTENT REQUIRED BY APPLICABLE LAW, IN NO EVENT WILL LICENSOR BE LIABLE TO YOU
- * ON ANY LEGAL THEORY FOR ANY SPECIAL, INCIDENTAL, CONSEQUENTIAL, PUNITIVE OR EXEMPLARY DAMAGES
- * ARISING OUT OF THIS LICENSE OR THE USE OF THE WORK, EVEN IF LICENSOR HAS BEEN ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGES.
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
  *
  */
 
@@ -22,7 +19,7 @@
 /* Spell Defs                                                           */
 /************************************************************************/
 
-bool RockbiterWeapon(uint32 i, SpellPointer pSpell)
+bool RockbiterWeapon(uint32 i, Spell* pSpell)
 {
     uint32 enchantment_entry = 0;
     switch(pSpell->m_spellInfo->RankNumber)
@@ -59,7 +56,7 @@ bool RockbiterWeapon(uint32 i, SpellPointer pSpell)
     if(!enchantment_entry || !pSpell->p_caster)
         return true;
 
-    ItemPointer item = pSpell->p_caster->GetItemInterface()->GetInventoryItem(EQUIPMENT_SLOT_MAINHAND);
+    Item* item = pSpell->p_caster->GetItemInterface()->GetInventoryItem(EQUIPMENT_SLOT_MAINHAND);
     EnchantEntry * enchant = dbcEnchant.LookupEntry(enchantment_entry);
     if(!item || !enchant)
         return true;

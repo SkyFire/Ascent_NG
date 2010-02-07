@@ -1,20 +1,22 @@
 ///////////////warrior//////////////////
+intiminating shout - it also fears you not just the enemy
 
 
 
 ////////////////////Mage/////////////////////////
 
-Enduring winter Some how replenishment effect don't want to trigger I'm out of ideas
+Enduring winter Somehow replenishment effect don't want to trigger I'm out of ideas, the other effect works
 
-Mirror image doesen'T do anything
+Mirror image - Mirror image is working totaly wrong
+						
 
 ////////////////////Paladin////////////////////////
 
-Guarded by the light talent
+Guarded by the light - It doesen't refreshes divine plea
+seal of righteousness - only the judgement effect of the spell works
 
 ///////////////////////Death Knight/////////////////////
-
-Rune strike is shit
+Corpse explosion - doesen'T work
 
 
 ///////////////////////Rogue/////////////////////////////
@@ -22,8 +24,8 @@ Rune strike is shit
 ///////////////////////Druid////////////////////////////
 
 //////////////////////Shaman//////////////////////////////
+totems above level 70 doesen't work only the lower ranks
 
-Feral Spirit - doesen'T work
 /////////////////////////General/////////////////////////
 
 

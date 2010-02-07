@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 #include "Unit.h"
@@ -35,14 +30,13 @@ Object::Object() : m_position(0,0,0,0), m_spawnLocation(0,0,0,0)
 #ifdef SHAREDPTR_DEBUGMODE
 	printf("Object::Object()\n");
 #endif
-	m_phaseAura = NULLAURA;
+	m_phaseAura = NULL;
 	m_phaseMode = 1;
 	m_mapId = 0;
 	m_zoneId = 0;
 
 	m_uint32Values = 0;
 	m_objectUpdated = false;
-	m_sharedPtrDestructed = false;
 
 	m_valuesCount = 0;
 
@@ -60,12 +54,12 @@ Object::Object() : m_position(0,0,0,0), m_spawnLocation(0,0,0,0)
 	m_backSwimSpeed = 2.5f;
 	m_turnRate = 3.141593f;
 
-	m_mapMgr = NULLMAPMGR;
+	m_mapMgr = NULL;
 	m_mapCell = 0;
 
 	mSemaphoreTeleport = false;
 
-	dynObj = NULLDYN;
+	dynObj = NULL;
 
 	m_faction = NULL;
 	m_factionDBC = NULL;
@@ -86,31 +80,10 @@ Object::Object() : m_position(0,0,0,0), m_spawnLocation(0,0,0,0)
 
 Object::~Object( )
 {
-#ifdef SHAREDPTR_DEBUGMODE
-	printf("Object::~Object()\n");
-#endif
-
-	if( !m_sharedPtrDestructed )
-	{
-		Log.Error("SharedPtr", "Failure to call Object Destructor method on deletion.");
-#ifdef WIN32
-		PrintSharedPtrInformation(false, NULL);
-#endif
-	}
-}
-
-void Object::Init()
-{
-}
-
-void Object::Destructor()
-{
-	m_sharedPtrDestructed = true;
-
 	if(m_phaseAura)
 	{
 		m_phaseAura->Remove();
-		m_phaseAura = NULLAURA;
+		m_phaseAura = NULL;
 	}
 
 	if(m_objectTypeId != TYPEID_ITEM)
@@ -130,13 +103,16 @@ void Object::Destructor()
 	if( m_extensions != NULL )
 		delete m_extensions;
 
-	sEventMgr.RemoveEvents(shared_from_this());
+	sEventMgr.RemoveEvents(this);
+}
 
-#ifdef SHAREDPTR_DEBUGMODE
-	//ObjectPointer blah = shared_from_this();
-	// breakpoint this for further debugging
-	printf("Object::Destructor()\n");
-#endif
+void Object::Init()
+{
+}
+
+void Object::Destructor()
+{
+	delete this;
 }
 
 void Object::SetPhase(int32 phase)
@@ -162,7 +138,7 @@ void Object::_Create( uint32 mapid, float x, float y, float z, float ang )
 	m_lastMapUpdatePosition.ChangeCoords(x,y,z,ang);
 }
 
-uint32 Object::BuildCreateUpdateBlockForPlayer(ByteBuffer *data, PlayerPointer target)
+uint32 Object::BuildCreateUpdateBlockForPlayer(ByteBuffer *data, Player* target)
 {
 	uint16 flags = 0;
 	uint32 flags2 = 0;
@@ -180,61 +156,40 @@ uint32 Object::BuildCreateUpdateBlockForPlayer(ByteBuffer *data, PlayerPointer t
 		// items + containers: 0x8
 	case TYPEID_ITEM:
 	case TYPEID_CONTAINER:
-		flags = 0x0010;
-		break;
+		{
+			flags = 0x0010;
+		}break;
 		
-		// player/unit: 0x68 (except self)
+		// player/unit: 0x0070 (except self)
 	case TYPEID_UNIT:
 		{
-		flags  = 0x0070;
-		}	
+			flags = 0x0070;
+		}break;
+
 	case TYPEID_PLAYER:
 		{
-		flags  = 0x0070;
-		}	
-		break;
+			flags = 0x0070;
+		}break;
 
-		// gameobject/dynamicobject
+		// gameobjects and dynamicobjects
 	case TYPEID_GAMEOBJECT:
-		flags = 0x0350;
-		break;
-
-	case TYPEID_DYNAMICOBJECT:
-		flags = 0x0048;
-		break;
-
-	case TYPEID_CORPSE:
-		flags = 0x0148;
-		break;
-	}
-
-	if(GetTypeFromGUID() == HIGHGUID_TYPE_VEHICLE)
-		flags |= 0x00E0;
-
-	if(target == shared_from_this())
-	{
-		// player creating self
-		flags |= 0x0001;
-		updatetype = UPDATETYPE_CREATE_YOURSELF;
-	}
-
-	// gameobject stuff
-	if(m_objectTypeId == TYPEID_GAMEOBJECT)
-	{
-		switch(GetByte(GAMEOBJECT_BYTES_1, GAMEOBJECT_BYTES_TYPE_ID))
 		{
+			flags = 0x0350;//200|100|40|10
+
+			switch(GetByte(GAMEOBJECT_BYTES_1, GAMEOBJECT_BYTES_TYPE_ID))
+			{
 			case GAMEOBJECT_TYPE_MO_TRANSPORT:  
 				{
 					if(GetTypeFromGUID() != HIGHGUID_TYPE_TRANSPORTER)
 						return 0;   // bad transporter
 					else
-						flags = 0x0352;
+						flags |= 0x0002;
 				}break;
 
 			case GAMEOBJECT_TYPE_TRANSPORT:
 				{
 					/* deeprun tram, etc */
-					flags = 0x0352;
+					flags |= 0x0002;
 				}break;
 
 			case GAMEOBJECT_TYPE_DUEL_ARBITER:
@@ -243,7 +198,28 @@ uint32 Object::BuildCreateUpdateBlockForPlayer(ByteBuffer *data, PlayerPointer t
 					// it won't animate
 					updatetype = UPDATETYPE_CREATE_YOURSELF;
 				}break;
-		}
+			}
+		}break;
+
+	case TYPEID_DYNAMICOBJECT:
+		{
+			flags = 0x0150;
+		}break;
+
+	case TYPEID_CORPSE:
+		{
+			flags = 0x0148;
+		}break;
+	}
+
+	if(GetTypeFromGUID() == HIGHGUID_TYPE_VEHICLE)
+		flags |= 0x00E0;
+
+	if(target == this)
+	{
+		// player creating self
+		flags |= 0x0001;
+		updatetype = UPDATETYPE_CREATE_YOURSELF;
 	}
 
 	// build our actual update
@@ -297,7 +273,7 @@ WorldPacket *Object::BuildFieldUpdatePacket( uint32 index,uint32 value)
 	return packet;
 }
 
-void Object::BuildFieldUpdatePacket(PlayerPointer Target, uint32 Index, uint32 Value)
+void Object::BuildFieldUpdatePacket(Player* Target, uint32 Index, uint32 Value)
 {
 	ByteBuffer buf(500);
 
@@ -320,7 +296,7 @@ void Object::BuildFieldUpdatePacket(ByteBuffer * buf, uint32 Index, uint32 Value
 	*buf << Value;
 }
 
-uint32 Object::BuildValuesUpdateBlockForPlayer(ByteBuffer *data, PlayerPointer target)
+uint32 Object::BuildValuesUpdateBlockForPlayer(ByteBuffer *data, Player* target)
 {
 	UpdateMask updateMask;
 	updateMask.SetCount( m_valuesCount );
@@ -349,13 +325,13 @@ uint32 Object::BuildValuesUpdateBlockForPlayer(ByteBuffer * buf, UpdateMask * ma
 	ASSERT(m_wowGuid.GetNewGuidLen());
 	*buf << m_wowGuid;
 
-	_BuildValuesUpdate( buf, mask, NULLPLR );
+	_BuildValuesUpdate( buf, mask, NULL );
 
 	// 1 update.
 	return 1;
 }
 
-void Object::DestroyForPlayer(PlayerPointer target) const
+void Object::DestroyForPlayer(Player* target) const
 {
 	if(!target || target->GetSession() == 0) return;
 
@@ -373,17 +349,17 @@ void Object::DestroyForPlayer(PlayerPointer target) const
 /// TODO: rewrite this stuff, document unknown fields and flags
 uint32 TimeStamp();
 
-void Object::_BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2, PlayerPointer target )
+void Object::_BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2, Player* target )
 {
 	ByteBuffer *splinebuf = (m_objectTypeId == TYPEID_UNIT) ? target->GetAndRemoveSplinePacket(GetGUID()) : 0;
 	uint16 flag16 = 0;	// some other flag
 	*data << (uint16)flags;
 
-	PlayerPointer pThis = NULLPLR;
+	Player* pThis = NULL;
 	MovementInfo* moveinfo;
 	if(m_objectTypeId == TYPEID_PLAYER)
 	{
-		pThis = plr_shared_from_this();
+		pThis = TO_PLAYER(this);
 		if(pThis->GetSession())
 			moveinfo = pThis->GetSession()->GetMovementInfo();
 		if(target == pThis)
@@ -397,14 +373,19 @@ void Object::_BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2
 	{
 		if(pThis && pThis->m_TransporterGUID != 0)
 			flags2 |= 0x200;
-		else if(m_objectTypeId==TYPEID_UNIT && creature_shared_from_this()->m_transportGuid != 0 && creature_shared_from_this()->m_transportPosition != NULL)
+		else if(m_objectTypeId==TYPEID_UNIT && TO_CREATURE(this)->m_transportGuid != 0 && TO_CREATURE(this)->m_transportPosition != NULL)
 			flags2 |= 0x200;
-		else if (IsUnit() && unit_shared_from_this()->m_CurrentVehicle != NULL)
+		else if (IsUnit() && TO_UNIT(this)->m_CurrentVehicle != NULL)
 			flags2 |= 0x200;
 
 		if(splinebuf)
 		{
 			flags2 |= 0x08000001;	   //1=move forward
+			if(GetTypeId() == TYPEID_UNIT)
+			{
+				if( TO_UNIT(this)->GetAIInterface()->m_moveRun == false)
+					flags2 |= 0x100;	//100=walk
+			}			
 		}
 
 		if(GetTypeId() == TYPEID_UNIT)
@@ -422,13 +403,13 @@ void Object::_BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2
 				}break;
 			}
 		
-			if( unit_shared_from_this()->GetAIInterface()->IsFlying())
+			if( TO_UNIT(this)->GetAIInterface()->IsFlying())
 //				flags2 |= 0x800; //in 2.3 this is some state that i was not able to decode yet
 				flags2 |= 0x400; //Zack : Teribus the Cursed had flag 400 instead of 800 and he is flying all the time 
-			if( creature_shared_from_this()->proto && creature_shared_from_this()->proto->extra_a9_flags)
+			if( TO_CREATURE(this)->proto && TO_CREATURE(this)->proto->extra_a9_flags)
 			{
 				if(!(flags2 & 0x0200))
-					flags2 |= creature_shared_from_this()->proto->extra_a9_flags;
+					flags2 |= TO_CREATURE(this)->proto->extra_a9_flags;
 			}
 /*			if(GetGUIDHigh() == HIGHGUID_WAYPOINT)
 			{
@@ -456,10 +437,10 @@ void Object::_BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2
 
 		if ( flags2 & 0x0200 )	//BYTE1(flags2) & 2
 		{
-			if (IsUnit() && unit_shared_from_this()->m_CurrentVehicle != NULL)
+			if (IsUnit() && TO_UNIT(this)->m_CurrentVehicle != NULL)
 			{
-				UnitPointer pUnit = unit_shared_from_this();
-				VehiclePointer vehicle = unit_shared_from_this()->m_CurrentVehicle;
+				Unit* pUnit = TO_UNIT(this);
+				Vehicle* vehicle = TO_UNIT(this)->m_CurrentVehicle;
 
 				if (pUnit->m_inVehicleSeatId != 0xFF && vehicle->m_vehicleSeats[pUnit->m_inVehicleSeatId] != NULL)
 				{
@@ -489,13 +470,13 @@ void Object::_BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2
 				*data << pThis->m_TransporterX << pThis->m_TransporterY << pThis->m_TransporterZ << pThis->m_TransporterO;
 				*data << pThis->m_TransporterUnk << uint8(0);
 			}
-			else if(m_objectTypeId==TYPEID_UNIT && creature_shared_from_this()->m_transportPosition != NULL)
+			else if(m_objectTypeId==TYPEID_UNIT && TO_CREATURE(this)->m_transportPosition != NULL)
 			{
-				
-				*data << creature_shared_from_this()->m_transportNewGuid;
+				*data << TO_CREATURE(this)->m_transportNewGuid;
+
 				*data << uint32(HIGHGUID_TYPE_TRANSPORTER);
-				*data << creature_shared_from_this()->m_transportPosition->x << creature_shared_from_this()->m_transportPosition->y << 
-					creature_shared_from_this()->m_transportPosition->z << creature_shared_from_this()->m_transportPosition->o;
+				*data << TO_CREATURE(this)->m_transportPosition->x << TO_CREATURE(this)->m_transportPosition->y << 
+					TO_CREATURE(this)->m_transportPosition->z << TO_CREATURE(this)->m_transportPosition->o;
 				*data << uint32(0);
 				*data << uint8(0);
 			}
@@ -565,7 +546,7 @@ void Object::_BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2
 	}
 	else if(flags & 0x40)
 	{
-		if(flags & 0x2)
+		if(flags & 0x2 && (GetByte(GAMEOBJECT_BYTES_1, GAMEOBJECT_BYTES_TYPE_ID) == GAMEOBJECT_TYPE_MO_TRANSPORT))
 		{
 			*data << float(0);
 			*data << float(0);
@@ -600,7 +581,7 @@ void Object::_BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2
 
 	if (flags & 0x80) //if ((_BYTE)flags_ < 0)
 	{
-			*data << vehicle_shared_from_this()->GetVehicleEntry() << float(0.0f);
+			*data << TO_VEHICLE(this)->GetVehicleEntry() << float(0.0f);
 	}
 
 	// 0x200
@@ -608,7 +589,7 @@ void Object::_BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2
     {
 		uint64 rotation = 0;
 		if(IsGameObject())
-			rotation = gob_shared_from_this()->m_rotation;
+			rotation = TO_GAMEOBJECT(this)->m_rotation;
         *data << uint64(rotation); //blizz 64bit rotation
     }
 }
@@ -617,14 +598,14 @@ void Object::_BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2
 //  Creates an update block with the values of this object as
 //  determined by the updateMask.
 //=======================================================================================
-void Object::_BuildValuesUpdate(ByteBuffer * data, UpdateMask *updateMask, PlayerPointer target)
+void Object::_BuildValuesUpdate(ByteBuffer * data, UpdateMask *updateMask, Player* target)
 {
 	bool reset = false;
 
 	uint32 oldState = 0;
 	if(updateMask->GetBit(OBJECT_FIELD_GUID) && target)	   // We're creating.
 	{
-		CreaturePointer pThis = creature_shared_from_this();
+		Creature* pThis = TO_CREATURE(this);
 		if(m_objectTypeId == TYPEID_UNIT && pThis->m_taggingPlayer)		// tagged group will have tagged player
 		{
 			// set tagged visual
@@ -646,7 +627,7 @@ void Object::_BuildValuesUpdate(ByteBuffer * data, UpdateMask *updateMask, Playe
 
 		if(target && GetTypeId() == TYPEID_GAMEOBJECT)
 		{
-			GameObjectPointer go = gob_shared_from_this();
+			GameObject* go = TO_GAMEOBJECT(this);
 			GameObjectInfo *info;
 			info = go->GetInfo();
 			if(info && info->InvolvedQuestCount && info->InvolvedQuestIds[0])
@@ -737,7 +718,7 @@ WorldPacket * Object::BuildTeleportAckMsg(const LocationVector & v)
 	///////////////////////////////////////
 	//Update player on the client with TELEPORT_ACK
 	if( IsInWorld() )		// only send when inworld
-		plr_shared_from_this()->SetPlayerStatus( TRANSFER_PENDING );
+		TO_PLAYER(this)->SetPlayerStatus( TRANSFER_PENDING );
 
 	WorldPacket * data = new WorldPacket(MSG_MOVE_TELEPORT_ACK, 80);
 	*data << GetNewGUID();
@@ -774,7 +755,7 @@ bool Object::SetPosition(const LocationVector & v, bool allowPorting /* = false 
 
 	if (IsInWorld() && updateMap)
 	{
-		m_mapMgr->ChangeObjectLocation(shared_from_this());
+		m_mapMgr->ChangeObjectLocation(this);
 	}
 
 	return result;
@@ -801,11 +782,11 @@ bool Object::SetPosition( float newX, float newY, float newZ, float newOrientati
 	if (IsInWorld() && updateMap)
 	{
 		m_lastMapUpdatePosition.ChangeCoords(newX,newY,newZ,newOrientation);
-		m_mapMgr->ChangeObjectLocation(shared_from_this());
+		m_mapMgr->ChangeObjectLocation(this);
 
-		if( m_objectTypeId == TYPEID_PLAYER && plr_shared_from_this()->GetGroup() && plr_shared_from_this()->m_last_group_position.Distance2DSq(m_position) > 25.0f ) // distance of 5.0
+		if( m_objectTypeId == TYPEID_PLAYER && TO_PLAYER(this)->GetGroup() && TO_PLAYER(this)->m_last_group_position.Distance2DSq(m_position) > 25.0f ) // distance of 5.0
 		{
-            plr_shared_from_this()->GetGroup()->HandlePartialChange( PARTY_UPDATE_FLAG_POSITION, plr_shared_from_this() );
+            TO_PLAYER(this)->GetGroup()->HandlePartialChange( PARTY_UPDATE_FLAG_POSITION, TO_PLAYER(this) );
 		}	
 	}
 
@@ -823,14 +804,14 @@ void Object::SetRotation( uint64 guid )
 void Object::OutPacketToSet(uint16 Opcode, uint16 Len, const void * Data, bool self)
 {
 	if(self && m_objectTypeId == TYPEID_PLAYER)
-		plr_shared_from_this()->GetSession()->OutPacket(Opcode, Len, Data);
+		TO_PLAYER(this)->GetSession()->OutPacket(Opcode, Len, Data);
 
 	if(!IsInWorld())
 		return;
 
-	unordered_set<PlayerPointer  >::iterator itr = m_inRangePlayers.begin();
-	unordered_set<PlayerPointer  >::iterator it_end = m_inRangePlayers.end();
-	int gm = ( m_objectTypeId == TYPEID_PLAYER ? player_shared_from_this()->m_isGmInvisible : 0 );
+	unordered_set<Player*  >::iterator itr = m_inRangePlayers.begin();
+	unordered_set<Player*  >::iterator it_end = m_inRangePlayers.end();
+	int gm = ( m_objectTypeId == TYPEID_PLAYER ? TO_PLAYER(this)->m_isGmInvisible : 0 );
 	for(; itr != it_end; ++itr)
 	{
 		ASSERT((*itr)->GetSession());
@@ -850,20 +831,20 @@ void Object::SendMessageToSet(WorldPacket *data, bool bToSelf,bool myteam_only)
 {
 	if(bToSelf && m_objectTypeId == TYPEID_PLAYER)
 	{
-		plr_shared_from_this()->GetSession()->SendPacket(data);		
+		TO_PLAYER(this)->GetSession()->SendPacket(data);		
 	}
 
 	if(!IsInWorld())
 		return;
 
-	unordered_set<PlayerPointer  >::iterator itr = m_inRangePlayers.begin();
-	unordered_set<PlayerPointer  >::iterator it_end = m_inRangePlayers.end();
-	bool gminvis = (m_objectTypeId == TYPEID_PLAYER ? player_shared_from_this()->m_isGmInvisible : false);
+	unordered_set<Player*  >::iterator itr = m_inRangePlayers.begin();
+	unordered_set<Player*  >::iterator it_end = m_inRangePlayers.end();
+	bool gminvis = (m_objectTypeId == TYPEID_PLAYER ? TO_PLAYER(this)->m_isGmInvisible : false);
 	//Zehamster: Splitting into if/else allows us to avoid testing "gminvis==true" at each loop...
 	//		   saving cpu cycles. Chat messages will be sent to everybody even if player is invisible.
 	if(myteam_only)
 	{
-		uint32 myteam=plr_shared_from_this()->GetTeam();
+		uint32 myteam=TO_PLAYER(this)->GetTeam();
 		if(gminvis && data->GetOpcode()!=SMSG_MESSAGECHAT)
 		{
 			for(; itr != it_end; ++itr)
@@ -931,13 +912,13 @@ void Object::LoadValues(const char* data)
 	} while(pos != std::string::npos);
 }
 
-void Object::_SetUpdateBits(UpdateMask *updateMask, PlayerPointer target) const
+void Object::_SetUpdateBits(UpdateMask *updateMask, Player* target) const
 {
 	*updateMask = m_updateMask;
 }
 
 
-void Object::_SetCreateBits(UpdateMask *updateMask, PlayerPointer target) const
+void Object::_SetCreateBits(UpdateMask *updateMask, Player* target) const
 {
 	/*for( uint16 index = 0; index < m_valuesCount; index++ )
 	{
@@ -951,14 +932,19 @@ void Object::_SetCreateBits(UpdateMask *updateMask, PlayerPointer target) const
 
 void Object::AddToWorld()
 {
-	MapMgrPointer mapMgr = sInstanceMgr.GetInstance(shared_from_this());
+	MapMgr* mapMgr = sInstanceMgr.GetInstance(this);
 	if(mapMgr == NULL)
-		return; //instance add failed
+	{
+		if(IsPlayer() && TO_PLAYER(this)->m_bg != NULL && TO_PLAYER(this)->m_bg->IsArena())
+			mapMgr = TO_PLAYER(this)->m_bg->GetMapMgr();
+		else
+			return; //instance add failed
+	}
 
 	if( IsPlayer() )
 	{
 		// battleground checks
-		PlayerPointer p = plr_shared_from_this();
+		Player* p = TO_PLAYER(this);
 		if( p->m_bg == NULL && mapMgr->m_battleground != NULL )
 		{
 			// player hasn't been registered in the battleground, ok.
@@ -976,7 +962,7 @@ void Object::AddToWorld()
 	m_mapMgr = mapMgr;
 	m_inQueue = true;
 
-	mapMgr->AddObject(shared_from_this());
+	mapMgr->AddObject(this);
 
 	// correct incorrect instance id's
 	m_instanceId = m_mapMgr->GetInstanceID();
@@ -984,7 +970,7 @@ void Object::AddToWorld()
 	mSemaphoreTeleport = false;
 }
 
-void Object::AddToWorld(MapMgrPointer pMapMgr)
+void Object::AddToWorld(MapMgr* pMapMgr)
 {
 	if(!pMapMgr)
 		return; //instance add failed
@@ -992,7 +978,7 @@ void Object::AddToWorld(MapMgrPointer pMapMgr)
 	m_mapMgr = pMapMgr;
 	m_inQueue = true;
 
-	pMapMgr->AddObject(shared_from_this());
+	pMapMgr->AddObject(this);
 
 	// correct incorrect instance id's
 	m_instanceId = pMapMgr->GetInstanceID();
@@ -1002,10 +988,22 @@ void Object::AddToWorld(MapMgrPointer pMapMgr)
 
 //Unlike addtoworld it pushes it directly ignoring add pool
 //this can only be called from the thread of mapmgr!!!
-void Object::PushToWorld(MapMgrPointer mgr)
+void Object::PushToWorld(MapMgr* mgr)
 {
-	if(!mgr/* || (m_mapMgr != NULL && m_mapCell != NULL) */)
+	ASSERT(mgr!=NULL);
+	if(mgr==NULL)
+	{
+		// Reset these so session will get updated properly.
+		mSemaphoreTeleport = false;
+		m_inQueue = false;
+
+		if(IsPlayer())
+		{
+			Log.Error("Object","Kicking Player %s due to empty MapMgr;",TO_PLAYER(this)->GetName());
+			TO_PLAYER(this)->GetSession()->LogoutPlayer(false);
+		}
 		return; //instance add failed
+	}
 
 	m_mapId=mgr->GetMapId();
 	m_instanceId = mgr->GetInstanceID();
@@ -1013,7 +1011,7 @@ void Object::PushToWorld(MapMgrPointer mgr)
 	m_mapMgr = mgr;
 	OnPrePushToWorld();
 
-	mgr->PushObject(shared_from_this());
+	mgr->PushObject(this);
 
 	// correct incorrect instance id's
 	mSemaphoreTeleport = false;
@@ -1033,18 +1031,46 @@ void Object::RemoveFromWorld(bool free_guid)
 		dynObj->Remove();
 
 	ASSERT(m_mapMgr);
-	MapMgrPointer m = m_mapMgr;
-	m_mapMgr = NULLMAPMGR;
+	MapMgr* m = m_mapMgr;
+	m_mapMgr = NULL;
 
 	mSemaphoreTeleport = true;
 
-	m->RemoveObject(shared_from_this(), free_guid);
+	m->RemoveObject(this, free_guid);
 	
 	// remove any spells / free memory
-	sEventMgr.RemoveEvents(shared_from_this(), EVENT_UNIT_SPELL_HIT);
+	sEventMgr.RemoveEvents(this, EVENT_UNIT_SPELL_HIT);
 
 	// update our event holder
 	event_Relocate();
+}
+
+void Object::SetByte(uint32 index, uint32 index1,uint8 value)
+{
+	ASSERT( index < m_valuesCount );
+
+	if(index1 > 4)
+	{
+		sLog.outError("Object::SetByteValue: wrong offset %u", index1);
+		return;
+	}
+
+	if(uint8(m_uint32Values[ index ] >> (index1 * 8)) != value)
+	{
+		m_uint32Values[ index ] &= ~uint32(uint32(0xFF) << (index1 * 8));
+		m_uint32Values[ index ] |= uint32(uint32(value) << (index1 * 8));
+
+		if(IsInWorld())
+		{
+			m_updateMask.SetBit( index );
+
+			if(!m_objectUpdated)
+			{
+				m_mapMgr->ObjectUpdated(this);
+				m_objectUpdated = true;
+			}
+		}
+	}
 }
 
 //! Set uint32 property
@@ -1063,7 +1089,7 @@ void Object::SetUInt32Value( const uint32 index, const uint32 value )
 
 		if(!m_objectUpdated)
 		{
-			m_mapMgr->ObjectUpdated(shared_from_this());
+			m_mapMgr->ObjectUpdated(this);
 			m_objectUpdated = true;
 		}
 	}
@@ -1073,9 +1099,9 @@ void Object::SetUInt32Value( const uint32 index, const uint32 value )
 	{
 		if(IsInWorld())
 		{
-			Group* pGroup = player_shared_from_this()->GetGroup();
+			Group* pGroup = TO_PLAYER(this)->GetGroup();
 			if( pGroup != NULL )
-				pGroup->HandleUpdateFieldChange( index, player_shared_from_this() );
+				pGroup->HandleUpdateFieldChange( index, TO_PLAYER(this) );
 		}
 
 #ifdef OPTIMIZED_PLAYER_SAVING
@@ -1083,11 +1109,11 @@ void Object::SetUInt32Value( const uint32 index, const uint32 value )
 		{
 		case UNIT_FIELD_LEVEL:
 		case PLAYER_XP:
-			player_shared_from_this()->save_LevelXP();
+			TO_PLAYER(this)->save_LevelXP();
 			break;
 
 		case PLAYER_FIELD_COINAGE:
-			player_shared_from_this()->save_Gold();
+			TO_PLAYER(this)->save_Gold();
 			break;
 		}
 #endif
@@ -1111,7 +1137,7 @@ void Object::ModPUInt32Value(const uint32 index, const int32 value, bool apply )
 
 		if(!m_objectUpdated )
 		{
-			m_mapMgr->ObjectUpdated(shared_from_this());
+			m_mapMgr->ObjectUpdated(this);
 			m_objectUpdated = true;
 		}
 	}
@@ -1140,7 +1166,7 @@ void Object::ModUnsigned32Value(uint32 index, int32 mod)
 
 		if(!m_objectUpdated)
 		{
-			m_mapMgr->ObjectUpdated(shared_from_this());
+			m_mapMgr->ObjectUpdated(this);
 			m_objectUpdated = true;
 		}
 	}
@@ -1151,18 +1177,18 @@ void Object::ModUnsigned32Value(uint32 index, int32 mod)
 	{
 		// mana and energy regen
 		if( index == UNIT_FIELD_POWER1 || index == UNIT_FIELD_POWER4 )
-			TO_PLAYER( shared_from_this() )->SendPowerUpdate();
+			TO_PLAYER( this )->SendPowerUpdate();
 
 #ifdef OPTIMIZED_PLAYER_SAVING
 		switch(index)
 		{
 		case UNIT_FIELD_LEVEL:
 		case PLAYER_XP:
-			player_shared_from_this()->save_LevelXP();
+			TO_PLAYER(this)->save_LevelXP();
 			break;
 
 		case PLAYER_FIELD_COINAGE:
-			player_shared_from_this()->save_Gold();
+			TO_PLAYER(this)->save_Gold();
 			break;
 		}
 #endif
@@ -1182,7 +1208,7 @@ void Object::ModSignedInt32Value(uint32 index, int32 value )
 
 		if(!m_objectUpdated)
 		{
-			m_mapMgr->ObjectUpdated(shared_from_this());
+			m_mapMgr->ObjectUpdated(this);
 			m_objectUpdated = true;
 		}
 	}
@@ -1194,11 +1220,11 @@ void Object::ModSignedInt32Value(uint32 index, int32 value )
 		{
 		case UNIT_FIELD_LEVEL:
 		case PLAYER_XP:
-			player_shared_from_this()->save_LevelXP();
+			TO_PLAYER(this)->save_LevelXP();
 			break;
 
 		case PLAYER_FIELD_COINAGE:
-			player_shared_from_this()->save_Gold();
+			TO_PLAYER(this)->save_Gold();
 			break;
 		}
 #endif
@@ -1216,7 +1242,7 @@ void Object::ModFloatValue(const uint32 index, const float value )
 
 		if(!m_objectUpdated)
 		{
-			m_mapMgr->ObjectUpdated(shared_from_this());
+			m_mapMgr->ObjectUpdated(this);
 			m_objectUpdated = true;
 		}
 	}
@@ -1238,7 +1264,7 @@ void Object::SetUInt64Value( const uint32 index, const uint64 value )
 
 		if(!m_objectUpdated)
 		{
-			m_mapMgr->ObjectUpdated(shared_from_this());
+			m_mapMgr->ObjectUpdated(this);
 			m_objectUpdated = true;
 		}
 	}
@@ -1259,7 +1285,7 @@ void Object::SetFloatValue( const uint32 index, const float value )
 
 		if(!m_objectUpdated)
 		{
-			m_mapMgr->ObjectUpdated(shared_from_this());
+			m_mapMgr->ObjectUpdated(this);
 			m_objectUpdated = true;
 		}
 	}
@@ -1282,7 +1308,7 @@ void Object::SetFlag( const uint32 index, uint32 newFlag )
 
 		if(!m_objectUpdated)
 		{
-			m_mapMgr->ObjectUpdated(shared_from_this());
+			m_mapMgr->ObjectUpdated(this);
 			m_objectUpdated = true;
 		}
 	}
@@ -1290,15 +1316,15 @@ void Object::SetFlag( const uint32 index, uint32 newFlag )
 	// we're modifying an aurastate, so we need to update the auras.
 	if( index == UNIT_FIELD_AURASTATE )
 	{
-		UnitPointer u = unit_shared_from_this();
+		Unit* u = TO_UNIT(this);
 		if( newFlag == AURASTATE_FLAG_STUNNED && u->IsPlayer() && u->HasDummyAura(SPELL_HASH_PRIMAL_TENACITY) && TO_PLAYER(u)->GetShapeShift() == FORM_CAT )
 		{
 			for(uint32 i = 0; i < MAX_AURAS+MAX_POSITIVE_AURAS; ++i)
 			{
-				if( u->m_auras[i] && u->m_auras[i]->GetSpellProto()->NameHash == SPELL_HASH_PRIMAL_TENACITY )
+				if( u->m_auras[i] != NULL && u->m_auras[i]->GetSpellProto()->NameHash == SPELL_HASH_PRIMAL_TENACITY )
 				{
-					AuraPointer aura(new Aura(u->m_auras[i]->GetSpellProto(), -1, object_shared_from_this(), unit_shared_from_this()));
-					u->m_auras[i]->Remove();
+					Aura* aura = new Aura(u->m_auras[i]->GetSpellProto(), -1, TO_OBJECT(this), TO_UNIT(this));
+					u->RemoveAuraBySlot(i);
 					aura->AddMod(232, -31, 5, 0);
 					aura->AddMod(SPELL_AURA_MOD_DAMAGE_PERCENT_TAKEN, -31, 127, 1);
 					aura->AddMod(SPELL_AURA_DUMMY, 0, 0, 2);
@@ -1306,10 +1332,10 @@ void Object::SetFlag( const uint32 index, uint32 newFlag )
 					continue;
 				}
 
-				if( u->m_auras[i] && !u->m_auras[i]->m_applied) // try to apply
+				if( u->m_auras[i] != NULL && !u->m_auras[i]->m_applied) // try to apply
 					u->m_auras[i]->ApplyModifiers(true);
 
-				if( u->m_auras[i] && u->m_auras[i]->m_applied) // try to remove, if we lack the aurastate
+				if( u->m_auras[i] != NULL && u->m_auras[i]->m_applied) // try to remove, if we lack the aurastate
 					u->m_auras[i]->RemoveIfNecessary();
 			}
 		}
@@ -1317,10 +1343,10 @@ void Object::SetFlag( const uint32 index, uint32 newFlag )
 		{
 			for(uint32 i = 0; i < MAX_AURAS+MAX_POSITIVE_AURAS; ++i)
 			{
-				if( u->m_auras[i] && !u->m_auras[i]->m_applied) // try to apply
+				if( u->m_auras[i] != NULL && !u->m_auras[i]->m_applied) // try to apply
 					u->m_auras[i]->ApplyModifiers(true);
 
-				if( u->m_auras[i] && u->m_auras[i]->m_applied) // try to remove, if we lack the aurastate
+				if( u->m_auras[i] != NULL && u->m_auras[i]->m_applied) // try to remove, if we lack the aurastate
 					u->m_auras[i]->RemoveIfNecessary();
 			}
 		}
@@ -1344,7 +1370,7 @@ void Object::RemoveFlag( const uint32 index, uint32 oldFlag )
 
 		if(!m_objectUpdated)
 		{
-			m_mapMgr->ObjectUpdated(shared_from_this());
+			m_mapMgr->ObjectUpdated(this);
 			m_objectUpdated = true;
 		}
 	}
@@ -1352,15 +1378,15 @@ void Object::RemoveFlag( const uint32 index, uint32 oldFlag )
 	// we're modifying an aurastate, so we need to update the auras.
 	if( index == UNIT_FIELD_AURASTATE )
 	{
-		UnitPointer u = unit_shared_from_this();
+		Unit* u = TO_UNIT(this);
 		if( oldFlag == AURASTATE_FLAG_STUNNED && u->IsPlayer() && u->HasDummyAura(SPELL_HASH_PRIMAL_TENACITY) && TO_PLAYER(u)->GetShapeShift() == FORM_CAT )
 		{
 			for(uint32 i = 0; i < MAX_AURAS+MAX_POSITIVE_AURAS; ++i)
 			{
-				if( u->m_auras[i] && u->m_auras[i]->GetSpellProto()->NameHash == SPELL_HASH_PRIMAL_TENACITY )
+				if( u->m_auras[i] != NULL && u->m_auras[i]->GetSpellProto()->NameHash == SPELL_HASH_PRIMAL_TENACITY )
 				{
-					AuraPointer aura(new Aura(u->m_auras[i]->GetSpellProto(), -1, object_shared_from_this(), unit_shared_from_this()));
-					u->m_auras[i]->Remove();
+					Aura* aura = new Aura(u->m_auras[i]->GetSpellProto(), -1, TO_OBJECT(this), TO_UNIT(this));
+					u->RemoveAuraBySlot(i);
 					aura->AddMod(232, -31, 5, 0);
 					aura->AddMod(SPELL_AURA_DUMMY, 0, 0, 2);
 					aura->AddMod(SPELL_AURA_ADD_PCT_MODIFIER, -51, 14, 2);
@@ -1368,10 +1394,10 @@ void Object::RemoveFlag( const uint32 index, uint32 oldFlag )
 					continue;
 				}
 
-				if( u->m_auras[i] && !u->m_auras[i]->m_applied) // try to apply
+				if( u->m_auras[i] != NULL && !u->m_auras[i]->m_applied) // try to apply
 					u->m_auras[i]->ApplyModifiers(true);
 
-				if( u->m_auras[i] && u->m_auras[i]->m_applied) // try to remove, if we lack the aurastate
+				if( u->m_auras[i] != NULL && u->m_auras[i]->m_applied) // try to remove, if we lack the aurastate
 					u->m_auras[i]->RemoveIfNecessary();
 			}
 		}
@@ -1379,10 +1405,10 @@ void Object::RemoveFlag( const uint32 index, uint32 oldFlag )
 		{
 			for(uint32 i = 0; i < MAX_AURAS+MAX_POSITIVE_AURAS; ++i)
 			{
-				if( u->m_auras[i] && !u->m_auras[i]->m_applied) // try to apply
+				if( u->m_auras[i] != NULL && !u->m_auras[i]->m_applied) // try to apply
 					u->m_auras[i]->ApplyModifiers(true);
 
-				if( u->m_auras[i] && u->m_auras[i]->m_applied) // try to remove, if we lack the aurastate
+				if( u->m_auras[i] != NULL && u->m_auras[i]->m_applied) // try to remove, if we lack the aurastate
 					u->m_auras[i]->RemoveIfNecessary();
 			}
 		}
@@ -1391,7 +1417,7 @@ void Object::RemoveFlag( const uint32 index, uint32 oldFlag )
 
 ////////////////////////////////////////////////////////////
 
-float Object::CalcDistance(ObjectPointer Ob)
+float Object::CalcDistance(Object* Ob)
 {
 	return CalcDistance(GetPositionX(), GetPositionY(), GetPositionZ(), Ob->GetPositionX(), Ob->GetPositionY(), Ob->GetPositionZ());
 }
@@ -1399,11 +1425,11 @@ float Object::CalcDistance(float ObX, float ObY, float ObZ)
 {
 	return CalcDistance(GetPositionX(), GetPositionY(), GetPositionZ(), ObX, ObY, ObZ);
 }
-float Object::CalcDistance(ObjectPointer Oa, ObjectPointer Ob)
+float Object::CalcDistance(Object* Oa, Object* Ob)
 {
 	return CalcDistance(Oa->GetPositionX(), Oa->GetPositionY(), Oa->GetPositionZ(), Ob->GetPositionX(), Ob->GetPositionY(), Ob->GetPositionZ());
 }
-float Object::CalcDistance(ObjectPointer Oa, float ObX, float ObY, float ObZ)
+float Object::CalcDistance(Object* Oa, float ObX, float ObY, float ObZ)
 {
 	return CalcDistance(Oa->GetPositionX(), Oa->GetPositionY(), Oa->GetPositionZ(), ObX, ObY, ObZ);
 }
@@ -1520,7 +1546,7 @@ bool Object::inArc(float Position1X, float Position1Y, float FOV, float Orientat
 	}
 } 
 
-bool Object::isInFront(ObjectPointer target)
+bool Object::isInFront(Object* target)
 {
 	// check if we facing something ( is the object within a 180 degree slice of our positive y axis )
 
@@ -1545,7 +1571,7 @@ bool Object::isInFront(ObjectPointer target)
     return( ( angle >= left ) && ( angle <= right ) );
 }
 
-bool Object::isInBack(ObjectPointer target)
+bool Object::isInBack(Object* target)
 {
 	if(CalcDistance(target) < 0.5f)
 		return false; 
@@ -1573,12 +1599,12 @@ bool Object::isInBack(ObjectPointer target)
 	return( ( angle >= left ) && ( angle <= right ) );
 }
 
-bool Object::isInArc(ObjectPointer target , float angle) // angle in degrees
+bool Object::isInArc(Object* target , float angle) // angle in degrees
 {
 	return inArc( GetPositionX() , GetPositionY() , angle , GetOrientation() , target->GetPositionX() , target->GetPositionY() );
 }
 
-bool Object::isInRange(ObjectPointer target, float range)
+bool Object::isInRange(Object* target, float range)
 {
 	float dist = CalcDistance( target );
 	return( dist <= range );
@@ -1589,7 +1615,7 @@ bool Object::IsPet()
 	if( GetTypeId() != TYPEID_UNIT )
 		return false;
 
-	if( unit_shared_from_this()->m_isPet && m_uint32Values[UNIT_FIELD_CREATEDBY] != 0 && m_uint32Values[UNIT_FIELD_SUMMONEDBY] != 0 )
+	if( TO_UNIT(this)->m_isPet && m_uint32Values[UNIT_FIELD_CREATEDBY] != 0 && m_uint32Values[UNIT_FIELD_SUMMONEDBY] != 0 )
 		return true;
 
 	return false;
@@ -1617,18 +1643,18 @@ void Object::UpdateOppFactionSet()
 	{
 		if (((*i)->GetTypeId() == TYPEID_UNIT) || ((*i)->GetTypeId() == TYPEID_PLAYER) || ((*i)->GetTypeId() == TYPEID_GAMEOBJECT))
 		{
-			if (isHostile(shared_from_this(), (*i)))
+			if (isHostile(this, (*i)))
 			{
-				if(!(*i)->IsInRangeOppFactSet(shared_from_this()))
-					(*i)->m_oppFactsInRange.insert(shared_from_this());
+				if(!(*i)->IsInRangeOppFactSet(this))
+					(*i)->m_oppFactsInRange.insert(this);
 				if (!IsInRangeOppFactSet((*i)))
 					m_oppFactsInRange.insert((*i));
 				
 			}
 			else
 			{
-				if((*i)->IsInRangeOppFactSet(shared_from_this()))
-					(*i)->m_oppFactsInRange.erase(shared_from_this());
+				if((*i)->IsInRangeOppFactSet(this))
+					(*i)->m_oppFactsInRange.erase(this);
 				if (IsInRangeOppFactSet((*i)))
 					m_oppFactsInRange.erase((*i));
 			}
@@ -1641,9 +1667,9 @@ void Object::EventSetUInt32Value(uint32 index, uint32 value)
 	SetUInt32Value(index,value);
 }
 
-void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, uint32 unitEvent, uint32 spellId, bool no_remove_auras)
+void Object::DealDamage(Unit* pVictim, uint32 damage, uint32 targetEvent, uint32 unitEvent, uint32 spellId, bool no_remove_auras)
 {
-	PlayerPointer plr = NULLPLR;
+	Player* plr = NULL;
 
 	if( !pVictim || !pVictim->isAlive() || !pVictim->IsInWorld() || !IsInWorld() )
 		return;
@@ -1661,13 +1687,13 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
 	// Also, you WONT get flagged if you are dueling that person - FiShBaIt
 	if( pVictim->IsPlayer() && IsPlayer() )
 	{
-		if( isHostile( shared_from_this(), pVictim ) && TO_PLAYER( pVictim )->DuelingWith != player_shared_from_this() )
-			player_shared_from_this()->SetPvPFlag();
+		if( isHostile( this, pVictim ) && TO_PLAYER( pVictim )->DuelingWith != TO_PLAYER(this) )
+			TO_PLAYER(this)->SetPvPFlag();
 	}
 	//If our pet attacks  - flag us.
 	if( pVictim->IsPlayer() && IsPet() )
 	{
-		PlayerPointer owner = TO_PLAYER( pet_shared_from_this()->GetPetOwner() );
+		Player* owner = TO_PLAYER( TO_PET(this)->GetPetOwner() );
 		if( owner != NULL )
 			if( owner->isAlive() && TO_PLAYER( pVictim )->DuelingWith != owner )
 				owner->SetPvPFlag();		
@@ -1676,7 +1702,7 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
 	if(!no_remove_auras)
 	{
 		float breakchance = 35.0f;
-		if( spellId == 51514 )//&& IsUnit() && HasDummyAura(SPELL_HASH_GLYPH_OF_HEX) ) wait till 3.1
+		if( spellId == 51514)// && IsUnit() && HasDummyAura(SPELL_HASH_GLYPH_OF_HEX) ) wait till 3.1
 			breakchance += 15.0f;
 
 		//zack 2007 04 24 : root should not remove self (and also other unknown spells)
@@ -1708,34 +1734,34 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
 		}
 	}
 
-	if(IsUnit() && unit_shared_from_this()->isAlive() )
+	if(IsUnit() && TO_UNIT(this)->isAlive() )
 	{
-		if( unit_shared_from_this() != pVictim && pVictim->IsPlayer() && IsPlayer() && plr_shared_from_this()->m_hasInRangeGuards )
+		if( TO_UNIT(this) != pVictim && pVictim->IsPlayer() && IsPlayer() && TO_PLAYER(this)->m_hasInRangeGuards )
 		{
-			plr_shared_from_this()->SetGuardHostileFlag(true);
-			plr_shared_from_this()->CreateResetGuardHostileFlagEvent();
+			TO_PLAYER(this)->SetGuardHostileFlag(true);
+			TO_PLAYER(this)->CreateResetGuardHostileFlagEvent();
 		}
 
 /*		if(!pVictim->isInCombat() && pVictim->IsPlayer())
-			sHookInterface.OnEnterCombat( TO_PLAYER( pVictim ), unit_shared_from_this() );
+			sHookInterface.OnEnterCombat( TO_PLAYER( pVictim ), TO_UNIT(this) );
 
-		if(IsPlayer() && ! player_shared_from_this()->isInCombat())
-			sHookInterface.OnEnterCombat( player_shared_from_this(), player_shared_from_this() );*/
+		if(IsPlayer() && ! TO_PLAYER(this)->isInCombat())
+			sHookInterface.OnEnterCombat( TO_PLAYER(this), TO_PLAYER(this) );*/
 			
 		if(IsPet())
-			plr = pet_shared_from_this()->GetPetOwner();
+			plr = TO_PET(this)->GetPetOwner();
 		else if(IsPlayer())
-			plr = player_shared_from_this();
+			plr = TO_PLAYER(this);
 
 		if(plr != NULL && plr->GetTypeId() == TYPEID_PLAYER && pVictim->GetTypeId() == TYPEID_UNIT) // Units can't tag..
 			TO_CREATURE(pVictim)->Tag(plr);
 
-		//is this correct shared_from_this()
+		//is this correct this
 		if( pVictim != 
-			unit_shared_from_this() )
+			TO_UNIT(this) )
 		{
 			// Set our attack target to the victim.
-			unit_shared_from_this()->CombatStatus.OnDamageDealt( pVictim, damage );
+			TO_UNIT(this)->CombatStatus.OnDamageDealt( pVictim, damage );
 		}
 	}
 
@@ -1743,7 +1769,7 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
         float val;
 
 		if( pVictim->GetPowerType() == POWER_TYPE_RAGE 
-			&& pVictim != unit_shared_from_this()
+			&& pVictim != TO_UNIT(this)
 			&& pVictim->IsPlayer())
 		{
 			float level = (float)pVictim->getLevel();
@@ -1760,17 +1786,17 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
 
 	
 	//* BATTLEGROUND DAMAGE COUNTER *//
-	if( pVictim != unit_shared_from_this() )
+	if( pVictim != TO_UNIT(this) )
 	{
 		if( IsPlayer() )
 		{
-			plr = player_shared_from_this();
+			plr = TO_PLAYER(this);
 		}
 		else if( IsPet() )
 		{
-			plr = pet_shared_from_this()->GetPetOwner();
+			plr = TO_PET(this)->GetPetOwner();
 			if( plr != NULL && plr->GetMapMgr() == GetMapMgr() )
-				plr = NULLPLR;
+				plr = NULL;
 		}
 
 		if( plr != NULL && plr->m_bg != NULL && plr->GetMapMgr() == GetMapMgr() )
@@ -1784,7 +1810,7 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
 
 	if(health <= damage && pVictim->IsPlayer() && pVictim->getClass() == ROGUE && pVictim->m_CustomTimers[CUSTOM_TIMER_CHEATDEATH] <= getMSTime() )
 	{
-		PlayerPointer plrVictim = TO_PLAYER(pVictim);
+		Player* plrVictim = TO_PLAYER(pVictim);
 		uint32 rank = plrVictim->m_cheatDeathRank;
 
 		uint32 chance = rank == 3 ? 100 : rank * 33;
@@ -1792,7 +1818,7 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
 		{
 			// Proc that cheating death!
 			SpellEntry *spellInfo = dbcSpell.LookupEntry(45182);
-			SpellPointer spell(new Spell(pVictim, spellInfo, true, NULLAURA));
+			Spell* spell(new Spell(pVictim, spellInfo, true, NULL));
 			SpellCastTargets targets;
 			targets.m_unitTarget = pVictim->GetGUID();
 			spell->prepare(&targets);
@@ -1806,9 +1832,9 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
 	}
 
 	/*------------------------------------ DUEL HANDLERS --------------------------*/
-	if((pVictim->IsPlayer()) && (IsPlayer()) && TO_PLAYER(pVictim)->DuelingWith == player_shared_from_this() ) //Both Players
+	if((pVictim->IsPlayer()) && (IsPlayer()) && TO_PLAYER(pVictim)->DuelingWith == TO_PLAYER(this) ) //Both Players
 	{
-		if((health <= damage) && player_shared_from_this()->DuelingWith != NULL)
+		if((health <= damage) && TO_PLAYER(this)->DuelingWith != NULL)
 		{
 			//Player in Duel and Player Victim has lost
 			uint32 NewHP = pVictim->GetUInt32Value(UNIT_FIELD_MAXHEALTH)/100;
@@ -1819,8 +1845,8 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
 			//Set there health to 1% or 5 if 1% is lower then 5
 			pVictim->SetUInt32Value(UNIT_FIELD_HEALTH, NewHP);
 			//End Duel
-			player_shared_from_this()->EndDuel(DUEL_WINNER_KNOCKOUT);
-			plr_shared_from_this()->GetAchievementInterface()->HandleAchievementCriteriaWinDuel();
+			TO_PLAYER(this)->EndDuel(DUEL_WINNER_KNOCKOUT);
+			TO_PLAYER(this)->GetAchievementInterface()->HandleAchievementCriteriaWinDuel();
 			TO_PLAYER(pVictim)->GetAchievementInterface()->HandleAchievementCriteriaLoseDuel();
 
 			// surrender emote
@@ -1832,9 +1858,9 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
 
 	if((pVictim->IsPlayer()) && (IsPet())) 
 	{
-		if((health <= damage) && TO_PLAYER(pVictim)->DuelingWith == pet_shared_from_this()->GetPetOwner())
+		if((health <= damage) && TO_PLAYER(pVictim)->DuelingWith == TO_PET(this)->GetPetOwner())
 		{
-			PlayerPointer petOwner = pet_shared_from_this()->GetPetOwner();
+			Player* petOwner = TO_PET(this)->GetPetOwner();
 			if(petOwner)
 			{
 				//Player in Duel and Player Victim has lost
@@ -1852,10 +1878,20 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
 	/*------------------------------------ DUEL HANDLERS END--------------------------*/
 
 	bool isCritter = false;
-	if(pVictim->GetTypeId() == TYPEID_UNIT && TO_CREATURE(pVictim)->GetCreatureName())
+	if(pVictim->GetTypeId() == TYPEID_UNIT && TO_CREATURE(pVictim)->GetCreatureInfo())
 	{
-			if(TO_CREATURE(pVictim)->GetCreatureName()->Type == CRITTER)
+			if(TO_CREATURE(pVictim)->GetCreatureInfo()->Type == CRITTER)
 				isCritter = true;
+			else if(TO_CREATURE(pVictim)->proto)
+			{
+				//Dummy trainers can't die
+				if(isTargetDummy(TO_CREATURE(pVictim)->proto->Id))
+				{
+					//Just limit to 5HP (can't use 1HP here).
+					pVictim->SetUInt32Value(UNIT_FIELD_HEALTH, 5);
+					return;
+				}
+			}
 	}
 
 	/* -------------------------- HIT THAT CAUSES VICTIM TO DIE ---------------------------*/
@@ -1873,26 +1909,26 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
 		if( IsUnit() )
 		{
 			if( IsPlayer() && pVictim->IsUnit() && !pVictim->IsPlayer() && m_mapMgr->m_battleground && m_mapMgr->m_battleground->GetType() == BATTLEGROUND_ALTERAC_VALLEY )
-				TO_ALTERACVALLEY(m_mapMgr->m_battleground)->HookOnUnitKill( plr_shared_from_this(), pVictim );
+				TO_ALTERACVALLEY(m_mapMgr->m_battleground)->HookOnUnitKill( TO_PLAYER(this), pVictim );
 			SpellEntry *killerspell;
 			if( spellId )
 				killerspell = dbcSpell.LookupEntry( spellId );
 			else killerspell = NULL;
-			pVictim->HandleProc( PROC_ON_DIE, unit_shared_from_this(), killerspell );
+			pVictim->HandleProc( PROC_ON_DIE, TO_UNIT(this), killerspell );
 			pVictim->m_procCounter = 0;
-			unit_shared_from_this()->HandleProc( PROC_ON_TARGET_DIE, pVictim, killerspell );
-			unit_shared_from_this()->m_procCounter = 0;
+			TO_UNIT(this)->HandleProc( PROC_ON_TARGET_DIE, pVictim, killerspell );
+			TO_UNIT(this)->m_procCounter = 0;
 		}
 		// check if pets owner is combat participant
 		bool owner_participe = false;
 		if( IsPet() )
 		{
-			PlayerPointer owner = pet_shared_from_this()->GetPetOwner();
+			Player* owner = TO_PET(this)->GetPetOwner();
 			if( owner != NULL && pVictim->GetAIInterface()->getThreatByPtr( owner ) > 0 )
 				owner_participe = true;
 		}
 		/* victim died! */
-		UnitPointer pKiller = pVictim->CombatStatus.GetKiller();
+		Unit* pKiller = pVictim->CombatStatus.GetKiller();
 		if( pVictim->IsPlayer() )
 		{
 			// let's see if we have shadow of death
@@ -1902,7 +1938,7 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
 				SpellEntry* sorInfo = dbcSpell.LookupEntry(54223);
 				if( sorInfo != NULL && TO_PLAYER(pVictim)->Cooldown_CanCast( sorInfo ))
 				{
-					SpellPointer sor(new Spell( pVictim, sorInfo, false, NULLAURA ));
+					Spell* sor(new Spell( pVictim, sorInfo, false, NULL ));
 					SpellCastTargets targets;
 					targets.m_unitTarget = pVictim->GetGUID();
 					sor->prepare(&targets);
@@ -1919,7 +1955,7 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
 
 			if( IsCreature() )
 			{
-				TO_PLAYER(pVictim)->GetAchievementInterface()->HandleAchievementCriteriaKilledByCreature( creature_shared_from_this()->GetUInt32Value(OBJECT_FIELD_ENTRY) );
+				TO_PLAYER(pVictim)->GetAchievementInterface()->HandleAchievementCriteriaKilledByCreature( TO_CREATURE(this)->GetUInt32Value(OBJECT_FIELD_ENTRY) );
 			}
 			else if(IsPlayer())
 			{
@@ -1935,23 +1971,24 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
 			pVictim->SetUInt32Value(UNIT_FIELD_HEALTH, 0);
 		}
 
-		if( pVictim->IsPlayer() && (!IsPlayer() || pVictim == unit_shared_from_this() ) )
+		if( pVictim->IsPlayer() && (!IsPlayer() || pVictim == TO_UNIT(this) ) )
 		{
 			TO_PLAYER( pVictim )->DeathDurabilityLoss(0.10);
 		}
 
 		/* Zone Under Attack */
-        MapInfo * pMapInfo = WorldMapInfoStorage.LookupEntry(GetMapId());
-        if( pMapInfo && pMapInfo->type == INSTANCE_NULL && !pVictim->IsPlayer() && !pVictim->IsPet() && ( IsPlayer() || IsPet() ) )
+		MapInfo * pZMapInfo = NULL;
+		pZMapInfo = WorldMapInfoStorage.LookupEntry(GetMapId());
+		if( pZMapInfo != NULL && pZMapInfo->type == INSTANCE_NULL && !pVictim->IsPlayer() && !pVictim->IsPet() && ( IsPlayer() || IsPet() ) )
 		{
 			// Only NPCs that bear the PvP flag can be truly representing their faction.
 			if( TO_CREATURE(pVictim)->IsPvPFlagged() )
 			{
-				PlayerPointer pAttacker = NULLPLR;
+				Player* pAttacker = NULL;
 				if( IsPet() )
-					pAttacker = pet_shared_from_this()->GetPetOwner();
+					pAttacker = TO_PET(this)->GetPetOwner();
 				else if(IsPlayer())
-					pAttacker = player_shared_from_this();
+					pAttacker = TO_PLAYER(this);
 
 				if( pAttacker != NULL)
                 {
@@ -1960,7 +1997,7 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
 					    teamId = 1;
 				    else
 					    teamId = 0;
-				    uint32 AreaID = pVictim->GetMapMgr()->GetAreaID(pVictim->GetPositionX(), pVictim->GetPositionY());
+				    uint32 AreaID = pVictim->GetMapMgr()->GetAreaID(pVictim->GetPositionX(), pVictim->GetPositionY(), pVictim->GetPositionZ());
 				    if(!AreaID)
 					    AreaID = pAttacker->GetZoneId(); // Failsafe for a shitty TerrainMgr
 
@@ -1978,12 +2015,12 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
 		{
 			if(pVictim->GetCurrentSpell())
 			{
-				SpellPointer spl = pVictim->GetCurrentSpell();
+				Spell* spl = pVictim->GetCurrentSpell();
 				for(int i = 0; i < 3; i++)
 				{
 					if(spl->m_spellInfo->Effect[i] == SPELL_EFFECT_PERSISTENT_AREA_AURA)
 					{
-						DynamicObjectPointer dObj = GetMapMgr()->GetDynamicObject(pVictim->GetUInt32Value(UNIT_FIELD_CHANNEL_OBJECT));
+						DynamicObject* dObj = GetMapMgr()->GetDynamicObject(pVictim->GetUInt32Value(UNIT_FIELD_CHANNEL_OBJECT));
 						if(!dObj)
 							return;
 						WorldPacket data(SMSG_GAMEOBJECT_DESPAWN_ANIM, 8);
@@ -1991,7 +2028,6 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
 						dObj->SendMessageToSet(&data, false);
 						dObj->RemoveFromWorld(true);
 						dObj->Destructor();
-						dObj = NULLDYN; // deleted!
 					}
 				}
 				if(spl->m_spellInfo->ChannelInterruptFlags == 48140) spl->cancel();
@@ -2001,7 +2037,7 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
 		if(pVictim->IsPlayer())
 		{
 			uint32 self_res_spell = 0;
-			PlayerPointer plrVictim = TO_PLAYER(pVictim);
+			Player* plrVictim = TO_PLAYER(pVictim);
 			if(!(plrVictim->m_bg && plrVictim->m_bg->IsArena())) // Can't self res in Arena
 			{
 				self_res_spell = plrVictim->SoulStone;
@@ -2027,15 +2063,15 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
 
 
 		/* Stop Units from attacking */
-		if( IsPlayer() )
+		if( plr && plr->IsInWorld() )
 			plr->EventAttackStop();
 
 		if( IsUnit() )
 		{
-			unit_shared_from_this()->smsg_AttackStop( pVictim );
+			TO_UNIT(this)->smsg_AttackStop( pVictim );
 		
 			/* Tell Unit that it's target has Died */
-			unit_shared_from_this()->addStateFlag( UF_TARGET_DIED );
+			TO_UNIT(this)->addStateFlag( UF_TARGET_DIED );
 
 		}
 		if( pVictim->IsPlayer() )
@@ -2046,20 +2082,19 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
 				if( sorInfo != NULL )
 				{
 					pVictim->SetUInt32Value(UNIT_FIELD_HEALTH, 1);
-					SpellPointer sor(new Spell( pVictim, sorInfo, true, NULLAURA ));
+					Spell* sor(new Spell( pVictim, sorInfo, true, NULL ));
 					SpellCastTargets targets;
 					targets.m_unitTarget = pVictim->GetGUID();
 					sor->prepare(&targets);
-					return;
 				}
 			}
 		}
 		/* -------------------------------- HONOR + BATTLEGROUND CHECKS ------------------------ */
-		plr = NULLPLR;
+		plr = NULL;
 		if( IsPlayer() )
-			plr = TO_PLAYER( shared_from_this() );
+			plr = TO_PLAYER( this );
 		else if( IsPet())
-			plr = TO_PET( shared_from_this() )->GetPetOwner();
+			plr = TO_PET( this )->GetPetOwner();
 
 		if( plr != NULL)
 		{
@@ -2117,7 +2152,7 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
 			//--------------------------------- POSSESSED CREATURES -----------------------------------------
 			if( pVictim->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED_CREATURE) )
 			{//remove possess aura from controller
-				PlayerPointer vController = GetMapMgr()->GetPlayer( (uint32)pVictim->GetUInt64Value(UNIT_FIELD_CHARMEDBY) );
+				Player* vController = GetMapMgr()->GetPlayer( (uint32)pVictim->GetUInt64Value(UNIT_FIELD_CHARMEDBY) );
 				if( vController )
 				{
 					if( vController->GetUInt64Value( UNIT_FIELD_CHARM ) )//make sure he is target controller
@@ -2127,7 +2162,7 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
 				}
 			}
 			//--------------------------------- PARTY LOG -----------------------------------------
-			pVictim->GetAIInterface()->OnDeath( shared_from_this() );
+			pVictim->GetAIInterface()->OnDeath( this );
 			if(GetTypeId() == TYPEID_PLAYER)
 			{
 				WorldPacket data(SMSG_PARTYKILLLOG, 16);
@@ -2147,24 +2182,36 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
 				// TODO: lots of casts are bad make a temp member pointer to use for batches like this
 				// that way no local loadhitstore and its just one assignment 
 
-				// Is this player part of a group
-				if( player_shared_from_this()->InGroup() )
+				//Not all NPC's give XP, check for it in proto no_XP
+				bool can_give_xp = true;
+				if(pVictim->IsCreature())
 				{
-					//Calc Group XP
-					player_shared_from_this()->GiveGroupXP( pVictim, player_shared_from_this() );
-					//TODO: pet xp if player in group
+					if(TO_CREATURE(pVictim)->GetProto())
+						can_give_xp = (TO_CREATURE(pVictim)->GetProto()->no_xp ? false : true);
+					else
+						can_give_xp = false; // creatures without proto should not give any xp
 				}
-				else
+				if(can_give_xp)
 				{
-					uint32 xp = CalculateXpToGive( pVictim, unit_shared_from_this() );
-					if( xp > 0 )
+					// Is this player part of a group
+					if( TO_PLAYER(this)->InGroup() )
 					{
-						player_shared_from_this()->GiveXP( xp, victimGuid, true );
-						if( player_shared_from_this()->GetSummon() && player_shared_from_this()->GetSummon()->GetUInt32Value( UNIT_CREATED_BY_SPELL ) == 0 )
+						//Calc Group XP
+						TO_PLAYER(this)->GiveGroupXP( pVictim, TO_PLAYER(this) );
+						//TODO: pet xp if player in group
+					}
+					else
+					{
+						uint32 xp = CalculateXpToGive( pVictim, TO_UNIT(this) );
+						if( xp > 0 )
 						{
-							xp = CalculateXpToGive( pVictim, player_shared_from_this()->GetSummon() );
-							if( xp > 0 )
-								player_shared_from_this()->GetSummon()->GiveXP( xp );
+							TO_PLAYER(this)->GiveXP( xp, victimGuid, true );
+							if( TO_PLAYER(this)->GetSummon() && TO_PLAYER(this)->GetSummon()->GetUInt32Value( UNIT_CREATED_BY_SPELL ) == 0 )
+							{
+								xp = CalculateXpToGive( pVictim, TO_PLAYER(this)->GetSummon() );
+								if( xp > 0 )
+									TO_PLAYER(this)->GetSummon()->GiveXP( xp );
+							}
 						}
 					}
 				}
@@ -2172,25 +2219,25 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
 				// Achievement: on kill unit
 				if( !pVictim->IsPlayer() && IsPlayer() )
 				{
-					PlayerPointer pThis = plr_shared_from_this();
+					Player* pThis = TO_PLAYER(this);
 					pThis->GetAchievementInterface()->HandleAchievementCriteriaKillCreature( pVictim->GetUInt32Value(OBJECT_FIELD_ENTRY) );
 				}
 
 				if( pVictim->GetTypeId() != TYPEID_PLAYER )
-					sQuestMgr.OnPlayerKill( player_shared_from_this(), TO_CREATURE( pVictim ) );
+					sQuestMgr.OnPlayerKill( TO_PLAYER(this), TO_CREATURE( pVictim ) );
 			}
-			else /* is Creature or GameObjectPointer */
+			else /* is Creature or GameObject* */
 			{
 				/* ----------------------------- PET XP HANDLING -------------- */
 				if( owner_participe && IsPet() && !pVictim->IsPet() )
 				{
-					PlayerPointer petOwner = pet_shared_from_this()->GetPetOwner();
+					Player* petOwner = TO_PET(this)->GetPetOwner();
 					if( petOwner != NULL && petOwner->GetTypeId() == TYPEID_PLAYER )
 					{
 						if( petOwner->InGroup() )
 						{
 							//Calc Group XP
-							unit_shared_from_this()->GiveGroupXP( pVictim, petOwner );
+							TO_UNIT(this)->GiveGroupXP( pVictim, petOwner );
 							//TODO: pet xp if player in group
 						}
 						else
@@ -2199,11 +2246,11 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
 							if( xp > 0 )
 							{
 								petOwner->GiveXP( xp, victimGuid, true );
-								if( !pet_shared_from_this()->IsSummon() )
+								if( !TO_PET(this)->IsSummonedPet() )
 								{
-									xp = CalculateXpToGive( pVictim, pet_shared_from_this() );
+									xp = CalculateXpToGive( pVictim, TO_PET(this) );
 									if( xp > 0 )
-										pet_shared_from_this()->GiveXP( xp );
+										TO_PET(this)->GiveXP( xp );
 								}
 							}
 						}
@@ -2218,7 +2265,7 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
 				if( pVictim->IsPet() )
 				{
 					// dying pet looses 1 happiness level
-					if( !TO_PET( pVictim )->IsSummon() )
+					if( !TO_PET( pVictim )->IsSummonedPet() )
 					{
 						uint32 hap = TO_PET( pVictim )->GetUInt32Value( UNIT_FIELD_POWER5 );
 						hap = hap - PET_HAPPINESS_UPDATE_VALUE > 0 ? hap - PET_HAPPINESS_UPDATE_VALUE : 0;
@@ -2228,7 +2275,7 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
 					TO_PET( pVictim )->DelayedRemove( false, true );
 					
 					//remove owner warlock soul link from caster
-					PlayerPointer owner = TO_PET( pVictim )->GetPetOwner();
+					Player* owner = TO_PET( pVictim )->GetPetOwner();
 					if( owner != NULL )
 						owner->EventDismissPet();
 				}
@@ -2236,7 +2283,7 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
 				else if( pVictim->GetUInt64Value( UNIT_FIELD_CHARMEDBY ) )
 				{
 					//remove owner warlock soul link from caster
-					UnitPointer owner=pVictim->GetMapMgr()->GetUnit( pVictim->GetUInt64Value( UNIT_FIELD_CHARMEDBY ) );
+					Unit* owner=pVictim->GetMapMgr()->GetUnit( pVictim->GetUInt64Value( UNIT_FIELD_CHARMEDBY ) );
 					if( owner != NULL && owner->IsPlayer())
 						TO_PLAYER( owner )->EventDismissPet();
 				}
@@ -2251,7 +2298,7 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
 			TO_PLAYER( pVictim )->m_BreathDamageTimer = 0;
 			TO_PLAYER( pVictim )->m_SwimmingTime = 0;
 
-			/* -------------------- KILL PET WHEN PLAYER DIES ---------------*/
+			/* -------------------- REMOVE PET WHEN PLAYER DIES ---------------*/
 			if( TO_PLAYER( pVictim )->GetSummon() != NULL )
 			{
 				if( pVictim->GetUInt32Value( UNIT_CREATED_BY_SPELL ) > 0 )
@@ -2259,18 +2306,18 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
 				else
 					TO_PLAYER( pVictim )->GetSummon()->Remove( true, true, true );
 			}
-			/* -------------------- KILL PET WHEN PLAYER DIES END---------------*/
+			/* -------------------- REMOVE PET WHEN PLAYER DIES END---------------*/
 		}
 		else OUT_DEBUG("DealDamage for Unknown Object.");
 	}
 	else /* ---------- NOT DEAD YET --------- */
 	{
-		if(pVictim != unit_shared_from_this() /* && updateskill */)
+		if(pVictim != TO_UNIT(this) /* && updateskill */)
 		{
 			// Send AI Reaction UNIT vs UNIT
 			if( GetTypeId() ==TYPEID_UNIT )
 			{
-				unit_shared_from_this()->GetAIInterface()->AttackReaction( pVictim, damage, spellId );
+				TO_UNIT(this)->GetAIInterface()->AttackReaction( pVictim, damage, spellId );
 			}
 			
 			// Send AI Victim Reaction
@@ -2278,23 +2325,26 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
 			{
 				if( pVictim->GetTypeId() != TYPEID_PLAYER )
 				{
-					TO_CREATURE( pVictim )->GetAIInterface()->AttackReaction( unit_shared_from_this(), damage, spellId );
+					TO_CREATURE( pVictim )->GetAIInterface()->AttackReaction( TO_UNIT(this), damage, spellId );
 				}
 			}
 
-			if( IsUnit() && TO_UNIT( shared_from_this() )->HasDummyAura( SPELL_HASH_MARK_OF_BLOOD ) )
+			if( IsUnit() && TO_UNIT( this )->HasDummyAura( SPELL_HASH_MARK_OF_BLOOD ) )
 			{
-				TO_UNIT( shared_from_this() )->CastSpell( pVictim, 50424, true );
+				SpellEntry * tmpsp = NULL;
+				tmpsp = dbcSpell.LookupEntry(50424);
+				if(tmpsp != NULL)
+					sEventMgr.AddEvent(TO_UNIT( this ), &Unit::EventCastSpell, pVictim, tmpsp, EVENT_AURA_APPLY, 250, 1,EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT); 
 			}
 			else if( IsPlayer() && spellId )
 			{
-				PlayerPointer plra = TO_PLAYER(shared_from_this());
+				Player* plra = TO_PLAYER(this);
 				SpellEntry *spentry = dbcSpell.LookupEntry( spellId );
 				if( (spentry->NameHash == SPELL_HASH_CORRUPTION || spentry->NameHash == SPELL_HASH_UNSTABLE_AFFLICTION) && plra->HasDummyAura(SPELL_HASH_PANDEMIC) )
 				{
-					if( Rand( plra->GetFloatValue(PLAYER_SPELL_CRIT_PERCENTAGE1_5) ) && pVictim )
+					if( Rand( plra->GetFloatValue(PLAYER_SPELL_CRIT_PERCENTAGE1 + 5) ) && pVictim )
 					{
-						SpellPointer sp(new Spell(shared_from_this(), dbcSpell.LookupEntry(58691), true, NULLAURA));
+						Spell* sp(new Spell(this, dbcSpell.LookupEntry(58691), true, NULL));
 						SpellCastTargets targets;
 						targets.m_unitTarget = pVictim->GetGUID();
 						sp->forced_basepoints[0] = float2int32(damage * ( plra->GetDummyAura(SPELL_HASH_PANDEMIC)->RankNumber * 0.33f + 0.01f));
@@ -2303,17 +2353,12 @@ void Object::DealDamage(UnitPointer pVictim, uint32 damage, uint32 targetEvent, 
 				}
 			}	
 		}
-		// TODO: Mark victim as a HK
-		/*if( TO_PLAYER( pVictim )->GetCurrentBattleground() != NULL && player_shared_from_this()->GetCurrentBattleground() != NULL)
-		{
-			
-		}*/	
 
-		pVictim->SetUInt32Value( UNIT_FIELD_HEALTH, health - damage );
+		pVictim->SetUInt32Value(UNIT_FIELD_HEALTH, health - damage );
 	}
 }
 
-void Object::SpellNonMeleeDamageLog(UnitPointer pVictim, uint32 spellID, uint32 damage, bool allowProc, bool static_damage, bool no_remove_auras, uint32 AdditionalCritChance)
+void Object::SpellNonMeleeDamageLog(Unit* pVictim, uint32 spellID, uint32 damage, bool allowProc, bool static_damage, bool no_remove_auras, uint32 AdditionalCritChance)
 {
 //==========================================================================================
 //==============================Unacceptable Cases Processing===============================
@@ -2325,7 +2370,7 @@ void Object::SpellNonMeleeDamageLog(UnitPointer pVictim, uint32 spellID, uint32 
 	if(!spellInfo)
         return;
 
-	if (IsPlayer() && !player_shared_from_this()->canCast(spellInfo))
+	if (IsPlayer() && !TO_PLAYER(this)->canCast(spellInfo))
 		return;
 //==========================================================================================
 //==============================Variables Initialization====================================
@@ -2339,9 +2384,9 @@ void Object::SpellNonMeleeDamageLog(UnitPointer pVictim, uint32 spellID, uint32 
 
 	float res_after_spelldmg;
 
-	UnitPointer caster = NULLUNIT;
+	Unit* caster = NULL;
 	if( IsUnit() )
-		caster = unit_shared_from_this();
+		caster = TO_UNIT(this);
 
 //==========================================================================================
 //==============================+Spell Damage Bonus Calculations============================
@@ -2418,12 +2463,13 @@ void Object::SpellNonMeleeDamageLog(UnitPointer pVictim, uint32 spellID, uint32 
 			if( CritChance > 95 ) CritChance = 95;
 			critical = Rand(CritChance);
 			//sLog.outString( "SpellNonMeleeDamageLog: Crit Chance %f%%, WasCrit = %s" , CritChance , critical ? "Yes" : "No" );
-			AuraPointer fs = NULLAURA;
-			if(spellInfo->NameHash == SPELL_HASH_LAVA_BURST && (fs = pVictim->FindNegativeAuraByNameHash(SPELL_HASH_FLAME_SHOCK)) != NULL)
+			Aura* fs = NULL;
+			fs = spellInfo->NameHash == SPELL_HASH_LAVA_BURST ? pVictim->FindNegativeAuraByNameHash(SPELL_HASH_FLAME_SHOCK): NULL;
+			if( fs != NULL)
 			{
 				critical = true;
 				if(caster && !caster->HasAura(55447))	// Glyph of Flame Shock
-					fs->Remove();
+					pVictim->RemoveAura(fs);
 			}
 //==========================================================================================
 //==============================Spell Critical Hit==========================================
@@ -2504,7 +2550,7 @@ void Object::SpellNonMeleeDamageLog(UnitPointer pVictim, uint32 spellID, uint32 
 
 //------------------------------absorption--------------------------------------------------	
 	uint32 ress=(uint32)res;
-	uint32 abs_dmg = pVictim->AbsorbDamage(shared_from_this(), school, &ress, dbcSpell.LookupEntryForced(spellID));
+	uint32 abs_dmg = pVictim->AbsorbDamage(this, school, &ress, dbcSpell.LookupEntryForced(spellID));
 	uint32 ms_abs_dmg= pVictim->ManaShieldAbsorb(ress, dbcSpell.LookupEntryForced(spellID));
 	if (ms_abs_dmg)
 	{
@@ -2531,7 +2577,7 @@ void Object::SpellNonMeleeDamageLog(UnitPointer pVictim, uint32 spellID, uint32 
 	float res_before_resist = res;
 	if(res > 0 && IsUnit())
 	{
-		unit_shared_from_this()->CalculateResistanceReduction(pVictim,&dmg,spellInfo,0.0f);
+		TO_UNIT(this)->CalculateResistanceReduction(pVictim,&dmg,spellInfo,0.0f);
 		if((int32)dmg.resisted_damage > dmg.full_damage)
 			res = 0;
 		else
@@ -2550,7 +2596,14 @@ void Object::SpellNonMeleeDamageLog(UnitPointer pVictim, uint32 spellID, uint32 
 
 	int32 ires = float2int32(res);
 
-	SendSpellNonMeleeDamageLog(shared_from_this(), pVictim, spellID, float2int32(res), school, abs_dmg, dmg.resisted_damage, false, 0, critical, IsPlayer());
+	//--------------------------split damage-----------------------------------------------
+	// Paladin: Blessing of Sacrifice, and Warlock: Soul Link
+	if( pVictim->m_damageSplitTarget.active)
+	{
+		ires = pVictim->DoDamageSplitTarget(ires, spellInfo->School, false);
+	}
+
+	SendSpellNonMeleeDamageLog(this, pVictim, spellID, ires, school, abs_dmg, dmg.resisted_damage, false, 0, critical, IsPlayer());
 
 	if( ires > 0 )
 	{
@@ -2561,19 +2614,19 @@ void Object::SpellNonMeleeDamageLog(UnitPointer pVictim, uint32 spellID, uint32 
 	{
 		// we still have to tell the combat status handler we did damage so we're put in combat
 		if( IsUnit() )
-			unit_shared_from_this()->CombatStatus.OnDamageDealt(pVictim, 1);
+			TO_UNIT(this)->CombatStatus.OnDamageDealt(pVictim, 1);
 	}
 	
 	if( IsUnit() && allowProc && spellInfo->Id != 25501 )
 	{
-		pVictim->HandleProc( vproc, unit_shared_from_this(), spellInfo, float2int32( res ) );
+		pVictim->HandleProc( vproc, TO_UNIT(this), spellInfo, float2int32( res ) );
 		pVictim->m_procCounter = 0;
-		unit_shared_from_this()->HandleProc( aproc, pVictim, spellInfo, float2int32( res ) );
-		unit_shared_from_this()->m_procCounter = 0;
+		TO_UNIT(this)->HandleProc( aproc, pVictim, spellInfo, float2int32( res ) );
+		TO_UNIT(this)->m_procCounter = 0;
 	}
 	if( IsPlayer() )
 	{
-		player_shared_from_this()->m_casted_amount[school] = ( uint32 )res;
+		TO_PLAYER(this)->m_casted_amount[school] = ( uint32 )res;
 	}
 
 	if( (dmg.full_damage == 0 && abs_dmg) == 0 )
@@ -2591,8 +2644,8 @@ void Object::SpellNonMeleeDamageLog(UnitPointer pVictim, uint32 spellID, uint32 
 
 	if( school == SHADOW_DAMAGE )
 	{
-		if( IsPlayer() && unit_shared_from_this()->isAlive() && plr_shared_from_this()->getClass() == PRIEST )
-			plr_shared_from_this()->VampiricSpell(float2int32(res), pVictim, dbcSpell.LookupEntry(spellID));
+		if( IsPlayer() && TO_UNIT(this)->isAlive() && TO_PLAYER(this)->getClass() == PRIEST )
+			TO_PLAYER(this)->VampiricSpell(float2int32(res), pVictim, dbcSpell.LookupEntry(spellID));
 
 		if( pVictim->isAlive() && IsUnit() )
 		{
@@ -2600,41 +2653,25 @@ void Object::SpellNonMeleeDamageLog(UnitPointer pVictim, uint32 spellID, uint32 
 			if( spellID == 32379 || spellID == 32996 || spellID == 48157 || spellID == 48158 ) 
 			{
 				uint32 damage = (uint32)( res + abs_dmg );
-				uint32 absorbed = unit_shared_from_this()->AbsorbDamage(shared_from_this(), school, &damage, dbcSpell.LookupEntryForced(spellID) );
-				DealDamage( unit_shared_from_this(), damage, 2, 0, spellID );
-				SendSpellNonMeleeDamageLog( shared_from_this(), unit_shared_from_this(), spellID, damage, school, absorbed, 0, false, 0, false, IsPlayer() );
+
+				if( TO_UNIT( this )->HasDummyAura(SPELL_HASH_PAIN_AND_SUFFERING) )
+					damage += float2int32(damage * ((TO_UNIT( this )->GetDummyAura(SPELL_HASH_PAIN_AND_SUFFERING)->EffectBasePoints[1]+1) / 100.0f));
+
+				uint32 absorbed = TO_UNIT(this)->AbsorbDamage(this, school, &damage, dbcSpell.LookupEntryForced(spellID) );
+				DealDamage( TO_UNIT(this), damage, 2, 0, spellID );
+				SendSpellNonMeleeDamageLog( this, TO_UNIT(this), spellID, damage, school, absorbed, 0, false, 0, false, IsPlayer() );
 			}
 			else if( spellInfo->NameHash == SPELL_HASH_HAUNT )
 				caster->m_lastHauntInitialDamage = res;
 		}
 	}
-
-	// Rage
-	/*if( dmg.full_damage && this->IsUnit() && pVictim->IsPlayer() && pVictim->GetPowerType() == POWER_TYPE_RAGE && pVictim->CombatStatus.IsInCombat() )
-	{
-		float val;
-		float level = (float)unit_shared_from_this()->getLevel();
-
-		// Conversion Value
-		float c = 0.0091107836f * level * level + 3.225598133f * level + 4.2652911f;
-
-		val = 2.5f * dmg.full_damage / c;
-		val *= 10;
-
-		//OUT_DEBUG( "Rd(%i) d(%i) c(%f) rage = %f", realdamage, dmg.full_damage, c, val );
-
-		pVictim->ModUnsigned32Value( UNIT_FIELD_POWER2, (int32)val );
-		if( pVictim->GetUInt32Value( UNIT_FIELD_POWER2) > 1000 )
-			pVictim->ModUnsigned32Value( UNIT_FIELD_POWER2, 1000 - pVictim->GetUInt32Value( UNIT_FIELD_POWER2 ) );
-
-	}*/
 }
 
 //*****************************************************************************************
 //* SpellLog packets just to keep the code cleaner and better to read
 //*****************************************************************************************
 
-void Object::SendSpellLog(ObjectPointer Caster, ObjectPointer Target, uint32 Ability, uint8 SpellLogType)
+void Object::SendSpellLog(Object* Caster, Object* Target, uint32 Ability, uint8 SpellLogType)
 {
 	if ((!Caster || !Target) && Ability)
 		return;
@@ -2650,7 +2687,7 @@ void Object::SendSpellLog(ObjectPointer Caster, ObjectPointer Target, uint32 Abi
 }
 
 
-void Object::SendSpellNonMeleeDamageLog( ObjectPointer Caster, UnitPointer Target, uint32 SpellID, uint32 Damage, uint8 School, uint32 AbsorbedDamage, uint32 ResistedDamage, bool PhysicalDamage, uint32 BlockedDamage, bool CriticalHit, bool bToset )
+void Object::SendSpellNonMeleeDamageLog( Object* Caster, Unit* Target, uint32 SpellID, uint32 Damage, uint8 School, uint32 AbsorbedDamage, uint32 ResistedDamage, bool PhysicalDamage, uint32 BlockedDamage, bool CriticalHit, bool bToset )
 {
 	if ( !Caster || !Target )
 		return;
@@ -2689,15 +2726,12 @@ int32 Object::event_GetInstanceID()
 		return m_instanceId;
 }
 
-void Object::EventSpellHit(SpellPointer pSpell)
+void Object::EventSpellHit(Spell* pSpell)
 {
-	if( !IsInWorld() )
-	{
-		pSpell = NULLSPELL;
-		return;
-	}
-
-	pSpell->cast(false);
+	if( IsInWorld() && pSpell->m_caster != NULL )
+		pSpell->cast(false);
+	else
+		delete pSpell;
 }
 
 
@@ -2713,7 +2747,7 @@ bool Object::CanActivate()
 
 	case TYPEID_GAMEOBJECT:
 		{
-			if(gob_shared_from_this()->HasAI() && GetByte(GAMEOBJECT_BYTES_1, GAMEOBJECT_BYTES_TYPE_ID) != GAMEOBJECT_TYPE_TRAP)
+			if(TO_GAMEOBJECT(this)->HasAI() && GetByte(GAMEOBJECT_BYTES_1, GAMEOBJECT_BYTES_TYPE_ID) != GAMEOBJECT_TYPE_TRAP)
 				return true;
 		}break;
 	}
@@ -2721,26 +2755,26 @@ bool Object::CanActivate()
 	return false;
 }
 
-void Object::Activate(MapMgrPointer mgr)
+void Object::Activate(MapMgr* mgr)
 {
 	switch(m_objectTypeId)
 	{
 	case TYPEID_UNIT:
 		if(IsVehicle())
-			mgr->activeVehicles.insert(vehicle_shared_from_this());
+			mgr->activeVehicles.insert(TO_VEHICLE(this));
 		else
-			mgr->activeCreatures.insert(creature_shared_from_this());
+			mgr->activeCreatures.insert(TO_CREATURE(this));
 		break;
 
 	case TYPEID_GAMEOBJECT:
-		mgr->activeGameObjects.insert(gob_shared_from_this());
+		mgr->activeGameObjects.insert(TO_GAMEOBJECT(this));
 		break;
 	}
 
 	Active = true;
 }
 
-void Object::Deactivate(MapMgrPointer mgr)
+void Object::Deactivate(MapMgr* mgr)
 {
 	switch(m_objectTypeId)
 	{
@@ -2748,61 +2782,37 @@ void Object::Deactivate(MapMgrPointer mgr)
 		if(IsVehicle())
 		{
 			// check iterator
-			if( mgr->__vehicle_iterator != mgr->activeVehicles.end() && (*mgr->__vehicle_iterator) == vehicle_shared_from_this() )
+			if( mgr->__vehicle_iterator != mgr->activeVehicles.end() && (*mgr->__vehicle_iterator) == TO_VEHICLE(this) )
 				++mgr->__vehicle_iterator;
 
-			mgr->activeVehicles.erase(vehicle_shared_from_this());
+			mgr->activeVehicles.erase(TO_VEHICLE(this));
 		}
 		else
 		{
 			// check iterator
-			if( mgr->__creature_iterator != mgr->activeCreatures.end() && (*mgr->__creature_iterator) == creature_shared_from_this() )
+			if( mgr->__creature_iterator != mgr->activeCreatures.end() && (*mgr->__creature_iterator) == TO_CREATURE(this) )
 				++mgr->__creature_iterator;
 
-			mgr->activeCreatures.erase(creature_shared_from_this());
+			mgr->activeCreatures.erase(TO_CREATURE(this));
 		}
 		break;
 
 	case TYPEID_GAMEOBJECT:
 		// check iterator
-		if( mgr->__gameobject_iterator != mgr->activeGameObjects.end() && (*mgr->__gameobject_iterator) == gob_shared_from_this() )
+		if( mgr->__gameobject_iterator != mgr->activeGameObjects.end() && (*mgr->__gameobject_iterator) == TO_GAMEOBJECT(this) )
 			++mgr->__gameobject_iterator;
 
-		mgr->activeGameObjects.erase(gob_shared_from_this());
+		mgr->activeGameObjects.erase(TO_GAMEOBJECT(this));
 		break;
 	}
 	Active = false;
 }
 
-void Object::SetByte(uint32 index, uint32 index1,uint8 value)
-{
-	ASSERT( index < m_valuesCount );
-	// save updating when val isn't changing.
-	uint8 * v =&((uint8*)m_uint32Values)[index*4+index1];
-	
-	if(*v == value)
-		return;
-
-	*v = value;
-
-	if(IsInWorld())
-	{
-		m_updateMask.SetBit( index );
-
-		if(!m_objectUpdated)
-		{
-			m_mapMgr->ObjectUpdated(shared_from_this());
-			m_objectUpdated = true;
-		}
-	}
-
-}
-
 void Object::SetZoneId(uint32 newZone)
 {
 	m_zoneId = newZone;
-	if( m_objectTypeId == TYPEID_PLAYER && player_shared_from_this()->GetGroup() )
-		player_shared_from_this()->GetGroup()->HandlePartialChange( PARTY_UPDATE_FLAG_ZONEID, player_shared_from_this() );
+	if( m_objectTypeId == TYPEID_PLAYER && TO_PLAYER(this)->GetGroup() )
+		TO_PLAYER(this)->GetGroup()->HandlePartialChange( PARTY_UPDATE_FLAG_ZONEID, TO_PLAYER(this) );
 }
 
 void Object::PlaySoundToSet(uint32 sound_entry)
@@ -2821,7 +2831,7 @@ void Object::_SetExtension(const string& name, void* ptr)
 }
 
 
-void Object::SendAttackerStateUpdate( UnitPointer Target, dealdamage *dmg, uint32 realdamage, uint32 abs, uint32 blocked_damage, uint32 hit_status, uint32 vstate )
+void Object::SendAttackerStateUpdate( Unit* Target, dealdamage *dmg, uint32 realdamage, uint32 abs, uint32 blocked_damage, uint32 hit_status, uint32 vstate )
 {
 	if (!Target || !dmg)
 		return;
@@ -2888,7 +2898,7 @@ void Object::SetByteFlag(const uint32 index, const uint32 flag, uint8 newFlag)
 
 		if(!m_objectUpdated)
 		{
-			m_mapMgr->ObjectUpdated(shared_from_this());
+			m_mapMgr->ObjectUpdated(this);
 			m_objectUpdated = true;
 		}
 	}
@@ -2907,7 +2917,7 @@ void Object::RemoveByteFlag(const uint32 index, const uint32 flag, uint8 checkFl
 
 		if(!m_objectUpdated)
 		{
-			m_mapMgr->ObjectUpdated(shared_from_this());
+			m_mapMgr->ObjectUpdated(this);
 			m_objectUpdated = true;
 		}
 	}
@@ -2921,7 +2931,7 @@ bool Object::HasByteFlag(const uint32 index, const uint32 flag, uint8 checkFlag)
 		return false;
 }
 
-bool Object::IsInLineOfSight(ObjectPointer pObj)
+bool Object::IsInLineOfSight(Object* pObj)
 {
 	if (GetMapMgr() && GetMapMgr()->IsCollisionEnabled())
 		return (CollideInterface.CheckLOS( GetMapId(), GetPositionX(), GetPositionY(), GetPositionZ() + 2.0f, pObj->GetPositionX(), pObj->GetPositionY(), pObj->GetPositionZ() + 2.0f) );
@@ -2929,7 +2939,7 @@ bool Object::IsInLineOfSight(ObjectPointer pObj)
 		return true;
 }
 
-bool Object::PhasedCanInteract(ObjectPointer pObj)
+bool Object::PhasedCanInteract(Object* pObj)
 {
 	bool ret = false;
 
@@ -2939,10 +2949,10 @@ bool Object::PhasedCanInteract(ObjectPointer pObj)
 	if( pObj->m_phaseMode & m_phaseMode || pObj->m_phaseMode == m_phaseMode )
 		ret = true;
 
-	PlayerPointer pObjI = IsPlayer() ? plr_shared_from_this() : NULLPLR;
-	PlayerPointer pObjII = pObj->IsPlayer() ? TO_PLAYER(pObj) : NULLPLR;
+	Player* pObjI = IsPlayer() ? TO_PLAYER(this) : NULL;
+	Player* pObjII = pObj->IsPlayer() ? TO_PLAYER(pObj) : NULL;
 	if( IsPet() ) 
-		pObjI = pet_shared_from_this()->GetPetOwner();
+		pObjI = TO_PET(this)->GetPetOwner();
 	if( pObj->IsPet() )
 		pObjII = TO_PET(pObj)->GetPetOwner();
 
@@ -2974,12 +2984,12 @@ int32 Object::GetSpellBaseCost(SpellEntry *sp)
 	return float2int32(cost); // Truncate zeh decimals!
 }
 
-void Object::CastSpell( ObjectPointer Target, SpellEntry* Sp, bool triggered )
+void Object::CastSpell( Object* Target, SpellEntry* Sp, bool triggered )
 {
 	if( Sp == NULL )
 		return;
 
-	SpellPointer newSpell(new Spell(shared_from_this(), Sp, triggered, NULLAURA));
+	Spell* newSpell(new Spell(this, Sp, triggered, NULL));
 	SpellCastTargets targets(0);
 	if(Target)
 	{
@@ -3000,7 +3010,7 @@ void Object::CastSpell( ObjectPointer Target, SpellEntry* Sp, bool triggered )
 	newSpell->prepare(&targets);
 }
 
-void Object::CastSpell( ObjectPointer Target, uint32 SpellID, bool triggered )
+void Object::CastSpell( Object* Target, uint32 SpellID, bool triggered )
 {
 	SpellEntry * ent = dbcSpell.LookupEntry(SpellID);
 	if(ent == 0) return;
@@ -3014,7 +3024,7 @@ void Object::CastSpell( uint64 targetGuid, SpellEntry* Sp, bool triggered )
 		return;
 
 	SpellCastTargets targets(targetGuid);
-	SpellPointer newSpell(new Spell(shared_from_this(), Sp, triggered, NULLAURA));
+	Spell* newSpell(new Spell(this, Sp, triggered, NULL));
 	newSpell->prepare(&targets);
 }
 

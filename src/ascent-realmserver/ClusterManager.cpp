@@ -1,19 +1,14 @@
 /*
  * Ascent MMORPG Server
- * Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
  *
  */
 
@@ -101,6 +96,7 @@ Instance * ClusterMgr::GetPrototypeInstanceByMapId(uint32 MapId)
 	return i;
 }
 
+
 WServer * ClusterMgr::CreateWorkerServer(WSSocket * s)
 {
 	/* find an id */
@@ -115,10 +111,10 @@ WServer * ClusterMgr::CreateWorkerServer(WSSocket * s)
 	if(i == MAX_WORKER_SERVERS)
 	{
 		m_lock.ReleaseWriteLock();
-		return NULL;// No spaces
+		return 0;		// No spaces
 	}
 
-	Log.Debug("ClusterMgr", "Allocating worker server %u to %s:%u", i, s->GetRemoteIP().c_str(), s->GetRemotePort());
+	DEBUG_LOG("ClusterMgr", "Allocating worker server %u to %s:%u", i, s->GetRemoteIP().c_str(), s->GetRemotePort());
 	WorkerServers[i] = new WServer(i, s);
 	if(m_maxWorkerServer < i)
 		m_maxWorkerServer = i;
@@ -141,7 +137,6 @@ void ClusterMgr::AllocateInitialInstances(WServer * server, vector<uint32>& pref
 	}
 	m_lock.ReleaseReadLock();
 
-
 	for(vector<uint32>::iterator itr = result.begin(); itr != result.end(); ++itr)
 	{
 		CreateInstance(*itr, server);
@@ -150,6 +145,10 @@ void ClusterMgr::AllocateInitialInstances(WServer * server, vector<uint32>& pref
 
 Instance * ClusterMgr::CreateInstance(uint32 MapId, WServer * server)
 {
+	MapInfo * info = WorldMapInfoStorage.LookupEntry(MapId);
+	if(!info)
+		return NULL;
+
 	Instance * pInstance = new Instance;
 	pInstance->InstanceId = ++m_maxInstanceId;
 	pInstance->MapId = MapId;
@@ -158,11 +157,16 @@ Instance * ClusterMgr::CreateInstance(uint32 MapId, WServer * server)
 	m_lock.AcquireWriteLock();
 	Instances.insert( make_pair( pInstance->InstanceId, pInstance ) );
 
-	if(IS_MAIN_MAP(MapId))
+	if(info->type == 0 /*INSTANCE_NULL*/)
 		SingleInstanceMaps[MapId] = pInstance;
 	m_lock.ReleaseWriteLock();
 
-	Log.Debug("ClusterMgr", "Allocating instance %u on map %u to server %u", pInstance->InstanceId, pInstance->MapId, server->GetID());
+	/* tell the actual server to create the instance */
+	WorldPacket data(ISMSG_CREATE_INSTANCE, 8);
+	data << MapId << pInstance->InstanceId;
+	server->SendPacket(&data);
+	server->AddInstance(pInstance);
+	DEBUG_LOG("ClusterMgr", "Allocating instance %u on map %u to server %u", pInstance->InstanceId, pInstance->MapId, server->GetID());
 	return pInstance;
 }
 
@@ -192,9 +196,14 @@ WServer * ClusterMgr::GetWorkerServerForNewInstance()
 /* create new instance based on template, or a saved instance */
 Instance * ClusterMgr::CreateInstance(uint32 InstanceId, uint32 MapId)
 {
+
+	MapInfo * info = WorldMapInfoStorage.LookupEntry(MapId);
+	if(!info)
+		return NULL;
+
 	/* pick a server for us :) */
 	WServer * server = GetWorkerServerForNewInstance();
-	if(server == NULL)
+	if(!server)
 		return NULL;
 
 	ASSERT(GetInstance(InstanceId) == NULL);
@@ -210,6 +219,9 @@ Instance * ClusterMgr::CreateInstance(uint32 InstanceId, uint32 MapId)
 
 	m_lock.AcquireWriteLock();
 	Instances.insert( make_pair( InstanceId, pInstance ) );
+
+	if(info->type == 0 /*INSTANCE_NULL*/)
+		SingleInstanceMaps[MapId] = pInstance;
 	m_lock.ReleaseWriteLock();
 
 	/* tell the actual server to create the instance */
@@ -217,7 +229,7 @@ Instance * ClusterMgr::CreateInstance(uint32 InstanceId, uint32 MapId)
 	data << MapId << InstanceId;
 	server->SendPacket(&data);
 	server->AddInstance(pInstance);
-	Log.Debug("ClusterMgr", "Allocating instance %u on map %u to server %u", pInstance->InstanceId, pInstance->MapId, server->GetID());
+	DEBUG_LOG("ClusterMgr", "Allocating instance %u on map %u to server %u", pInstance->InstanceId, pInstance->MapId, server->GetID());
 	return pInstance;
 }
 
@@ -237,7 +249,6 @@ void ClusterMgr::DistributePacketToAll(WorldPacket * data, WServer * exclude)
 
 void ClusterMgr::OnServerDisconnect(WServer* s)
 {
-	//grab ze lock
 	m_lock.AcquireWriteLock();
 
 	for(uint32 i = 0; i <= m_maxWorkerServer; ++i)

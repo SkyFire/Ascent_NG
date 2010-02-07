@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 
@@ -34,23 +29,19 @@ Vehicle::Vehicle(uint64 guid) : Creature(guid)
 	m_mountSpell = 0;
 
 	for(uint8 i = 0; i < 8; ++i)
-		m_passengers[i] = NULLUNIT;
+		m_passengers[i] = NULL;
 }
 
 Vehicle::~Vehicle()
-{
-#ifdef SHAREDPTR_DEBUGMODE
-	printf("\nVehicle::~Vehicle");
-#endif
+{	
+	m_passengerCount = 0;
+	if( IsInWorld() )
+		RemoveFromWorld(false, true);
 }
 
 void Vehicle::Destructor()
 {
-	m_passengerCount = 0;
-	if( IsInWorld() )
-		RemoveFromWorld(false, true);
-
-	Creature::Destructor();
+	delete this;
 }
 
 void Vehicle::Init()
@@ -58,7 +49,7 @@ void Vehicle::Init()
 	Creature::Init();
 }
 
-void Vehicle::InitSeats(uint32 vehicleEntry, PlayerPointer pRider)
+void Vehicle::InitSeats(uint32 vehicleEntry, Player* pRider)
 {
 	m_maxPassengers = 0;
 	SetVehicleEntry(vehicleEntry);
@@ -160,7 +151,7 @@ bool Vehicle::Load(CreatureSpawn *spawn, uint32 mode, MapInfo *info)
 	return Creature::Load(spawn, mode, info);
 }
 
-void Vehicle::SendSpells(uint32 entry, PlayerPointer plr)
+void Vehicle::SendSpells(uint32 entry, Player* plr)
 {
 	list<uint32> avail_spells;
 	for(list<AI_Spell*>::iterator itr = GetAIInterface()->m_spells.begin(); itr != GetAIInterface()->m_spells.end(); ++itr)
@@ -202,7 +193,7 @@ void Vehicle::Despawn(uint32 delay, uint32 respawntime)
 {
 	if(delay)
 	{
-		sEventMgr.AddEvent(vehicle_shared_from_this(), &Vehicle::Despawn, (uint32)0, respawntime, EVENT_VEHICLE_RESPAWN, delay, 1,0);
+		sEventMgr.AddEvent(TO_VEHICLE(this), &Vehicle::Despawn, (uint32)0, respawntime, EVENT_VEHICLE_RESPAWN, delay, 1,0);
 		return;
 	}
 
@@ -217,9 +208,9 @@ void Vehicle::Despawn(uint32 delay, uint32 respawntime)
 			pCell = m_mapCell;
 	
 		ASSERT(pCell);
-		pCell->_respawnObjects.insert(obj_shared_from_this());
-		sEventMgr.RemoveEvents(shared_from_this());
-		sEventMgr.AddEvent(m_mapMgr, &MapMgr::EventRespawnVehicle, vehicle_shared_from_this(), pCell, EVENT_VEHICLE_RESPAWN, respawntime, 1, 0);
+		pCell->_respawnObjects.insert(TO_OBJECT(this));
+		sEventMgr.RemoveEvents(this);
+		sEventMgr.AddEvent(m_mapMgr, &MapMgr::EventRespawnVehicle, TO_VEHICLE(this), pCell, EVENT_VEHICLE_RESPAWN, respawntime, 1, 0);
 		Unit::RemoveFromWorld(false);
 		m_position = m_spawnLocation;
 		m_respawnCell=pCell;
@@ -238,13 +229,13 @@ void Vehicle::Update(uint32 time)
 
 void Vehicle::SafeDelete()
 {
-	sEventMgr.RemoveEvents(shared_from_this());
-	sEventMgr.AddEvent(vehicle_shared_from_this(), &Vehicle::DeleteMe, EVENT_VEHICLE_SAFE_DELETE, 1000, 1,EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+	sEventMgr.RemoveEvents(this);
+	sEventMgr.AddEvent(TO_VEHICLE(this), &Vehicle::DeleteMe, EVENT_VEHICLE_SAFE_DELETE, 1000, 1,EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
 }
 
 void Vehicle::DeleteMe()
 {
-	VehiclePointer pThis = vehicle_shared_from_this();
+	Vehicle* pThis = TO_VEHICLE(this);
 
 	if(IsInWorld())
 		RemoveFromWorld(false, true);
@@ -252,7 +243,7 @@ void Vehicle::DeleteMe()
 	Destructor();
 }
 
-void Vehicle::AddPassenger(UnitPointer pPassenger)
+void Vehicle::AddPassenger(Unit* pPassenger)
 {
 	if(!m_maxPassengers) //how is this happening?
 	{
@@ -272,7 +263,7 @@ void Vehicle::AddPassenger(UnitPointer pPassenger)
 	}
 }
 
-uint8 Vehicle::GetPassengerSlot(UnitPointer pPassenger)
+uint8 Vehicle::GetPassengerSlot(Unit* pPassenger)
 {
 	for(uint8 i = 0; i < m_maxPassengers; ++i)
 	{
@@ -285,14 +276,14 @@ uint8 Vehicle::GetPassengerSlot(UnitPointer pPassenger)
 	return 0xFF;
 }
 
-void Vehicle::RemovePassenger(UnitPointer pPassenger)
+void Vehicle::RemovePassenger(Unit* pPassenger)
 {
-	VehiclePointer pThis = vehicle_shared_from_this();
+	Vehicle* pThis = TO_VEHICLE(this);
 
 	uint8 slot = pPassenger->m_inVehicleSeatId;
 	if(slot >= 8)
 		return;
-	pPassenger->m_CurrentVehicle.reset();
+	pPassenger->m_CurrentVehicle = NULL;
 	pPassenger->m_inVehicleSeatId = 0xFF;
 
 	pPassenger->RemoveFlag(UNIT_FIELD_FLAGS, (UNIT_FLAG_UNKNOWN_5 | UNIT_FLAG_PREPARATION));
@@ -316,10 +307,10 @@ void Vehicle::RemovePassenger(UnitPointer pPassenger)
 
 	if(pPassenger->IsPlayer())
 	{
-		PlayerPointer plr = TO_PLAYER(pPassenger);
+		Player* plr = TO_PLAYER(pPassenger);
 		if(plr == GetControllingUnit())
 		{
-			plr->m_CurrentCharm.reset();
+			plr->m_CurrentCharm = NULL;
 			data.Initialize(SMSG_CLIENT_CONTROL_UPDATE);
 			data << GetNewGUID() << (uint8)0;
 			plr->GetSession()->SendPacket(&data);
@@ -358,7 +349,7 @@ void Vehicle::RemovePassenger(UnitPointer pPassenger)
 		
 	if(slot == 0)
 	{
-		m_redirectSpellPackets = NULLPLR;
+		m_redirectSpellPackets = NULL;
 		CombatStatus.Vanished();
 		pPassenger->SetUInt64Value( UNIT_FIELD_CHARM, 0 );
 		SetUInt32Value(UNIT_FIELD_FACTIONTEMPLATE, GetCharmTempVal());
@@ -377,12 +368,8 @@ void Vehicle::RemovePassenger(UnitPointer pPassenger)
 		//and respawn at spawn point.
 		//Well actually this is how blizz wanted it
 		//but they couldnt get it to work xD
-		if( m_spawn )
-			GetAIInterface()->MoveTo(m_spawn->x, m_spawn->y, m_spawn->z, m_spawn->o);
-		else //we're a temp spawn
-			SafeDelete();
 
-		m_controllingUnit.reset();
+		m_controllingUnit = NULL;
 		for(uint8 i = 0; i < m_maxPassengers; i++)
 		{
 			if(i != 0 && m_passengers[i])
@@ -392,10 +379,10 @@ void Vehicle::RemovePassenger(UnitPointer pPassenger)
 		}
 	}
 
-	m_passengers[slot].reset();
+	m_passengers[slot] = NULL;
 }
 
-bool Vehicle::HasPassenger(UnitPointer pPassenger)
+bool Vehicle::HasPassenger(Unit* pPassenger)
 {
 	for(uint8 i = 0; i < m_maxPassengers; ++i)
 	{
@@ -405,7 +392,7 @@ bool Vehicle::HasPassenger(UnitPointer pPassenger)
 	return false;
 }
 
-void Vehicle::_AddToSlot(UnitPointer pPassenger, uint8 slot)
+void Vehicle::_AddToSlot(Unit* pPassenger, uint8 slot)
 {
 	assert( slot < m_maxPassengers );
 	m_passengers[ slot ] = pPassenger;
@@ -424,7 +411,7 @@ void Vehicle::_AddToSlot(UnitPointer pPassenger, uint8 slot)
 	// This is where the real magic happens
 	if( pPassenger->IsPlayer() )
 	{
-		PlayerPointer pPlayer = TO_PLAYER(pPassenger);
+		Player* pPlayer = TO_PLAYER(pPassenger);
 		//pPlayer->Root();
 
 		if(pPlayer->m_CurrentCharm)
@@ -450,7 +437,7 @@ void Vehicle::_AddToSlot(UnitPointer pPassenger, uint8 slot)
 			pPlayer->GetSummon()->Remove(false, true, true);	// hunter pet -> just remove for later re-call
 		}
 
-		pPlayer->m_CurrentVehicle = vehicle_shared_from_this();
+		pPlayer->m_CurrentVehicle = TO_VEHICLE(this);
 
 		pPlayer->SetFlag(UNIT_FIELD_FLAGS, (UNIT_FLAG_UNKNOWN_5 | UNIT_FLAG_PREPARATION));
 
@@ -474,7 +461,7 @@ void Vehicle::_AddToSlot(UnitPointer pPassenger, uint8 slot)
 		data << GetPositionZ();									// position vector 
 		data << GetOrientation();								// orientaion
 		// transport part
-		data << GetGUID();										// transport guid
+		data << GetNewGUID();									// transport guid
 		data << v.x;											// transport offsetX
 		data << v.y;											// transport offsetY
 		data << v.z;											// transport offsetZ
@@ -496,7 +483,7 @@ void Vehicle::_AddToSlot(UnitPointer pPassenger, uint8 slot)
 		data << GetPositionZ();									// position vector 
 		data << GetOrientation();								// orientaion
 		// transport part
-		data << GetGUID();										// transport guid
+		data << GetNewGUID();									// transport guid
 		data << v.x;											// transport offsetX
 		data << v.y;											// transport offsetY
 		data << v.z;											// transport offsetZ
@@ -521,7 +508,7 @@ void Vehicle::_AddToSlot(UnitPointer pPassenger, uint8 slot)
 			data << GetNewGUID() << uint8(1);
 			pPlayer->GetSession()->SendPacket(&data);
 
-			pPlayer->m_CurrentCharm = vehicle_shared_from_this();
+			pPlayer->m_CurrentCharm = TO_VEHICLE(this);
 			pPlayer->SetUInt64Value(UNIT_FIELD_CHARM, GetGUID());
 			SetCharmTempVal(GetUInt32Value(UNIT_FIELD_FACTIONTEMPLATE));
 			SetUInt32Value(UNIT_FIELD_FACTIONTEMPLATE, pPlayer->GetUInt32Value(UNIT_FIELD_FACTIONTEMPLATE));
@@ -546,14 +533,14 @@ void Vehicle::_AddToSlot(UnitPointer pPassenger, uint8 slot)
 keep us in sync with the client, so that the vehicle doesn't
 get dismissed because the server thinks its gone out of range
 of its passengers*/
-void Vehicle::MoveVehicle(float x, float y, float z, float o) //thanks andy
+void Vehicle::MoveVehicle(float x, float y, float z, float o)
 {
 	SetPosition(x, y, z, o, false);
-	for (uint8 i=0; i<m_maxPassengers; ++i)
+	for (uint8 i = 0; i < m_maxPassengers; ++i)
 	{
 		if (m_passengers[i] != NULL)
 		{
-			m_passengers[i]->SetPosition(x,y,z,o,false);
+			m_passengers[i]->SetPosition(x, y, z, o, false);
 		}
 	}
 }
@@ -562,7 +549,7 @@ void Vehicle::setDeathState(DeathState s)
 {
 	Creature::setDeathState(s);
 
-	for (uint8 i=0; i<m_maxPassengers; ++i)
+	for (uint8 i = 0; i < m_maxPassengers; ++i)
 		if (m_passengers[i] != NULL)
 			RemovePassenger(m_passengers[i]);
 
@@ -670,8 +657,8 @@ void WorldSession::HandleSpellClick( WorldPacket & recv_data )
     uint64 guid;
     recv_data >> guid;
 
-	VehiclePointer pVehicle = GetPlayer()->GetMapMgr()->GetVehicle(GET_LOWGUID_PART(guid));
-	UnitPointer pPlayer = TO_UNIT(GetPlayer());
+	Vehicle* pVehicle = GetPlayer()->GetMapMgr()->GetVehicle(GET_LOWGUID_PART(guid));
+	Unit* pPlayer = TO_UNIT(GetPlayer());
 
 	if(!pVehicle)
 		return;

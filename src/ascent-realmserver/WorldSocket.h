@@ -1,19 +1,14 @@
 /*
  * Ascent MMORPG Server
- * Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
  *
  */
 
@@ -35,7 +30,7 @@ public:
 
 	// vs8 fix - send null on empty buffer
 	ASCENT_INLINE void SendPacket(WorldPacket* packet) { if(!packet) return; OutPacket(packet->GetOpcode(), packet->size(), (packet->size() ? (const void*)packet->contents() : NULL)); }
-	ASCENT_INLINE void SendPacket(StackBufferBase * packet) { if(!packet) return; OutPacket(packet->GetOpcode(), packet->GetSize(), (packet->GetSize() ? (const void*)packet->GetBufferPointer() : NULL)); }
+	ASCENT_INLINE void SendPacket(StackPacket * packet) { if(!packet) return; OutPacket(packet->GetOpcode(), packet->GetSize(), (packet->GetSize() ? (const void*)packet->GetBufferPointer() : NULL)); }
 
 	void __fastcall OutPacket(uint16 opcode, size_t len, const void* data);
    
@@ -47,6 +42,8 @@ public:
 	void OnRead();
 	void OnConnect();
 	void OnDisconnect();
+
+	void SendAddonInfoPacket(WorldPacket *source, uint32 pos, Session *m_session);
 	
 protected:
 	
@@ -55,6 +52,7 @@ protected:
 
 private:
 
+	uint8 K[40];
 	uint32 mOpcode;
 	uint32 mRemaining;
 	uint32 mSize;
@@ -63,9 +61,8 @@ private:
 	uint32 mClientBuild;
 	uint32 mRequestID;
 
-	std::string* m_fullAccountName;
-
 	WorldPacket * pAuthenticationPacket;
+	string * m_fullAccountName;
 	WowCrypt _crypt;
 	uint32 _latency;
 

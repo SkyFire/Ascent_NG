@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 Mutex m_transportGuidGen;
@@ -339,7 +334,7 @@ void Transporter::UpdatePosition()
 
 void Transporter::TransportPassengers(uint32 mapid, uint32 oldmap, float x, float y, float z)
 {
-	sEventMgr.RemoveEvents(shared_from_this(), EVENT_TRANSPORTER_NEXT_WAYPOINT);
+	sEventMgr.RemoveEvents(this, EVENT_TRANSPORTER_NEXT_WAYPOINT);
 
 	if(mPassengers.size() > 0)
 	{
@@ -357,7 +352,7 @@ void Transporter::TransportPassengers(uint32 mapid, uint32 oldmap, float x, floa
 			it2 = itr;
 			++itr;
 
-			PlayerPointer plr = objmgr.GetPlayer(it2->first);
+			Player* plr = objmgr.GetPlayer(it2->first);
 			if(!plr)
 			{
 				// remove from map
@@ -409,8 +404,8 @@ void Transporter::TransportPassengers(uint32 mapid, uint32 oldmap, float x, floa
 
 	// Set our position
 	RemoveFromWorld(false);
-	SetMapId(mapid);
 	SetPosition(x,y,z,m_position.o,false);
+	SetMapId(mapid);
 	AddToWorld();
 }
 
@@ -421,20 +416,20 @@ Transporter::Transporter(uint64 guid) : GameObject(guid)
 
 Transporter::~Transporter()
 {
-}
+sEventMgr.RemoveEvents(this);
 
-void Transporter::Destructor()
-{
-	sEventMgr.RemoveEvents(TO_TRANSPORT(shared_from_this()));
 	for(TransportNPCMap::iterator itr = m_npcs.begin(); itr != m_npcs.end(); ++itr)
 	{
 		if(itr->second->GetTypeId()==TYPEID_UNIT)
 			delete TO_CREATURE( itr->second )->m_transportPosition;
 
 		itr->second->Destructor();
-		itr->second = NULLOBJ;
 	}
-	GameObject::Destructor();
+}
+
+void Transporter::Destructor()
+{
+	delete this;
 }
 
 void ObjectMgr::LoadTransporters()
@@ -452,12 +447,11 @@ void ObjectMgr::LoadTransporters()
 	{
 		uint32 entry = QR->Fetch()[0].GetUInt32();
 
-		TransporterPointer pTransporter(new Transporter((uint64)HIGHGUID_TYPE_TRANSPORTER<<32 |entry));
+		Transporter* pTransporter(new Transporter((uint64)HIGHGUID_TYPE_TRANSPORTER<<32 |entry));
 		if(!pTransporter->CreateAsTransporter(entry, ""))
 		{
 			Log.Warning("ObjectMgr","Skipped invalid transporterid %d.", entry);
 			pTransporter->Destructor();
-			pTransporter = NULLTRANSPORT;
 		}else
 		{
             AddTransport(pTransporter);
@@ -483,7 +477,7 @@ void ObjectMgr::LoadTransporters()
 void Transporter::OnPushToWorld()
 {
 	// Create waypoint event
-	sEventMgr.AddEvent(CAST(Transporter,shared_from_this()), &Transporter::UpdatePosition, EVENT_TRANSPORTER_NEXT_WAYPOINT, 100, 0,EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+	sEventMgr.AddEvent(CAST(Transporter,this), &Transporter::UpdatePosition, EVENT_TRANSPORTER_NEXT_WAYPOINT, 100, 0,EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
 }
 
 void Transporter::AddNPC(uint32 Entry, float offsetX, float offsetY, float offsetZ, float offsetO)
@@ -498,7 +492,7 @@ void Transporter::AddNPC(uint32 Entry, float offsetX, float offsetY, float offse
 	if(inf==NULL||proto==NULL)
 		return;
 
-	CreaturePointer pCreature(new Creature((uint64)HIGHGUID_TYPE_TRANSPORTER<<32 | guid));
+	Creature* pCreature(new Creature((uint64)HIGHGUID_TYPE_TRANSPORTER<<32 | guid));
 	pCreature->Init();
 	pCreature->Load(proto, offsetX, offsetY, offsetZ, offsetO);
 	pCreature->m_transportPosition = new LocationVector(offsetX, offsetY, offsetZ, offsetO);
@@ -507,18 +501,18 @@ void Transporter::AddNPC(uint32 Entry, float offsetX, float offsetY, float offse
 	m_npcs.insert(make_pair(guid,pCreature));
 }
 
-CreaturePointer Transporter::GetCreature(uint32 Guid)
+Creature* Transporter::GetCreature(uint32 Guid)
 {
 	TransportNPCMap::iterator itr = m_npcs.find(Guid);
 	if(itr==m_npcs.end())
-		return NULLCREATURE;
+		return NULL;
 	if(itr->second->GetTypeId()==TYPEID_UNIT)
 		return TO_CREATURE( itr->second );
 	else
-		return NULLCREATURE;
+		return NULL;
 }
 
-uint32 Transporter::BuildCreateUpdateBlockForPlayer(ByteBuffer *data, PlayerPointer target )
+uint32 Transporter::BuildCreateUpdateBlockForPlayer(ByteBuffer *data, Player* target )
 {
 	uint32 cnt = Object::BuildCreateUpdateBlockForPlayer(data, target);
 

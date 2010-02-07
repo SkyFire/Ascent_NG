@@ -983,6 +983,26 @@
 				</File>
 			</Filter>
 		</Filter>
+		<Filter
+			Name="Console"
+			>
+			<File
+				RelativePath="..\..\src\ascent-shared\Console\BaseConsole.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\ascent-shared\Console\CConsole.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\ascent-shared\Console\CConsole.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\ascent-shared\Console\ConsoleListener.cpp"
+				>
+			</File>
+		</Filter>
 		<File
 			RelativePath="..\..\src\ascent-shared\AscentConfig.h"
 			>
@@ -1005,10 +1025,6 @@
 		</File>
 		<File
 			RelativePath="..\..\src\ascent-shared\FastQueue.h"
-			>
-		</File>
-		<File
-			RelativePath="..\..\src\ascent-shared\SharedPtr.h"
 			>
 		</File>
 		<File

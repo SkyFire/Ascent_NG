@@ -1,26 +1,22 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
+
 
 #include "StdAfx.h"
 createFileSingleton(StructFactory);
 
-MapScriptInterface::MapScriptInterface(MapMgrPointer mgr)
+MapScriptInterface::MapScriptInterface(MapMgr* mgr)
 {
 	mapMgr = mgr;
 }
@@ -69,11 +65,11 @@ uint32 MapScriptInterface::GetPlayerCountInRadius(float x, float y, float z /* =
 	return PlayerCount;
 }
 
-GameObjectPointer MapScriptInterface::SpawnGameObject(uint32 Entry, float cX, float cY, float cZ, float cO, bool AddToWorld, uint32 Misc1, uint32 Misc2)
+GameObject* MapScriptInterface::SpawnGameObject(uint32 Entry, float cX, float cY, float cZ, float cO, bool AddToWorld, uint32 Misc1, uint32 Misc2)
 {
-	GameObjectPointer pGameObject = mapMgr->CreateGameObject(Entry);
+	GameObject* pGameObject = mapMgr->CreateGameObject(Entry);
 	if(pGameObject == NULL || !pGameObject->CreateFromProto(Entry, mapMgr->GetMapId(), cX, cY, cZ, cO, 0.0f, 0.0f, 0.0f, 0.0f))
-		return NULLGOB;
+		return NULL;
 
 	pGameObject->SetInstanceID(mapMgr->GetInstanceID());
 	pGameObject->SetPhase(1);
@@ -84,16 +80,17 @@ GameObjectPointer MapScriptInterface::SpawnGameObject(uint32 Entry, float cX, fl
 	return pGameObject;
 }
 
-CreaturePointer MapScriptInterface::SpawnCreature(uint32 Entry, float cX, float cY, float cZ, float cO, bool AddToWorld, bool tmplate, uint32 Misc1, uint32 Misc2)
+Creature* MapScriptInterface::SpawnCreature(uint32 Entry, float cX, float cY, float cZ, float cO, bool AddToWorld, bool tmplate, uint32 Misc1, uint32 Misc2)
 {
 	CreatureProto * proto = CreatureProtoStorage.LookupEntry(Entry);
 	CreatureInfo * info = CreatureNameStorage.LookupEntry(Entry);
 	if(proto == 0 || info == 0)
 	{
-		return NULLCREATURE;
+		return NULL;
 	}
 
-	CreatureSpawn * sp = new CreatureSpawn;
+	CreatureSpawn * sp = NULL;
+	sp = new CreatureSpawn;
 	sp->entry = Entry;
 	sp->form = 0;
 	sp->id = 0;
@@ -115,8 +112,14 @@ CreaturePointer MapScriptInterface::SpawnCreature(uint32 Entry, float cX, float 
 	sp->phase = 1;
 	sp->vehicle = proto->vehicle_entry;
 
-	CreaturePointer p = this->mapMgr->CreateCreature(Entry);
-	ASSERT(p);
+	Creature* p = NULL;
+	p = mapMgr->CreateCreature(Entry);
+	if(p == NULL)
+	{
+		delete sp;
+		return NULL;
+	}
+
 	p->Load(sp, (uint32)NULL, NULL);
 	p->spawnid = 0;
 	p->m_spawn = NULL;
@@ -128,16 +131,14 @@ CreaturePointer MapScriptInterface::SpawnCreature(uint32 Entry, float cX, float 
 	return p;
 }
 
-void MapScriptInterface::DeleteCreature(CreaturePointer ptr)
+void MapScriptInterface::DeleteCreature(Creature* ptr)
 {
 	ptr->Destructor();
-	ptr = NULLCREATURE;
 }
 
-void MapScriptInterface::DeleteGameObject(GameObjectPointer ptr)
+void MapScriptInterface::DeleteGameObject(GameObject* ptr)
 {
 	ptr->Destructor();
-	ptr = NULLGOB;
 }
 
 WayPoint * StructFactory::CreateWaypoint()

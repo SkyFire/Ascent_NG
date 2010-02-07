@@ -617,10 +617,6 @@
 			>
 		</File>
 		<File
-			RelativePath=".\ClassDiagram1.cd"
-			>
-		</File>
-		<File
 			RelativePath="..\..\src\ascent-world\ClassSpells.h"
 			>
 		</File>
@@ -773,6 +769,10 @@
 			>
 		</File>
 		<File
+			RelativePath="..\..\src\ascent-world\INGEvents.cpp"
+			>
+		</File>
+		<File
 			RelativePath="..\..\src\ascent-world\Item.cpp"
 			>
 		</File>
@@ -862,6 +862,10 @@
 		</File>
 		<File
 			RelativePath="..\..\src\ascent-world\MailSystem.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\src\ascent-world\MainServerDefines.h"
 			>
 		</File>
 		<File
@@ -1021,6 +1025,10 @@
 			>
 		</File>
 		<File
+			RelativePath="..\..\src\ascent-world\resources.rc"
+			>
+		</File>
+		<File
 			RelativePath="..\..\src\ascent-world\ScriptMgr.cpp"
 			>
 		</File>
@@ -1161,6 +1169,14 @@
 			>
 		</File>
 		<File
+			RelativePath="..\..\src\ascent-world\TheIsleOfConquest.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\src\ascent-world\TheIsleOfConquest.h"
+			>
+		</File>
+		<File
 			RelativePath="..\..\src\ascent-world\TradeHandler.cpp"
 			>
 		</File>
@@ -1293,15 +1309,15 @@
 			>
 		</File>
 		<File
-			RelativePath="..\..\src\ascent-world\WorldState.h"
-			>
-		</File>
-		<File
 			RelativePath="..\..\src\ascent-world\WorldStateManager.cpp"
 			>
 		</File>
 		<File
 			RelativePath="..\..\src\ascent-world\WorldStateManager.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\src\ascent-world\WorldStates.h"
 			>
 		</File>
 	</Files>

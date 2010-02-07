@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #ifndef _LOOTMGR_H
 #define _LOOTMGR_H
@@ -23,13 +18,13 @@
 struct ItemPrototype;
 class MapMgr;
 class Player;
-class LootRoll : public EventableObject, public std::tr1::enable_shared_from_this<LootRoll>
+class LootRoll : public EventableObject
 {
 public:
 	LootRoll();
 	~LootRoll();
-	void Init(uint32 timer, uint32 groupcount, uint64 guid, uint32 slotid, uint32 itemid, uint32 itemunk1, uint32 itemunk2, MapMgrPointer mgr);
-	void PlayerRolled(PlayerPointer player, uint8 choice);
+	void Init(uint32 timer, uint32 groupcount, uint64 guid, uint32 slotid, uint32 itemid, uint32 itemunk1, uint32 itemunk2, MapMgr* mgr);
+	void PlayerRolled(Player* player, uint8 choice);
 	void Finalize();
 
 	int32 event_GetInstanceID();
@@ -46,7 +41,7 @@ private:
 	uint32 _itemunk2;
 	uint32 _remaining;
 	uint64 _guid;
-	MapMgrPointer _mgr;
+	MapMgr* _mgr;
 };
 
 typedef vector<pair<RandomProps*, float> > RandomPropertyVector;
@@ -66,7 +61,7 @@ typedef struct __LootItem
 	uint32 iItemsCount;
 	RandomProps * iRandomProperty;
 	ItemRandomSuffixEntry * iRandomSuffix;
-	LootRollPointer roll;
+	LootRoll* roll;
 	bool passed;
 	LooterSet has_looted;
 	uint32 ffa_loot;
@@ -95,8 +90,8 @@ struct Loot
 	std::vector<__LootItem> items;
 	uint32 gold;
 	LooterSet looters;
-	bool HasItems(PlayerPointer Looter);
-	bool HasLoot(PlayerPointer Looter);
+	bool HasItems(Player* Looter);
+	bool HasLoot(Player* Looter);
 };
 
 struct tempy
@@ -140,7 +135,7 @@ public:
 	void FillGOLoot(Loot * loot,uint32 loot_id, bool heroic);
 	void FillItemLoot(Loot *loot, uint32 loot_id);
 	void FillFishingLoot(Loot * loot,uint32 loot_id);
-	void FillSkinningLoot(Loot * loot,uint32 loot_id);
+	void FillGatheringLoot(Loot * loot,uint32 loot_id);
 	void FillPickpocketingLoot(Loot *loot, uint32 loot_id);
 	void FillDisenchantingLoot(Loot *loot, uint32 loot_id);
 	void FillProspectingLoot(Loot *loot, uint32 loot_id);
@@ -157,7 +152,7 @@ public:
 	
 	LootStore	CreatureLoot;
 	LootStore	FishingLoot;
-	LootStore	SkinningLoot;
+	LootStore	GatheringLoot;
 	LootStore	GOLoot;
 	LootStore	ItemLoot;
 	LootStore	ProspectingLoot;

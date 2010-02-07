@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 
@@ -236,7 +231,7 @@ void WorldSession::HandleMessagechatOpcode( WorldPacket & recv_data )
 
 				data = sChatHandler.FillMessageData( CHAT_MSG_SAY, lang, msg.c_str(), _player->GetGUID(), _player->bGMTagOn ? 4 : 0 );
 				SendChatPacket(data, 1, lang, this);
-				for(unordered_set<PlayerPointer  >::iterator itr = _player->m_inRangePlayers.begin(); itr != _player->m_inRangePlayers.end(); ++itr)
+				for(unordered_set<Player*  >::iterator itr = _player->m_inRangePlayers.begin(); itr != _player->m_inRangePlayers.end(); ++itr)
 				{
 					(*itr)->GetSession()->SendChatPacket(data, 1, lang, this);
 				}
@@ -328,13 +323,21 @@ void WorldSession::HandleMessagechatOpcode( WorldPacket & recv_data )
 		} break;
 	case CHAT_MSG_WHISPER:
 		{
-			PlayerPointer player = objmgr.GetPlayer(misc.c_str(), false);
+			Player* player = objmgr.GetPlayer(misc.c_str(), false);
 			if(!player)
 			{
-				data = new WorldPacket(SMSG_CHAT_PLAYER_NOT_FOUND, misc.length() + 1);
-				*data << misc;
-				SendPacket(data);
-				delete data;
+				if( misc == "Console" ||  misc == "console" )
+				{
+					Log.Notice("Whisper","%s to %s: %s", _player->GetName(), misc.c_str(), msg.c_str());
+					return;
+				}
+				else
+				{
+					data = new WorldPacket(SMSG_CHAT_PLAYER_NOT_FOUND, misc.length() + 1);
+					*data << misc;
+					SendPacket(data);
+					delete data;
+				}
 				break;
 			}
 
@@ -378,14 +381,14 @@ void WorldSession::HandleMessagechatOpcode( WorldPacket & recv_data )
 			SendPacket(data);
 			delete data;
 
-			if(player->HasFlag(PLAYER_FLAGS, 0x02))
+			if(player->HasFlag(PLAYER_FLAGS, PLAYER_FLAG_AFK))
 			{
 				// Has AFK flag, autorespond.
 				data = sChatHandler.FillMessageData(CHAT_MSG_AFK, LANG_UNIVERSAL,  player->m_afk_reason.c_str(),player->GetGUID(), _player->bGMTagOn ? 4 : 0);
 				SendPacket(data);
 				delete data;
 			}
-			else if(player->HasFlag(PLAYER_FLAGS, 0x04))
+			else if(player->HasFlag(PLAYER_FLAGS, PLAYER_FLAG_DND))
 			{
 				// Has AFK flag, autorespond.
 				data = sChatHandler.FillMessageData(CHAT_MSG_DND, LANG_UNIVERSAL, player->m_afk_reason.c_str(),player->GetGUID(), _player->bGMTagOn ? 4 : 0);
@@ -398,25 +401,35 @@ void WorldSession::HandleMessagechatOpcode( WorldPacket & recv_data )
 		{
 			if (sChatHandler.ParseCommands(msg.c_str(), this) > 0)
 				break;
-
+#ifdef CLUSTERING 
+			WorldPacket data(ICMSG_CHANNEL_ACTION, 1 + misc.size() + 4 + msg.size() + 4 + 1);
+			data << uint8(CHANNEL_SAY);
+			data << misc;
+			data << GetPlayer()->GetLowGUID();
+			data << msg;
+			data << uint32(NULL);
+			data << bool(false);
+			sClusterInterface.SendPacket(&data);
+#else
 			Channel *chn = channelmgr.GetChannel(misc.c_str(),GetPlayer()); 
 			if(chn != NULL)
-				chn->Say(GetPlayer(),msg.c_str(), NULLPLR, false);
+				chn->Say(GetPlayer(),msg.c_str(), NULL, false);
+#endif
 		} break;
 	case CHAT_MSG_AFK:
 		{
 			GetPlayer()->SetAFKReason(msg);
 
 			/* WorldPacket *data, WorldSession* session, uint32 type, uint32 language, const char *channelName, const char *message*/
-			if(GetPlayer()->HasFlag(PLAYER_FLAGS, 0x02))
+			if(GetPlayer()->HasFlag(PLAYER_FLAGS, PLAYER_FLAG_AFK))
 			{
-				GetPlayer()->RemoveFlag(PLAYER_FLAGS, 0x02);
+				GetPlayer()->RemoveFlag(PLAYER_FLAGS, PLAYER_FLAG_AFK);
 				if(sWorld.GetKickAFKPlayerTime())
 					sEventMgr.RemoveEvents(GetPlayer(),EVENT_PLAYER_SOFT_DISCONNECT);
 			}
 			else
 			{
-				GetPlayer()->SetFlag(PLAYER_FLAGS, 0x02);
+				GetPlayer()->SetFlag(PLAYER_FLAGS, PLAYER_FLAG_AFK);
 				if(sWorld.GetKickAFKPlayerTime())
 					sEventMgr.AddEvent(GetPlayer(),&Player::SoftDisconnect,EVENT_PLAYER_SOFT_DISCONNECT,sWorld.GetKickAFKPlayerTime(),1,0);
 
@@ -431,11 +444,11 @@ void WorldSession::HandleMessagechatOpcode( WorldPacket & recv_data )
 		{
 			GetPlayer()->SetAFKReason(msg);
 
-			if(GetPlayer()->HasFlag(PLAYER_FLAGS, 0x04))
-				GetPlayer()->RemoveFlag(PLAYER_FLAGS, 0x04);
+			if(GetPlayer()->HasFlag(PLAYER_FLAGS, PLAYER_FLAG_DND))
+				GetPlayer()->RemoveFlag(PLAYER_FLAGS, PLAYER_FLAG_DND);
 			else
 			{
-				GetPlayer()->SetFlag(PLAYER_FLAGS, 0x04);
+				GetPlayer()->SetFlag(PLAYER_FLAGS, PLAYER_FLAG_DND);
 			}		  
 		} break;
 	default:
@@ -510,7 +523,7 @@ void WorldSession::HandleTextEmoteOpcode( WorldPacket & recv_data )
 		}
 	}
 
-	UnitPointer pUnit = _player->GetMapMgr()->GetUnit(guid);
+	Unit* pUnit = _player->GetMapMgr()->GetUnit(guid);
 	if(pUnit)
 	{
 		if(pUnit->IsPlayer())
@@ -520,10 +533,10 @@ void WorldSession::HandleTextEmoteOpcode( WorldPacket & recv_data )
 		}
 		else if(pUnit->GetTypeId() == TYPEID_UNIT)
 		{
-			CreaturePointer p = TO_CREATURE(pUnit);
-			if(p->GetCreatureName())
+			Creature* p = TO_CREATURE(pUnit);
+			if(p->GetCreatureInfo())
 			{
-				name = p->GetCreatureName()->Name;
+				name = p->GetCreatureInfo()->Name;
 				namelen = (uint32)strlen(name) + 1;
 
 				if( p->IsPet() )
@@ -595,7 +608,7 @@ void WorldSession::HandleReportSpamOpcode(WorldPacket & recvPacket)
 	std::string message;
 	recvPacket >> unk1 >> reportedGuid >> unk2 >> messagetype >> unk3 >> unk4 >> message;
 
-	PlayerPointer rPlayer = objmgr.GetPlayer((uint32)reportedGuid);
+	Player* rPlayer = objmgr.GetPlayer((uint32)reportedGuid);
 	if(!rPlayer)
 		return;*/
 

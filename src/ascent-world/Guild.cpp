@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 
@@ -71,7 +66,6 @@ Guild::~Guild()
 			if((*itr)->pSlots[i] != NULL)
 			{
 				(*itr)->pSlots[i]->Destructor();
-				(*itr)->pSlots[i] = NULLITEM;
 			}
 
 		for(list<GuildBankEvent*>::iterator it2 = (*itr)->lLog.begin(); it2 != (*itr)->lLog.end(); ++it2)
@@ -608,14 +602,14 @@ bool Guild::LoadFromDB(Field * f)
 			pTab->szTabIcon = (strlen(result->Fetch()[3].GetString()) > 0) ? strdup(result->Fetch()[3].GetString()) : NULL;
 			
 			for(uint32 i = 0; i < MAX_GUILD_BANK_SLOTS; ++i)
-				pTab->pSlots[i] = NULLITEM;
+				pTab->pSlots[i] = NULL;
 
 			if(res2)
 			{
 				do 
 				{
 
-					ItemPointer pItem = objmgr.LoadItem(res2->Fetch()[3].GetUInt64());
+					Item* pItem = objmgr.LoadItem(res2->Fetch()[3].GetUInt64());
 					if(pItem == NULL)
 					{
 						printf("Deleting guildbank item for invalid item %u (%u)\n", GetGuildId(), res2->Fetch()[3].GetUInt32());
@@ -836,7 +830,7 @@ void Guild::RemoveGuildMember(PlayerInfo * pMember, WorldSession * pClient)
 	{
 		if(pMember->m_loggedInPlayer)
 		{
-			PlayerPointer plr = objmgr.GetPlayer(pMember->guid);
+			Player* plr = objmgr.GetPlayer(pMember->guid);
 			sChatHandler.SystemMessageToPlr(plr, "You have been removed from the guild by %s", pClient->GetPlayer()->GetName());
 		}
 		LogGuildEvent(GUILD_EVENT_REMOVED, 2, pMember->name, pClient->GetPlayer()->GetName());
@@ -1151,7 +1145,7 @@ void Guild::SendGuildRoster(WorldSession * pClient)
 	WorldPacket data(SMSG_GUILD_ROSTER, (60*10) + (100 * m_members.size()) + 100);
 	GuildMemberMap::iterator itr;
 	GuildRank * r;
-	PlayerPointer pPlayer;
+	Player* pPlayer;
 	uint32 i, j;
 	uint32 c =0;
 	uint32 pos;
@@ -1299,7 +1293,7 @@ void Guild::BuyBankTab(WorldSession * pClient)
 	GuildBankTab * pTab = new GuildBankTab;
 	pTab->iTabId = m_bankTabCount;
 	for(uint32 i = 0; i < MAX_GUILD_BANK_SLOTS; ++i)
-		pTab->pSlots[i] = NULLITEM;
+		pTab->pSlots[i] = NULL;
 	
 	pTab->szTabName=NULL;
 	pTab->szTabIcon=NULL;

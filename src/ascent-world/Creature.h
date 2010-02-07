@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #ifndef WOWSERVER_CREATURE_H
 #define WOWSERVER_CREATURE_H
@@ -51,6 +46,7 @@ struct CreatureInfo
 	char * info_str;
 	uint32 Flags1;
 	uint32 Type;
+	uint32 TypeFlags;
 	uint32 Family;
 	uint32 Rank;
 	uint32 Unknown1;
@@ -140,7 +136,8 @@ struct CreatureProto
 	float BoundingRadius;
 	char * aura_string;
 	uint32 boss;
-	uint32 money;
+	int32 money;
+	bool no_xp;
 	uint32 invisibility_type;
 	uint32 death_state;
 	float	walk_speed;//base movement
@@ -164,6 +161,24 @@ struct CreatureProto
 	set<uint32> start_auras;
 	list<AI_Spell*> spells;
 };
+
+struct CreatureProtoHeroic
+{
+	uint32 entry;
+	uint32 Minlevel;
+	uint32 Maxlevel;
+	uint32 Minhealth;
+	uint32 Maxhealth;
+	float Mindmg;
+	float Maxdmg;
+	uint32 mana;
+	uint32 Resistances[7];
+	char * aura_string;
+	uint32 auraimmune_flag;
+
+	unordered_set<uint32> start_auras;
+};
+
 #pragma pack(pop)
 
 struct Formation{
@@ -175,22 +190,25 @@ struct Formation{
    
 enum UNIT_TYPE
 {
-	NOUNITTYPE	  = 0,
-	BEAST		   = 1,
-	DRAGONSKIN	  = 2,
-	DEMON		   = 3,
-	ELEMENTAL	   = 4,
-	GIANT		   = 5,
-	UNDEAD		  = 6,
+	NOUNITTYPE		= 0,
+	BEAST			= 1,
+	DRAGONSKIN		= 2,
+	DEMON			= 3,
+	ELEMENTAL		= 4,
+	GIANT			= 5,
+	UNDEAD			= 6,
 	HUMANOID		= 7,
-	CRITTER		 = 8,
-	MECHANICAL	  = 9,
+	CRITTER			= 8,
+	MECHANICAL		= 9,
 	UNIT_TYPE_MISC  = 10,
+	UNIT_TYPE_TOTEM = 11,
+	UNIT_TYPE_NONCOMBAT_PET = 12,
+	UNIT_TYPE_GAS_CLOUD = 13,
 };
 
 enum FAMILY
 {
-	FAMILY_WOLF = 1,
+	FAMILY_WOLF				= 1,
 	FAMILY_CAT,
 	FAMILY_SPIDER,
 	FAMILY_BEAR,
@@ -199,18 +217,18 @@ enum FAMILY
 	FAMILY_CARRION_BIRD,
 	FAMILY_CRAB,
 	FAMILY_GORILLA,
-	FAMILY_RAPTOR = 11,
+	FAMILY_RAPTOR			= 11,
 	FAMILY_TALLSTRIDER ,
-	FAMILY_FELHUNTER = 15,
+	FAMILY_FELHUNTER		= 15,
 	FAMILY_VOIDWALKER,
 	FAMILY_SUCCUBUS,
-	FAMILY_DOOMGUARD = 19,
+	FAMILY_DOOMGUARD		= 19,
 	FAMILY_SCORPID,
 	FAMILY_TURTLE, 
-	FAMILY_IMP = 23,
+	FAMILY_IMP				= 23,
 	FAMILY_BAT,
 	FAMILY_HYENA,
-	FAMILY_OWL,
+	FAMILY_BIRD_OF_PREY,
 	FAMILY_WIND_SERPENT,
 	FAMILY_REMOTE_CONTROL,
 	FAMILY_FELGUARD,
@@ -219,8 +237,32 @@ enum FAMILY
 	FAMILY_WARP_STALKER,
 	FAMILY_SPOREBAT,
 	FAMILY_NETHER_RAY,
-	FAMILY_SERPENT
+	FAMILY_SERPENT,
+	FAMILY_MOTH				= 37,
+	FAMILY_CHIMAERA,
+	FAMILY_DEVILSAUR,
+	FAMILY_GHOUL,
+	FAMILY_SILITHID,
+	FAMILY_WORM,
+	FAMILY_RHINO,
+	FAMILY_WASP,
+	FAMILY_CORE_HOUND,
+	FAMILY_SPIRIT_BEAST,
+	FAMILY_FAKE_IMP			= 416,
+	FAMILY_FAKE_FELHUNTER,
+	FAMILY_FAKE_VOIDWALKER	= 1860,
+	FAMILY_FAKE_SUCCUBUS	= 1863,
+	FAMILY_FAKE_FELGUARD	= 17252,
+	FAMILY_FAKE_SPIRIT_WOLF = 29264
 };
+
+enum CreatureTypeFlags
+{
+	CREATURE_TYPEFLAGS_TAMEABLE   = 0x0001,
+	CREATURE_TYPEFLAGS_HERBLOOT   = 0x0100,
+	CREATURE_TYPEFLAGS_MININGLOOT = 0x0200,
+};
+
 
 enum ELITE
 {
@@ -230,6 +272,7 @@ enum ELITE
 	ELITE_WORLDBOSS,
 	ELITE_RARE
 };
+
 enum TIME_REMOVE_CORPSE
 {
 	TIME_CREATURE_REMOVE_CORPSE = 180000,
@@ -255,6 +298,7 @@ struct Trainer;
 class SERVER_DECL Creature : public Unit
 {
 public:
+	friend class Player;
 
 	Creature(uint64 guid);
 	virtual ~Creature();
@@ -265,7 +309,7 @@ public:
 	void Load(CreatureProto * proto_, float x, float y, float z, float o = 0.0f);
 
 	void AddToWorld();
-	void AddToWorld(MapMgrPointer pMapMgr);
+	void AddToWorld(MapMgr* pMapMgr);
 	void RemoveFromWorld(bool addrespawnevent, bool free_guid);
 
 	/// Creation
@@ -279,7 +323,6 @@ public:
 	/// Updates
 	virtual void Update( uint32 time );
 
-	ASCENT_INLINE CreatureInfo* GetCreatureInfo() { return creature_info; }
 	ASCENT_INLINE uint32 GetSQL_id() { return spawnid; };
 
 	/// Creature inventory
@@ -392,7 +435,7 @@ public:
 	void RegenerateMana(bool isinterrupted);
 	int BaseAttackType;
 
-	bool CanSee(UnitPointer obj) // * Invisibility & Stealth Detection - Partha *
+	bool CanSee(Unit* obj) // * Invisibility & Stealth Detection - Partha *
 	{
 		if(!obj)
 			return false;
@@ -432,7 +475,7 @@ public:
 	}
 
 	//Make this unit face another unit
-	bool setInFront(UnitPointer target);
+	bool setInFront(Unit* target);
 
 	bool Skinned;
 
@@ -454,15 +497,12 @@ public:
 
 	void OnJustDied();
 	void OnRemoveCorpse();
-	void OnRespawn(MapMgrPointer m);
+	void OnRespawn(MapMgr* m);
 	void SafeDelete();
-	//void Despawn();
-	void SummonExpire(); // this is used for guardians. They are non respawnable creatures linked to a player
-
 
 	// In Range
-	void AddInRangeObject(ObjectPointer pObj);
-	void OnRemoveInRangeObject(ObjectPointer pObj);
+	void AddInRangeObject(Object* pObj);
+	void OnRemoveInRangeObject(Object* pObj);
 	void ClearInRangeSet();
 
 	// Demon
@@ -476,10 +516,15 @@ public:
 	void SetEnslaveSpell(uint32 spellId) { m_enslaveSpell = spellId; }
 	bool RemoveEnslave();
 
-	ASCENT_INLINE PlayerPointer GetTotemOwner() { return totemOwner; }
-	ASCENT_INLINE void SetTotemOwner(PlayerPointer owner) { totemOwner = owner; }
-	ASCENT_INLINE int32 GetTotemSlot() { return totemSlot; }
-	ASCENT_INLINE void SetTotemSlot(int32 slot) { totemSlot = slot; }
+	//General vars for summoned creatures
+	Unit* GetSummonOwner();
+	ASCENT_INLINE int32 GetSummonSlot() { return SummonSlot; }
+	ASCENT_INLINE bool IsSummon() { return SummonOwner && SummonSlot > -1; }
+	ASCENT_INLINE void SetSummonOwnerSlot(uint64 ownerguid, int8 slot) { SummonOwner = ownerguid; SummonSlot = slot;}
+
+	//Special summons, Totems
+	ASCENT_INLINE bool IsTotem() { return Totem;}
+	ASCENT_INLINE void SetTotem(bool totem) { Totem = totem;}
 
 	ASCENT_INLINE bool IsPickPocketed() { return m_PickPocketed; }
 	ASCENT_INLINE void SetPickPocketed(bool val = true) { m_PickPocketed = val; }
@@ -491,6 +536,12 @@ public:
 
 	uint32 m_TaxiNode;
 	CreatureInfo *creature_info;
+	ASCENT_INLINE CreatureInfo *GetCreatureInfo()
+	{
+		return creature_info; 
+	}
+	// left this function for backwards compatibility with scripts
+	// please use GetCreatureInfo()
 	ASCENT_INLINE CreatureInfo *GetCreatureName()
 	{
 		return creature_info; 
@@ -500,8 +551,6 @@ public:
 	void RegenerateFocus();
 
 	CreatureFamilyEntry * myFamily;
-	ASCENT_INLINE bool IsTotem() { return totemOwner != 0 && totemSlot != -1; }
-	void TotemExpire();
 	void FormationLinkUp(uint32 SqlId);
 	void ChannelLinkUpGO(uint32 SqlId);
 	void ChannelLinkUpCreature(uint32 SqlId);
@@ -511,8 +560,11 @@ public:
 	uint32 original_emotestate;
 	uint32 original_MountedDisplayID;
 	CreatureProto * proto;
+	CreatureProtoHeroic * proto_heroic;
 	ASCENT_INLINE CreatureProto *GetProto() { return proto; }
+	ASCENT_INLINE CreatureProtoHeroic * GetProtoHeroic() { return proto_heroic; }
 	CreatureSpawn * m_spawn;
+	EventIdInfo * m_event;
 	void OnPushToWorld();
 	void Despawn(uint32 delay, uint32 respawntime);
 	void TriggerScriptEvent(string func);
@@ -525,11 +577,11 @@ public:
 	bool CanAddToWorld();
 
 	WayPointMap * m_custom_waypoint_map;
-	PlayerPointer m_escorter;
+	Player* m_escorter;
 	void DestroyCustomWaypointMap();
 	bool IsInLimboState() { return m_limbostate; }
 	uint32 GetLineByFamily(CreatureFamilyEntry * family){return family->skilline ? family->skilline : 0;};
-	void RemoveLimboState(UnitPointer healer);
+	void RemoveLimboState(Unit* healer);
 	void SetGuardWaypoints();
 	bool m_corpseEvent;
 	MapCell * m_respawnCell;
@@ -559,8 +611,9 @@ protected:
 	uint32 m_enslaveCount;
 	uint32 m_enslaveSpell;
 
-	PlayerPointer totemOwner;
-	int32 totemSlot;
+	uint32 SummonOwner;
+	int32 SummonSlot;
+	bool Totem;
 
 	bool m_PickPocketed;
 	uint32 _fields[UNIT_END];
@@ -570,6 +623,7 @@ public:
 
 	// loooooot
 	void GenerateLoot();
+	uint32 GetRequiredLootSkill();
 
 	// tagging
 	uint32 m_taggingGroup;
@@ -577,13 +631,13 @@ public:
 	int8 m_lootMethod;
 
 	// updates the loot state, whether it is tagged or lootable, or no longer has items
-	void UpdateLootAnimation(PlayerPointer Looter);
+	void UpdateLootAnimation(Player* Looter);
 
 	// clears tag, clears "tagged" visual grey
 	void ClearTag();
 
 	// tags the object by a certain player.
-	void Tag(PlayerPointer plr);
+	void Tag(Player* plr);
 
 	// used by bgs
 	bool m_noDeleteAfterDespawn;

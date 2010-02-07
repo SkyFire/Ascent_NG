@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 
@@ -26,12 +21,12 @@ OpcodeHandler WorldPacketHandlers[NUM_MSG_TYPES];
 WorldSession::WorldSession(uint32 id, string Name, WorldSocket *sock) : _socket(sock), _accountId(id), _accountName(Name),
 _logoutTime(0), permissions(NULL), permissioncount(0), _loggingOut(false), instanceId(0)
 {
-	_player = NULLPLR;
+	_player = NULL;
 	m_hasDeathKnight = false;
 	m_highestLevel = 0;
 	m_asyncQuery = false;
 	memset(movement_packet, 0, sizeof(movement_packet));
-	memset(&movement_info, 0, sizeof(MovementInfo));
+	memset(&movement_info, 0, sizeof(MovementInfo));		//New movement packet
 	m_currMsTime = getMSTime();
 	bDeleted = false;
 	m_bIsWLevelSet = false;
@@ -40,7 +35,7 @@ _logoutTime(0), permissions(NULL), permissioncount(0), _loggingOut(false), insta
 	_updatecount = 0;
 	m_moveDelayTime=0;
 	m_clientTimeDelay =0;
-	m_loggingInPlayer=NULLPLR;
+	m_loggingInPlayer=NULL;
 	language=0;
 	m_muted = 0;
 	_side = -1;
@@ -59,7 +54,7 @@ WorldSession::~WorldSession()
 {
 	deleteMutex.Acquire();
 
-	if(_player)
+	if(_player != NULL)
 	{
 		printf("warning: logged out player in worldsession destructor");
 		LogoutPlayer(true);
@@ -87,7 +82,7 @@ WorldSession::~WorldSession()
 	if(m_loggingInPlayer)
 	{
 		m_loggingInPlayer->SetSession(NULL);
-		m_loggingInPlayer = NULLPLR;
+		m_loggingInPlayer = NULL;
 	}
 
 	deleteMutex.Release();
@@ -144,7 +139,7 @@ int WorldSession::Update(uint32 InstanceID)
 			Handler = &WorldPacketHandlers[packet->GetOpcode()];
 			if(Handler->status == STATUS_LOGGEDIN && !_player && Handler->handler != 0)
 			{
-				Log.Error("WorldSession","Received unexpected/wrong state packet with opcode %s (0x%.4X)",
+				Log.Warning("WorldSession","Received unexpected/wrong state packet with opcode %s (0x%.4X)",
 					LookupOpcodeName(packet->GetOpcode()), packet->GetOpcode());
 			}
 			else
@@ -152,7 +147,7 @@ int WorldSession::Update(uint32 InstanceID)
 				// Valid Packet :>
 				if(Handler->handler == 0)
 				{
-					Log.Error("WorldSession","Received unhandled packet with opcode %s (0x%.4X)",
+					Log.Warning("WorldSession","Received unhandled packet with opcode %s (0x%.4X)",
 						LookupOpcodeName(packet->GetOpcode()), packet->GetOpcode());
 				}
 				else
@@ -246,6 +241,15 @@ void WorldSession::LogoutPlayer(bool Save)
 
 	if( _player != NULL )
 	{
+#ifdef CLUSTERING
+		//if socket is NULL, we can assume the realmserver took care of it :P
+		if (_socket != NULL)
+		{
+			WorldPacket data(ICMSG_PLAYER_LOGOUT, 4);
+			data << _socket->GetSessionId() << _player->GetLowGUID();
+			sClusterInterface.SendPacket(&data);
+		}
+#endif
 		_player->ObjLock();
 
 		sHookInterface.OnLogout( _player );
@@ -258,10 +262,10 @@ void WorldSession::LogoutPlayer(bool Save)
 
 		if( _player->m_currentLoot && _player->IsInWorld() )
 		{
-			ObjectPointer obj = _player->GetMapMgr()->_GetObject( _player->m_currentLoot );
+			Object* obj = _player->GetMapMgr()->_GetObject( _player->m_currentLoot );
 			if( obj != NULL )
 				obj->m_loot.looters.erase(_player->GetLowGUID());
-			obj = NULLOBJ;
+			obj = NULL;
 		}
 
 		// part channels
@@ -270,7 +274,7 @@ void WorldSession::LogoutPlayer(bool Save)
 		if( _player->m_CurrentTransporter != NULL )
 		{
 			_player->m_CurrentTransporter->RemovePlayer( _player );
-			_player->m_CurrentTransporter = NULLTRANSPORT;
+			_player->m_CurrentTransporter = NULL;
 			_player->m_TransporterGUID = 0;
 		}
 
@@ -330,7 +334,7 @@ void WorldSession::LogoutPlayer(bool Save)
 		if( _player->IsInWorld() )
 			_player->RemoveFromWorld();
 		
-		_player->m_playerInfo->m_loggedInPlayer = NULLPLR;
+		_player->m_playerInfo->m_loggedInPlayer = NULL;
 
 		if( _player->m_playerInfo->m_Group != NULL )
 			_player->m_playerInfo->m_Group->Update();
@@ -370,7 +374,6 @@ void WorldSession::LogoutPlayer(bool Save)
 				CharacterDatabase.ExecuteNA(ss.str().c_str());
 			}
 		}
-//		_player->SetSession(NULL);
 		_player->ObjUnlock();
 
 		_player->Destructor();
@@ -382,7 +385,7 @@ void WorldSession::LogoutPlayer(bool Save)
 
 	SetLogoutTimer(0);
 	if(_player != NULL)
-		_player = NULLPLR;
+		_player = NULL;
 }
 
 void WorldSession::SendBuyFailed(uint64 guid, uint32 itemid, uint8 error)
@@ -607,6 +610,7 @@ void WorldSession::InitPacketHandlerTable()
 	WorldPacketHandlers[CMSG_TEXT_EMOTE].handler								= &WorldSession::HandleTextEmoteOpcode;
 	WorldPacketHandlers[CMSG_INSPECT].handler								= &WorldSession::HandleInspectOpcode;
 	
+#ifndef CLUSTERING
 	// Channels
 	WorldPacketHandlers[CMSG_JOIN_CHANNEL].handler							  = &WorldSession::HandleChannelJoin;
 	WorldPacketHandlers[CMSG_LEAVE_CHANNEL].handler							 = &WorldSession::HandleChannelLeave;
@@ -626,6 +630,7 @@ void WorldSession::InitPacketHandlerTable()
 	WorldPacketHandlers[CMSG_CHANNEL_MODERATE].handler						  = &WorldSession::HandleChannelModerate;
 	WorldPacketHandlers[CMSG_GET_CHANNEL_MEMBER_COUNT].handler					= &WorldSession::HandleChannelNumMembersQuery;
 	WorldPacketHandlers[CMSG_CHANNEL_DISPLAY_LIST].handler					= &WorldSession::HandleChannelRosterQuery;
+#endif
 	
 	// Groups / Raids
 	WorldPacketHandlers[CMSG_GROUP_INVITE].handler							  = &WorldSession::HandleGroupInviteOpcode;
@@ -828,6 +833,7 @@ void WorldSession::InitPacketHandlerTable()
 	WorldPacketHandlers[CMSG_PET_RENAME].handler								= &WorldSession::HandlePetRename;
 	WorldPacketHandlers[CMSG_PET_ABANDON].handler							   = &WorldSession::HandlePetAbandon;
 	WorldPacketHandlers[CMSG_PET_UNLEARN].handler								= &WorldSession::HandlePetUnlearn;
+	WorldPacketHandlers[CMSG_PET_LEARN_TALENT].handler						= &WorldSession::HandlePetLearnTalent;
 
 	// Totems
 	WorldPacketHandlers[CMSG_TOTEM_DESTROYED].handler							= &WorldSession::HandleTotemDestroyed;
@@ -985,7 +991,7 @@ void WorldSession::SendChatPacket(WorldPacket * data, uint32 langpos, int32 lang
 	SendPacket(data);
 }
 
-void WorldSession::SendItemPushResult(ItemPointer pItem, bool Created, bool Received, bool SendToSet, bool NewItem, uint8 DestBagSlot, uint32 DestSlot, uint32 AddCount)
+void WorldSession::SendItemPushResult(Item* pItem, bool Created, bool Received, bool SendToSet, bool NewItem, uint8 DestBagSlot, uint32 DestSlot, uint32 AddCount)
 {
 	/*WorldPacket data(SMSG_ITEM_PUSH_RESULT, 60);
 	data << _player->GetGUID();
@@ -1062,17 +1068,17 @@ void WorldSession::HandleAchievementInspect(WorldPacket &recv_data)
 	recv_data >> guid;
 
 	uint64 rguid = guid.GetOldGuid();
-	UnitPointer pUnit = GetPlayer()->GetMapMgr()->GetPlayer( GUID_LOPART(rguid) );
+	Unit* pUnit = GetPlayer()->GetMapMgr()->GetPlayer( GUID_LOPART(rguid) );
 	if( pUnit && pUnit->IsPlayer() && TO_PLAYER(pUnit)->GetAchievementInterface()->HasAchievements() )
 	{
 		SendPacket(TO_PLAYER(pUnit)->GetAchievementInterface()->BuildAchievementData(true));
 	}
 }
 
-uint8 WorldSession::CheckTeleportPrerequsites(AreaTrigger * pAreaTrigger, WorldSession * pSession, PlayerPointer pPlayer, MapInfo * pMapInfo)
+uint8 WorldSession::CheckTeleportPrerequsites(AreaTrigger * pAreaTrigger, WorldSession * pSession, Player* pPlayer, MapInfo * pMapInfo)
 {
 	//is this map enabled?
-	if(!pMapInfo || !pMapInfo->HasFlag(WMI_INSTANCE_ENABLED))
+	if( pMapInfo  == NULL || !pMapInfo->HasFlag(WMI_INSTANCE_ENABLED))
 		return AREA_TRIGGER_FAILURE_UNAVAILABLE;
 
 	//Do we need TBC expansion?
@@ -1095,11 +1101,11 @@ uint8 WorldSession::CheckTeleportPrerequsites(AreaTrigger * pAreaTrigger, WorldS
 	if(!pPlayer->triggerpass_cheat)
 	{
 		//Do we need any quests?
-		if( pMapInfo && pMapInfo->required_quest && !( pPlayer->HasFinishedDailyQuest(pMapInfo->required_quest) || pPlayer->HasFinishedDailyQuest(pMapInfo->required_quest)))
+		if( pMapInfo->required_quest && !( pPlayer->HasFinishedDailyQuest(pMapInfo->required_quest) || pPlayer->HasFinishedDailyQuest(pMapInfo->required_quest)))
 			return AREA_TRIGGER_FAILURE_NO_ATTUNE_Q;
 
 		//Do we need certain items?
-		if(pMapInfo && pMapInfo->required_item && !pPlayer->GetItemInterface()->GetItemCount(pMapInfo->required_item, true))
+		if( pMapInfo->required_item && !pPlayer->GetItemInterface()->GetItemCount(pMapInfo->required_item, true))
 			return AREA_TRIGGER_FAILURE_NO_ATTUNE_I;
 
 		//Do we need to be in a group?
@@ -1121,11 +1127,15 @@ uint8 WorldSession::CheckTeleportPrerequsites(AreaTrigger * pAreaTrigger, WorldS
 			if( pPlayer->m_playerInfo && pMapInfo->playerlimit >= 5 && (int32)((pMapInfo->playerlimit - 5)/5) < pPlayer->m_playerInfo->subGroup)
 				return AREA_TRIGGER_FAILURE_IN_QUEUE;
 
+			// Need http://www.wowhead.com/?spell=46591 to enter Magisters Terrace
+			if( pMapInfo->mapid == 585 && pPlayer->iInstanceType >= MODE_HEROIC && !pPlayer->HasSpell(46591)) // Heroic Countenance
+				return AREA_TRIGGER_FAILURE_NO_HEROIC;
+
 			//All Heroic instances are automatically unlocked when reaching lvl 80, no keys needed here.
 			if(!(pMapInfo->HasFlag(WMI_INSTANCE_XPACK_02) && pPlayer->getLevel()>= 80))
 			{
-				//otherwise we still need to be lvl 70 for heroic.
-				if( pPlayer->iInstanceType >= MODE_HEROIC && pPlayer->getLevel()<  70)
+				//otherwise we still need to be lvl 65 for heroic.
+				if( pPlayer->iInstanceType && pPlayer->getLevel() < uint32(pMapInfo->HasFlag(WMI_INSTANCE_XPACK_02) ? 80 : 70))
 					return AREA_TRIGGER_FAILURE_LEVEL_HEROIC;
 
 				//and we might need a key too.
@@ -1138,4 +1148,18 @@ uint8 WorldSession::CheckTeleportPrerequsites(AreaTrigger * pAreaTrigger, WorldS
 	}
 	//Nothing more to check, should be ok
 	return AREA_TRIGGER_FAILURE_OK;
+}
+
+void WorldSession::SendAccountDataTimes(uint32 mask)
+{
+	WorldPacket data( SMSG_ACCOUNT_DATA_TIMES, 68 );
+	data << uint32(UNIXTIME); // Set Unix Timing?
+	data << uint8(1);
+	data << uint32(mask);
+
+	for(int i = 0; i < NUM_ACCOUNT_DATA_TYPES; ++i)
+		if(mask & (1 << i))
+			data << uint32(0);
+
+	SendPacket(&data);
 }

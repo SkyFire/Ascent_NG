@@ -1,24 +1,23 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #ifndef __WORLDSESSION_H
 #define __WORLDSESSION_H
+
+#ifdef CLUSTERING
+#include "../ascent-realmserver/Structures.h"
+#endif
 
 class Player;
 class WorldPacket;
@@ -125,6 +124,23 @@ struct AccountDataEntry
 	bool bIsDirty;
 };
 
+// 3.2.2 Account DataType Enums
+enum AccountDataTypes
+{
+	GLOBAL_CONFIG_CACHE				= 0,	// 0x01 
+	PER_CHARACTER_CONFIG_CACHE		= 1,	// 0x02 
+	GLOBAL_BINDINGS_CACHE			= 2,	// 0x04 
+	PER_CHARACTER_BINDINGS_CACHE	= 3,	// 0x08 
+	GLOBAL_MACROS_CACHE				= 4,	// 0x10 
+	PER_CHARACTER_MACROS_CACHE		= 5,	// 0x20 
+	PER_CHARACTER_LAYOUT_CACHE		= 6,	// 0x40 
+	PER_CHARACTER_CHAT_CACHE		= 7,	// 0x80 
+	NUM_ACCOUNT_DATA_TYPES			= 8
+};
+#define GLOBAL_CACHE_MASK           0x15
+#define PER_CHARACTER_CACHE_MASK    0xEA
+
+
 typedef struct Cords {
 	float x,y,z;
 }Cords;
@@ -149,6 +165,8 @@ public:
 	WoWGuid transGuid;
 	float transX, transY, transZ, transO, transTime;
 	uint8 transSeat;
+
+	WoWGuid guid;
 
 	void init(WorldPacket & data);
 	void write(WorldPacket & data);
@@ -177,7 +195,7 @@ public:
 	WorldSession(uint32 id, string Name, WorldSocket *sock);
 	~WorldSession();
 
-	PlayerPointer m_loggingInPlayer;
+	Player* m_loggingInPlayer;
 	ASCENT_INLINE void SendPacket(WorldPacket* packet)
 	{
 		if(_socket && _socket->IsConnected())
@@ -204,7 +222,7 @@ public:
 	uint32 m_lastPing;
 
 	ASCENT_INLINE uint32 GetAccountId() const { return _accountId; }
-	ASCENT_INLINE PlayerPointer GetPlayer() { return _player; }
+	ASCENT_INLINE Player* GetPlayer() { return _player; }
 	
 	/* Acct flags */
 	void SetAccountFlags(uint32 flags) { _accountFlags = flags; }
@@ -213,6 +231,7 @@ public:
 	/* GM Permission System */
 	void LoadSecurity(std::string securitystring);
 	void SetSecurity(std::string securitystring);
+	ASCENT_INLINE uint32 GetAccountFlags() { return _accountFlags; }
 	ASCENT_INLINE char* GetPermissions() { return permissions; }
 	ASCENT_INLINE int GetPermissionCount() { return permissioncount; }
 	ASCENT_INLINE bool HasPermissions() { return (permissioncount > 0) ? true : false; }
@@ -231,7 +250,7 @@ public:
 	{
 		_socket = sock;
 	}
-	ASCENT_INLINE void SetPlayer(PlayerPointer plr) { _player = plr; }
+	ASCENT_INLINE void SetPlayer(Player* plr) { _player = plr; }
 	
 	ASCENT_INLINE void SetAccountData(uint32 index, char* data, bool initial,uint32 sz)
 	{
@@ -282,7 +301,7 @@ public:
 
 	int __fastcall Update(uint32 InstanceID);
 
-	void SendItemPushResult(ItemPointer pItem, bool Created, bool Received, bool SendToSet, bool NewItem, uint8 DestBagSlot, uint32 DestSlot, uint32 AddCount);
+	void SendItemPushResult(Item* pItem, bool Created, bool Received, bool SendToSet, bool NewItem, uint8 DestBagSlot, uint32 DestSlot, uint32 AddCount);
 	void SendBuyFailed(uint64 guid, uint32 itemid, uint8 error);
 	void SendSellItem(uint64 vendorguid, uint64 itemid, uint8 error);
 	void SendNotification(const char *message, ...);
@@ -405,7 +424,7 @@ protected:
 	void HandleLootMethodOpcode(WorldPacket& recvPacket);
 	void HandleMinimapPingOpcode(WorldPacket& recvPacket);
 	void HandleSetPlayerIconOpcode(WorldPacket& recv_data);
-	void SendPartyCommandResult(PlayerPointer pPlayer, uint32 p1, std::string name, uint32 err);
+	void SendPartyCommandResult(Player* pPlayer, uint32 p1, std::string name, uint32 err);
 
 	// Raid
 	void HandleConvertGroupToRaidOpcode(WorldPacket& recvPacket);
@@ -533,6 +552,7 @@ protected:
 	void HandleCorpseQueryOpcode( WorldPacket& recvPacket );
 	void HandleResurrectResponseOpcode(WorldPacket& recvPacket);
 
+#ifndef CLUSTERING
 	/// Channel Opcodes (ChannelHandler.cpp)
 	void HandleChannelJoin(WorldPacket& recvPacket);
 	void HandleChannelLeave(WorldPacket& recvPacket);
@@ -552,6 +572,7 @@ protected:
 	void HandleChannelModerate(WorldPacket& recvPacket);
 	void HandleChannelNumMembersQuery(WorldPacket & recvPacket);
 	void HandleChannelRosterQuery(WorldPacket & recvPacket);
+#endif
 
 	// Duel
 	void HandleDuelAccepted(WorldPacket & recv_data);
@@ -623,6 +644,7 @@ protected:
 	void HandlePetRename(WorldPacket & recv_data);
 	void HandlePetAbandon(WorldPacket & recv_data);
 	void HandlePetUnlearn(WorldPacket & recv_data);
+	void HandlePetLearnTalent(WorldPacket & recv_data);
 
 	// Totems
 	void HandleTotemDestroyed(WorldPacket & recv_data);
@@ -707,24 +729,29 @@ protected:
 	void HandleAlterAppearance(WorldPacket & recv_data);
 	void HandleAchievementInspect(WorldPacket & recv_data);
 	void HandleRemoveGlyph(WorldPacket & recv_data);
+	void HandleWorldStateUITimerUpdate( WorldPacket & recv_data );
 
 	//Vehicles
 	void HandleVehicleDismiss(WorldPacket & recv_data);
 	void HandleSpellClick( WorldPacket & recv_data );
 
 public:
-	void SendTradeStatus(uint8 TradeStatus);
-	void SendInventoryList(CreaturePointer pCreature);
-	void SendTrainerList(CreaturePointer pCreature);
-	void SendCharterRequest(CreaturePointer pCreature);
-	void SendTaxiList(CreaturePointer pCreature);
-	void SendInnkeeperBind(CreaturePointer pCreature);
-	void SendBattlegroundList(CreaturePointer pCreature, uint32 mapid);
-	void SendBankerList(CreaturePointer pCreature);
-	void SendTabardHelp(CreaturePointer pCreature);
-	void SendAuctionList(CreaturePointer pCreature);
-	void SendSpiritHealerRequest(CreaturePointer pCreature);
-	void FullLogin(PlayerPointer plr);
+	void SendTradeStatus(uint32 TradeStatus);
+	void SendInventoryList(Creature* pCreature);
+	void SendTrainerList(Creature* pCreature);
+	void SendCharterRequest(Creature* pCreature);
+	void SendTaxiList(Creature* pCreature);
+	void SendInnkeeperBind(Creature* pCreature);
+	void SendBattlegroundList(Creature* pCreature, uint32 mapid);
+	void SendBankerList(Creature* pCreature);
+	void SendTabardHelp(Creature* pCreature);
+	void SendAuctionList(Creature* pCreature);
+	void SendSpiritHealerRequest(Creature* pCreature);
+	void FullLogin(Player* plr);
+	void SendAccountDataTimes(uint32 mask);
+#ifdef CLUSTERING
+	bool ClusterTryPlayerLogin(uint32 Guid, uint32 ClientBuild, string GMPermissions, uint32 Account_Flags);
+#endif
 
 	float m_wLevel; // Level of water the player is currently in
 	bool m_bIsWLevelSet; // Does the m_wLevel variable contain up-to-date information about water level?
@@ -733,7 +760,7 @@ public:
 
 private:
 	friend class Player;
-	PlayerPointer _player;
+	Player* _player;
 	WorldSocket *_socket;
 		
 	/* Preallocated buffers for movement handlers */
@@ -762,7 +789,7 @@ private:
 	uint32 client_build;
 	uint32 instanceId;
 	uint8 _updatecount;
-	uint8 CheckTeleportPrerequsites(AreaTrigger * pAreaTrigger, WorldSession * pSession, PlayerPointer pPlayer, MapInfo * pMapInfo);
+	uint8 CheckTeleportPrerequsites(AreaTrigger * pAreaTrigger, WorldSession * pSession, Player* pPlayer, MapInfo * pMapInfo);
 public:
 	static void InitPacketHandlerTable();
 	uint32 floodLines;

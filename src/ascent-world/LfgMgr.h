@@ -1,33 +1,32 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 enum LFGTypes 
 {
-	LFG_NONE = 0,
-	LFG_INSTANCE = 1,
-	LFG_RAID = 2,
-	LFG_QUEST = 3,
-	LFG_ZONE = 4,
-	LFG_HEROIC_DUNGEON = 5, // from client
+	LFG_NONE                 = 0,
+	LFG_DUNGEON              = 1,
+	LFG_RAID                 = 2,
+	LFG_QUEST                = 3,
+	LFG_ZONE                 = 4,
+	LFG_HEROIC_DUNGEON       = 5,
+	LFG_ANY_DUNGEON          = 6,
+	LFG_ANY_HEROIC_DUNGEON   = 7,
+	LFG_DAILY_DUNGEON        = 8,
+	LFG_DAILY_HEROIC_DUNGEON = 9,
 };
 
-#define MAX_DUNGEONS 244+1 // check max entrys +1 on lfgdungeons.dbc
+#define MAX_DUNGEONS 257+1 // check max entrys +1 on lfgdungeons.dbc
 #define MAX_LFG_QUEUE_ID 3
 #define LFG_MATCH_TIMEOUT 30		// in seconds
 
@@ -36,19 +35,19 @@ class LfgMgr : public Singleton < LfgMgr >, EventableObject
 {
 public:	
 	
-	typedef list<PlayerPointer  > LfgPlayerList;
+	typedef list<Player*  > LfgPlayerList;
 
 	LfgMgr();
 	~LfgMgr();
 	
-	bool AttemptLfgJoin(PlayerPointer pl, uint32 LfgDungeonId);
-	void SetPlayerInLFGqueue(PlayerPointer pl,uint32 LfgDungeonId);
-	void SetPlayerInLfmList(PlayerPointer pl, uint32 LfgDungeonId);
-	void RemovePlayerFromLfgQueue(PlayerPointer pl,uint32 LfgDungeonId);
-	void RemovePlayerFromLfgQueues(PlayerPointer pl);
-	void RemovePlayerFromLfmList(PlayerPointer pl, uint32 LfmDungeonId);
+	bool AttemptLfgJoin(Player* pl, uint32 LfgDungeonId);
+	void SetPlayerInLFGqueue(Player* pl,uint32 LfgDungeonId);
+	void SetPlayerInLfmList(Player* pl, uint32 LfgDungeonId);
+	void RemovePlayerFromLfgQueue(Player* pl,uint32 LfgDungeonId);
+	void RemovePlayerFromLfgQueues(Player* pl);
+	void RemovePlayerFromLfmList(Player* pl, uint32 LfmDungeonId);
 	void UpdateLfgQueue(uint32 LfgDungeonId);
-	void SendLfgList(PlayerPointer plr, uint32 Dungeon);
+	void SendLfgList(Player* plr, uint32 Dungeon);
 	void EventMatchTimeout(LfgMatch * pMatch);
 
 	int32 event_GetInstanceId() { return -1; }
@@ -65,8 +64,8 @@ protected:
 class LfgMatch
 {
 public:
-	set<PlayerPointer  > PendingPlayers;
-	set<PlayerPointer  > AcceptedPlayers;
+	set<Player*  > PendingPlayers;
+	set<Player*  > AcceptedPlayers;
 	Mutex lock;
 	uint32 DungeonId;
     Group * pGroup;

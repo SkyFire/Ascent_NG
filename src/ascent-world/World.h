@@ -1,26 +1,21 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #ifndef __WORLD_H
 #define __WORLD_H
 
-#define IS_INSTANCE(a) (((a)>1)&&((a)!=530))
+#define IS_INSTANCE(a) (a>1 && a!=530 && a != 571)
 
 class Object;
 class WorldPacket;
@@ -71,6 +66,14 @@ enum IntRates
 	MAX_INTRATES
 };
 
+enum EventIdFlags
+{
+	EVENTID_FLAG_NONE = 0,
+	EVENTID_FLAG_PHASE = 1,
+	EVENTID_FLAG_MODELID = 2,
+	EVENTID_FLAG_EQUIP = 4, //this obviously cannot be used for gameobjects
+	EVENTID_FLAG_SPAWN = 8
+};
 
 enum EnviromentalDamage
 {
@@ -135,6 +138,7 @@ enum CharCreateErrors
 	CHARACTER_CREATION_FAIL,
 	NAME_IS_IN_USE,
 	CREATION_OF_RACE_DISABLED,
+	ALL_CHARS_ON_PVP_REALM_MUST_AT_SAME_SIDE,
 	ALREADY_HAVE_MAXIMUM_CHARACTERS,
 	ALREADY_HAVE_MAXIMUM_CHARACTERS_2,
 	SERVER_IS_CURRENTLY_QUEUED,
@@ -217,13 +221,13 @@ struct MapInfo
 	char * name;
 	uint32 flags;
 	uint32 cooldown;
-    uint32 lvl_mod_a;
 	uint32 required_quest;
 	uint32 required_item;
 	uint32 heroic_key[2];
 	float update_distance;
 	uint32 checkpoint_id;
 	bool collision;
+//	bool cluster_loads_map;		//When the clustering is active
 
 	bool HasFlag(uint32 flag)
 	{
@@ -339,14 +343,15 @@ typedef set<WorldSession*> SessionSet;
 // The maximum level attainable, period, regardless of flags on your account.
 #define MAXIMUM_ATTAINABLE_LEVEL 80
 
-class SERVER_DECL World : public Singleton<World>, public EventableObject, public std::tr1::enable_shared_from_this<World>
+
+class SERVER_DECL World : public Singleton<World>, public EventableObject
 {
 public:
 	World();
 	~World();
 	void Destructor();
 
-	uint32 GetMaxLevel(PlayerPointer plr);
+	uint32 GetMaxLevel(Player* plr);
 
 	/** Reloads the config and sets all of the setting variables 
 	 */
@@ -498,7 +503,7 @@ public:
 
 	uint32 expansionUpdateTime;
 
-	void DeleteObject(ObjectPointer obj);
+	void DeleteObject(Object* obj);
 
 	uint32 compression_threshold;
 
@@ -530,6 +535,8 @@ public:
 	bool no_antihack_on_gm;
 
 	bool free_arena_teams;
+
+	bool display_free_items;
 
 	//Enable/Disable specific battlegrounds/arenas
 	bool av_disabled;
@@ -638,6 +645,45 @@ public:
 	void QueueShutdown(uint32 delay, uint32 type);
 	void CancelShutdown();
 	void UpdateShutdownStatus();
+
+	bool VerifyName(const char * name, size_t nlen)
+	{
+		const char * p;
+		size_t i;
+
+		static const char * bannedCharacters = "\t\v\b\f\a\n\r\\\"\'\? <>[](){}_=+-|/!@#$%^&*~`.,0123456789\0";
+		static const char * allowedCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		if(m_limitedNames)
+		{
+			for(i = 0; i < nlen; ++i)
+			{
+				p = allowedCharacters;
+				for(; *p != 0; ++p)
+				{
+					if(name[i] == *p)
+						goto cont;
+				}
+
+				return false;
+cont:
+				continue;
+			}
+		}
+		else
+		{
+			for(i = 0; i < nlen; ++i)
+			{
+				p = bannedCharacters;
+				while(*p != 0 && name[i] != *p && name[i] != 0)
+					++p;
+
+				if(*p != 0)
+					return false;
+			}
+		}
+
+		return true;
+	}
 };
 
 #define sWorld World::getSingleton()

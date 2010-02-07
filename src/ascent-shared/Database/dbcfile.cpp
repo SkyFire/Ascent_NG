@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "dbcfile.h"
 #include <stdio.h>
@@ -29,13 +24,18 @@ DBCFile::DBCFile()
 DBCFile::~DBCFile()
 {
 	if(	data )
-		free ( data );
+		delete[] data;
 	if ( stringTable )
-		free ( stringTable );
+		delete[] stringTable;
 }
 
 bool DBCFile::open(const char*fn)
 {
+	if(data)
+	{
+		delete [] data;
+		data=NULL;
+	}
 	FILE*pf=fopen(fn,"rb");
 	if(!pf)return false;
 
@@ -46,8 +46,10 @@ bool DBCFile::open(const char*fn)
 	fread(&recordSize,4,1,pf); // Size of a record
 	fread(&stringSize,4,1,pf); // String size
 
-	data = (unsigned char *)malloc (recordSize*recordCount); 
-	stringTable = (unsigned char *)malloc ( stringSize ) ;
+	data = new unsigned char[recordSize*recordCount];
+	stringTable = new unsigned char[stringSize];
+	//data = (unsigned char *)malloc (recordSize*recordCount); 
+	//stringTable = (unsigned char *)malloc ( stringSize ) ;
 	fread( data ,recordSize*recordCount,1,pf);
 	fread( stringTable , stringSize,1,pf);
 
@@ -95,6 +97,10 @@ bool DBCFile::DumpBufferToFile(const char*fn)
   return true;
 }
 
+/*
+//Don't uncomment these since we cant mix realloc with new
+//these could be reimplemented by using a vector, but do we really need them?!
+
 int DBCFile::AddRecord() //simply add an empty record to the end of the data section
 {
 	recordCount++;
@@ -131,7 +137,9 @@ int DBCFile::AddString(const char *new_string) //simply add an empty record to t
 		return 0; //we do not add 0 len strings
 
 	if( stringTable )
+	{
 		stringTable = (unsigned char *)realloc( stringTable, stringSize + new_str_len );
+	}
 	else 
 	{
 		//the dbc file is not yet opened
@@ -140,7 +148,7 @@ int DBCFile::AddString(const char *new_string) //simply add an empty record to t
 		return 0;
 	}
 
-	//seems like an error ocured
+	//seems like an error occurred
 	if ( !stringTable )
 	{
 		printf(" Error : Could not resize DBC string partition\n");
@@ -156,4 +164,4 @@ int DBCFile::AddString(const char *new_string) //simply add an empty record to t
 
 	return ret;
 }
-
+*/

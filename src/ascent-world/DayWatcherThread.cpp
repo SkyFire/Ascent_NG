@@ -1,23 +1,22 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
+
+//initialiseSingleton( DayWatcherThread );
+template <> DayWatcherThread * Singleton < DayWatcherThread > :: mSingleton = 0;
+
 #ifdef WIN32
 static HANDLE m_abortEvent = INVALID_HANDLE_VALUE;
 #else
@@ -29,11 +28,12 @@ DayWatcherThread::DayWatcherThread()
 {
 	m_threadRunning = true;
 	m_dirty = false;
+	m_creatureEventSpawnMaps.clear();
+	m_gameobjectEventSpawnMaps.clear();
 }
 
 DayWatcherThread::~DayWatcherThread()
 {
-
 }
 
 void DayWatcherThread::terminate()
@@ -54,7 +54,8 @@ void DayWatcherThread::dupe_tm_pointer(tm * returnvalue, tm * mypointer)
 void DayWatcherThread::update_settings()
 {
 	CharacterDatabase.Execute("REPLACE INTO server_settings VALUES(\"last_arena_update_time\", %u)", last_arena_time);
-	CharacterDatabase.Execute("REPLACE INTO server_settings VALUES(\"last_dailies_reset_time\", %u)", last_arena_time);
+	CharacterDatabase.Execute("REPLACE INTO server_settings VALUES(\"last_dailies_reset_time\", %u)", last_daily_reset_time);
+	CharacterDatabase.Execute("REPLACE INTO server_settings VALUES(\"last_eventid_time\", %u)", last_eventid_time);
 }
 
 void DayWatcherThread::load_settings()
@@ -70,7 +71,7 @@ void DayWatcherThread::load_settings()
 	}
 	else
 	{
-		DEBUG_LOG("DayWatcherThread", "Initializing Arena Updates to zero.");
+		DEBUG_LOG("DayWatcherThread", "Initialized Arena Updates.");
 		last_arena_time = 0;
 	}
 
@@ -82,15 +83,27 @@ void DayWatcherThread::load_settings()
 	}
 	else
 	{
-		DEBUG_LOG("DayWatcherThread", "Initializing Daily Updates to zero.");
+		DEBUG_LOG("DayWatcherThread", "Initialized Daily Updates.");
 		last_daily_reset_time = 0;
 	}
+
+	result = CharacterDatabase.Query("SELECT setting_value FROM server_settings WHERE setting_id = \"last_eventid_time\"");
+	if(result)
+	{
+		last_eventid_time = result->Fetch()[0].GetUInt32();
+		delete result;
+	}
+	else
+		last_eventid_time = 0;
+
+	LoadEventIdSettings();
 }
 
 void DayWatcherThread::set_tm_pointers()
 {
 	dupe_tm_pointer(localtime(&last_arena_time), &local_last_arena_time);
 	dupe_tm_pointer(localtime(&last_daily_reset_time), &local_last_daily_reset_time);
+	dupe_tm_pointer(localtime(&last_eventid_time), &local_last_eventid_time);
 }
 
 uint32 DayWatcherThread::get_timeout_from_string(const char * string, uint32 def)
@@ -140,21 +153,28 @@ bool DayWatcherThread::run()
 	SetThreadName("DayWatcher");
 
 	Log.Notice("DayWatcherThread", "Started.");
+	_loaded = false;
 	currenttime = UNIXTIME;
 	dupe_tm_pointer(localtime(&currenttime), &local_currenttime);
 	load_settings();
 	set_tm_pointers();
 	m_busy = false;
+	_firstrun[0] = true;
+	_firstrun[1] = true;
+	m_heroic_reset = false;
+
 #ifdef WIN32
 	m_abortEvent = CreateEvent(NULL, NULL, FALSE, NULL);
 #else
+
 	struct timeval now;
 	struct timespec tv;
 
 	pthread_mutex_init(&abortmutex,NULL);
 	pthread_cond_init(&abortcond,NULL);
 #endif
-	
+	uint32 interv = 120000;//Daywatcher check interval (in ms), must be >> 30secs !
+
 	while(m_threadRunning)
 	{
 		m_busy=true;
@@ -165,8 +185,148 @@ bool DayWatcherThread::run()
 			update_arena();
 
 		if(has_timeout_expired(&local_currenttime, &local_last_daily_reset_time, DAILY))
+		{
 			update_daily();
+			runEvents = true;
+		}
 
+		// reset will occur daily between 07:59:00 CET and 08:01:30 CET (players inside will get 60 sec countdown)
+		// 8AM = 25200s
+		uint32 umod = uint32(currenttime + 3600) % 86400;
+		if(!m_heroic_reset && umod >= 25140 && umod <= 25140 + (interv/1000) + 30 )  
+		{
+			//It's approx 8AM, let's reset (if not done so already)
+			Reset_Heroic_Instances();
+			m_heroic_reset = true;
+		}
+		if(m_heroic_reset && umod > 25140 + (interv/1000) + 30 )
+			m_heroic_reset = false;		
+
+		if(has_timeout_expired(&local_currenttime, &local_last_eventid_time, HOURLY))
+		{
+			Log.Notice("DayWatcherThread", "Running Hourly In Game Events checks...");
+			for(EventsList::iterator itr = m_eventIdList.begin(); itr != m_eventIdList.end(); itr++)
+			{
+				if(!(*itr)->eventbyhour)
+					continue;
+				
+				if((*itr)->isactive)
+				{
+					if((*itr)->lastactivated && !CheckHourlyEvent(&local_currenttime, (*itr)->starthour, (*itr)->endhour))
+					{
+						(*itr)->isactive = false;
+						SpawnEventId((*itr)->eventId, false);
+						update_event_settings((*itr)->eventId,0);
+					}
+					else
+					{
+						if((*itr)->lastactivated && _firstrun[0])
+						{
+							if(!SpawnEventId((*itr)->eventId))
+									break;
+						}
+						if(!(*itr)->lastactivated)
+						{
+						time_t activated = (*itr)->lastactivated = UNIXTIME;
+						update_event_settings((*itr)->eventId, activated);
+						runEvents = true;
+						}
+						continue;
+					}
+				}
+				else
+				{
+					if(CheckHourlyEvent(&local_currenttime, (*itr)->starthour, (*itr)->endhour))
+					{
+						if(!SpawnEventId((*itr)->eventId))
+							break;
+						(*itr)->isactive = true;
+						time_t activated = (*itr)->lastactivated = UNIXTIME;
+						update_event_settings((*itr)->eventId, activated);
+						continue;
+					}
+				}
+			}
+			_firstrun[0] = false;
+			last_eventid_time = UNIXTIME;
+			dupe_tm_pointer(localtime(&last_eventid_time), &local_last_eventid_time);
+			m_dirty = true;
+		}
+		
+		if(runEvents = true)
+		{
+			if(_loaded)
+			{
+				runEvents = false;
+				bool monthexpired = false;
+				Log.Notice("DayWatcherThread", "Running Daily In Game Events checks...");
+				for(EventsList::iterator itr = m_eventIdList.begin(); itr != m_eventIdList.end(); itr++)
+				{
+					if((*itr)->eventbyhour)
+						continue;
+					if((*itr)->isactive)
+					{
+						if((*itr)->lastactivated && has_eventid_expired((*itr)->activedays, (*itr)->lastactivated))
+						{
+							(*itr)->isactive = false;
+							SpawnEventId((*itr)->eventId, false);
+							update_event_settings((*itr)->eventId,0);
+						}
+						else
+						{
+							if((*itr)->lastactivated && _firstrun[1])
+							{
+								if(!SpawnEventId((*itr)->eventId))
+										break;
+							}
+
+							if(!(*itr)->lastactivated)
+							{
+							time_t activated = (*itr)->lastactivated = UNIXTIME;
+							update_event_settings((*itr)->eventId, activated);
+							runEvents = true;
+							}
+							continue;
+						}
+					}
+					else
+					{
+						if((*itr)->monthnumber)
+						{
+							if(has_eventid_timeout_expired(&local_currenttime, ((*itr)->monthnumber - 1), MONTHLY))
+							{
+								if(!(*itr)->daynumber)
+								{
+									if(!SpawnEventId((*itr)->eventId))
+											break;
+									(*itr)->isactive = true;
+									time_t activated = (*itr)->lastactivated = UNIXTIME;
+									update_event_settings((*itr)->eventId, activated);
+									continue;
+								}
+								monthexpired = true;
+							}
+						}
+						if(monthexpired && (*itr)->daynumber && has_eventid_timeout_expired(&local_currenttime, (*itr)->daynumber, DAILY))
+						{
+							monthexpired = false;
+							time_t activated = (*itr)->lastactivated = UNIXTIME;
+							update_event_settings((*itr)->eventId, activated);
+							continue;
+						}
+						if((*itr)->daynumber && !(*itr)->monthnumber && has_eventid_timeout_expired(&local_currenttime, (*itr)->daynumber, DAILY))
+						{
+							if(!SpawnEventId((*itr)->eventId))
+								break;
+							(*itr)->isactive = true;
+							time_t activated = (*itr)->lastactivated = UNIXTIME;
+							update_event_settings((*itr)->eventId, activated);
+						}
+					}
+				}
+				_firstrun[1] = false;
+			}
+		}
 		if(m_dirty)
 			update_settings();
 
@@ -175,7 +335,7 @@ bool DayWatcherThread::run()
 			break;
 
 #ifdef WIN32
-		WaitForSingleObject(m_abortEvent, 120000);
+		WaitForSingleObject(m_abortEvent, interv);
 #else
 		gettimeofday(&now, NULL);
 		tv.tv_sec = now.tv_sec + 120;
@@ -200,7 +360,7 @@ void DayWatcherThread::update_arena()
 {
 	Log.Notice("DayWatcherThread", "Running Weekly Arena Point Maintenance...");
 	QueryResult * result = CharacterDatabase.Query("SELECT guid, arenaPoints FROM characters");		/* this one is a little more intensive. */
-	PlayerPointer plr;
+	Player* plr;
 	uint32 guid, arenapoints, orig_arenapoints;
 	ArenaTeam * team;
 	PlayerInfo * inf;
@@ -291,7 +451,7 @@ void DayWatcherThread::update_arena()
 			if(orig_arenapoints != arenapoints)
 			{
 				plr = objmgr.GetPlayer(guid);
-				if(plr)
+				if(plr!=NULL)
 				{
 					plr->m_arenaPoints = arenapoints;
 					
@@ -327,3 +487,8 @@ void DayWatcherThread::update_daily()
 	m_dirty = true;
 }
 
+void DayWatcherThread::Reset_Heroic_Instances()
+{
+	Log.Notice("DayWatcherThread", "Reseting heroic instances...");
+	sInstanceMgr.ResetHeroicInstances();
+}

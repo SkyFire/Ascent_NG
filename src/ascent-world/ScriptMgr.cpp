@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 #ifndef WIN32
@@ -79,7 +74,7 @@ void ScriptMgr::LoadScripts()
 	uint32 count = 0;
 	HANDLE find_handle = FindFirstFile( search_path.c_str(), &data );
 	if(find_handle == INVALID_HANDLE_VALUE)
-		Log.Error("ScriptMgr","No external scripts found! Server will start up with limited functionality." );
+		Log.Notice("ScriptMgr","Not found external scripts! Server will start up with default functions." );
 	else
 	{
 		do
@@ -139,7 +134,6 @@ void ScriptMgr::LoadScripts()
 		while(FindNextFile(find_handle, &data));
 		FindClose(find_handle);
 		Log.Notice("ScriptMgr","Loaded %u external libraries.", count);
-		sLog.outString("");
 		Log.Notice("ScriptMgr","Loading optional scripting engines...");
 		for(vector<ScriptingEngine>::iterator itr = ScriptEngines.begin(); itr != ScriptEngines.end(); ++itr)
 		{
@@ -162,8 +156,7 @@ void ScriptMgr::LoadScripts()
 				FreeLibrary( itr->Handle );
 			}
 		}
-		Log.Notice("ScriptMgr","Done loading script engines...");
-		sLog.outString("");
+		Log.Success("ScriptMgr","Done loading script engines...");
 	}
 #else
 	/* Loading system for *nix */
@@ -265,7 +258,7 @@ char *ext;
 				dlclose( itr->Handle );
 			}
 		}
-		sLog.outString("Done loading script engines...");
+		Log.Success("ScriptMgr","Done loading script engines...");
 	}
 #endif
 }
@@ -352,7 +345,7 @@ void ScriptMgr::register_instance_script( uint32 pMapId, exp_create_instance_ai 
 	mInstances.insert( InstanceCreateMap::value_type( pMapId, pCallback ) );
 };
 
-CreatureAIScript* ScriptMgr::CreateAIScriptClassForEntry(CreaturePointer pCreature)
+CreatureAIScript* ScriptMgr::CreateAIScriptClassForEntry(Creature* pCreature)
 {
 	CreatureCreateMap::iterator itr = _creatures.find(pCreature->GetEntry());
 	if(itr == _creatures.end())
@@ -362,7 +355,7 @@ CreatureAIScript* ScriptMgr::CreateAIScriptClassForEntry(CreaturePointer pCreatu
 	return (function_ptr)(pCreature);
 }
 
-GameObjectAIScript * ScriptMgr::CreateAIScriptClassForGameObject(uint32 uEntryId, GameObjectPointer pGameObject)
+GameObjectAIScript * ScriptMgr::CreateAIScriptClassForGameObject(uint32 uEntryId, GameObject* pGameObject)
 {
 	GameObjectCreateMap::iterator itr = _gameobjects.find(pGameObject->GetEntry());
 	if(itr == _gameobjects.end())
@@ -372,7 +365,7 @@ GameObjectAIScript * ScriptMgr::CreateAIScriptClassForGameObject(uint32 uEntryId
 	return (function_ptr)(pGameObject);
 }
 
-InstanceScript* ScriptMgr::CreateScriptClassForInstance( uint32 pMapId, MapMgrPointer pMapMgr )
+InstanceScript* ScriptMgr::CreateScriptClassForInstance( uint32 pMapId, MapMgr* pMapMgr )
 {
 	InstanceCreateMap::iterator Iter = mInstances.find( pMapMgr->GetMapId() );
 	if ( Iter == mInstances.end() )
@@ -382,7 +375,7 @@ InstanceScript* ScriptMgr::CreateScriptClassForInstance( uint32 pMapId, MapMgrPo
 	return ( function_ptr )( pMapMgr );
 };
 
-bool ScriptMgr::CallScriptedDummySpell(uint32 uSpellId, uint32 i, SpellPointer pSpell)
+bool ScriptMgr::CallScriptedDummySpell(uint32 uSpellId, uint32 i, Spell* pSpell)
 {
 	HandleDummySpellMap::iterator itr = _spells.find(uSpellId);
 	if(itr == _spells.end())
@@ -392,7 +385,7 @@ bool ScriptMgr::CallScriptedDummySpell(uint32 uSpellId, uint32 i, SpellPointer p
 	return (function_ptr)(i, pSpell);
 }
 
-bool ScriptMgr::CallScriptedDummyAura(uint32 uSpellId, uint32 i, AuraPointer pAura, bool apply)
+bool ScriptMgr::CallScriptedDummyAura(uint32 uSpellId, uint32 i, Aura* pAura, bool apply)
 {
 	HandleDummyAuraMap::iterator itr = _auras.find(uSpellId);
 	if(itr == _auras.end())
@@ -402,7 +395,7 @@ bool ScriptMgr::CallScriptedDummyAura(uint32 uSpellId, uint32 i, AuraPointer pAu
 	return (function_ptr)(i, pAura, apply);
 }
 
-bool ScriptMgr::CallScriptedItem(ItemPointer pItem, PlayerPointer pPlayer)
+bool ScriptMgr::CallScriptedItem(Item* pItem, Player* pPlayer)
 {
 	if(pItem->GetProto()->gossip_script)
 	{
@@ -423,7 +416,7 @@ void ScriptMgr::register_item_gossip_script(uint32 entry, GossipScript * gs)
 }
 
 /* CreatureAI Stuff */
-CreatureAIScript::CreatureAIScript(CreaturePointer creature) : _unit(creature)
+CreatureAIScript::CreatureAIScript(Creature* creature) : _unit(creature)
 {
 
 }
@@ -450,7 +443,7 @@ void CreatureAIScript::RemoveAIUpdateEvent()
 
 /* GameObjectAI Stuff */
 
-GameObjectAIScript::GameObjectAIScript(GameObjectPointer goinstance) : _gameobject(goinstance)
+GameObjectAIScript::GameObjectAIScript(GameObject* goinstance) : _gameobject(goinstance)
 {
 
 }
@@ -469,18 +462,18 @@ GossipScript::GossipScript()
 	
 }
 
-void GossipScript::GossipEnd(ObjectPointer pObject, PlayerPointer Plr)
+void GossipScript::GossipEnd(Object* pObject, Player* Plr)
 {
 	Plr->CleanupGossipMenu();
 }
 
-bool CanTrainAt(PlayerPointer plr, Trainer * trn);
-void GossipScript::GossipHello(ObjectPointer pObject, PlayerPointer Plr, bool AutoSend)
+bool CanTrainAt(Player* plr, Trainer * trn);
+void GossipScript::GossipHello(Object* pObject, Player* Plr, bool AutoSend)
 {
 	GossipMenu *Menu;
 	uint32 TextID = 68; //Hi there how can I help you $N	Greetings $N
 
-	CreaturePointer pCreature = (pObject->GetTypeId()==TYPEID_UNIT)?TO_CREATURE( pObject ):NULLCREATURE;
+	Creature* pCreature = (pObject->GetTypeId()==TYPEID_UNIT)?TO_CREATURE( pObject ):NULL;
 	if(!pCreature)
 		return;
 
@@ -504,7 +497,7 @@ void GossipScript::GossipHello(ObjectPointer pObject, PlayerPointer Plr, bool Au
 
 	if(pTrainer != NULL && (flags & UNIT_NPC_FLAG_TRAINER || flags & UNIT_NPC_FLAG_TRAINER_PROF))
 	{
-		string name = pCreature->GetCreatureName()->Name;
+		string name = pCreature->GetCreatureInfo()->Name;
 		string::size_type pos = name.find(" ");	  // only take first name
 		if(pos != string::npos)
 			name = name.substr(0, pos);
@@ -556,6 +549,9 @@ void GossipScript::GossipHello(ObjectPointer pObject, PlayerPointer Plr, bool Au
 					break;
 				case PRIEST:
 					msg += "priest";
+					break;
+				case DEATHKNIGHT:
+					msg += "death knigh";
 					break;
 				}
 			}
@@ -611,9 +607,9 @@ void GossipScript::GossipHello(ObjectPointer pObject, PlayerPointer Plr, bool Au
 		Menu->SendTo(Plr);
 }
 
-void GossipScript::GossipSelectOption(ObjectPointer pObject, PlayerPointer Plr, uint32 Id, uint32 IntId, const char * EnteredCode)
+void GossipScript::GossipSelectOption(Object* pObject, Player* Plr, uint32 Id, uint32 IntId, const char * EnteredCode)
 {
-	CreaturePointer pCreature = TO_CREATURE( pObject );
+	Creature* pCreature = TO_CREATURE( pObject );
 	if( pObject->GetTypeId() != TYPEID_UNIT )
 		return;
 
@@ -728,7 +724,7 @@ void GossipScript::Destroy()
 
 /* InstanceAI Stuff */
 
-InstanceScript::InstanceScript( MapMgrPointer pMapMgr ) : mInstance( pMapMgr )
+InstanceScript::InstanceScript( MapMgr* pMapMgr ) : mInstance( pMapMgr )
 {
 };
 
@@ -781,184 +777,219 @@ bool HookInterface::OnNewCharacter(uint32 Race, uint32 Class, WorldSession * Ses
 	OUTER_LOOP_END_COND
 }
 
-void HookInterface::OnKillPlayer(PlayerPointer pPlayer, PlayerPointer pVictim)
+void HookInterface::OnKillPlayer(Player* pPlayer, Player* pVictim)
 {
 	OUTER_LOOP_BEGIN(SERVER_HOOK_EVENT_ON_KILL_PLAYER, tOnKillPlayer)
 		(call)(pPlayer, pVictim);
 	OUTER_LOOP_END
 }
 
-void HookInterface::OnFirstEnterWorld(PlayerPointer pPlayer)
+void HookInterface::OnFirstEnterWorld(Player* pPlayer)
 {
 	OUTER_LOOP_BEGIN(SERVER_HOOK_EVENT_ON_FIRST_ENTER_WORLD, tOnFirstEnterWorld)
 		(call)(pPlayer);
 	OUTER_LOOP_END
 }
 
-void HookInterface::OnCharacterCreate(PlayerPointer pPlayer)
+void HookInterface::OnCharacterCreate(Player* pPlayer)
 {
 	OUTER_LOOP_BEGIN(SERVER_HOOK_EVENT_ON_CHARACTER_CREATE, tOCharacterCreate)
 		(call)(pPlayer);
 	OUTER_LOOP_END
 }
 
-void HookInterface::OnEnterWorld(PlayerPointer pPlayer)
+void HookInterface::OnEnterWorld(Player* pPlayer)
 {
 	OUTER_LOOP_BEGIN(SERVER_HOOK_EVENT_ON_ENTER_WORLD, tOnEnterWorld)
 		(call)(pPlayer);
 	OUTER_LOOP_END
 }
 
-void HookInterface::OnGuildCreate(PlayerPointer pLeader, Guild * pGuild)
+void HookInterface::OnGuildCreate(Player* pLeader, Guild * pGuild)
 {
 	OUTER_LOOP_BEGIN(SERVER_HOOK_EVENT_ON_GUILD_CREATE, tOnGuildCreate)
 		(call)(pLeader, pGuild);
 	OUTER_LOOP_END
 }
 
-void HookInterface::OnGuildJoin(PlayerPointer pPlayer, Guild * pGuild)
+void HookInterface::OnGuildJoin(Player* pPlayer, Guild * pGuild)
 {
 	OUTER_LOOP_BEGIN(SERVER_HOOK_EVENT_ON_GUILD_JOIN, tOnGuildJoin)
 		(call)(pPlayer, pGuild);
 	OUTER_LOOP_END
 }
 
-void HookInterface::OnDeath(PlayerPointer pPlayer)
+void HookInterface::OnDeath(Player* pPlayer)
 {
 	OUTER_LOOP_BEGIN(SERVER_HOOK_EVENT_ON_DEATH, tOnDeath)
 		(call)(pPlayer);
 	OUTER_LOOP_END
 }
 
-bool HookInterface::OnRepop(PlayerPointer pPlayer)
+bool HookInterface::OnRepop(Player* pPlayer)
 {
 	OUTER_LOOP_BEGIN_COND(SERVER_HOOK_EVENT_ON_REPOP, tOnRepop)
 		ret_val = (call)(pPlayer);
 	OUTER_LOOP_END_COND
 }
 
-void HookInterface::OnEmote(PlayerPointer pPlayer, uint32 Emote, UnitPointer pUnit)
+void HookInterface::OnEmote(Player* pPlayer, uint32 Emote, Unit* pUnit)
 {
 	OUTER_LOOP_BEGIN(SERVER_HOOK_EVENT_ON_EMOTE, tOnEmote)
 		(call)(pPlayer, Emote, pUnit);
 	OUTER_LOOP_END
 }
 
-void HookInterface::OnEnterCombat(PlayerPointer pPlayer, UnitPointer pTarget)
+void HookInterface::OnEnterCombat(Player* pPlayer, Unit* pTarget)
 {
 	OUTER_LOOP_BEGIN(SERVER_HOOK_EVENT_ON_ENTER_COMBAT, tOnEnterCombat)
 		(call)(pPlayer, pTarget);
 	OUTER_LOOP_END
 }
 
-bool HookInterface::OnCastSpell(PlayerPointer pPlayer, SpellEntry* pSpell)
+bool HookInterface::OnCastSpell(Player* pPlayer, SpellEntry* pSpell)
 {
 	OUTER_LOOP_BEGIN_COND(SERVER_HOOK_EVENT_ON_CAST_SPELL, tOnCastSpell)
 		ret_val = (call)(pPlayer, pSpell);
 	OUTER_LOOP_END_COND
 }
 
-bool HookInterface::OnLogoutRequest(PlayerPointer pPlayer)
+bool HookInterface::OnLogoutRequest(Player* pPlayer)
 {
 	OUTER_LOOP_BEGIN_COND(SERVER_HOOK_EVENT_ON_LOGOUT_REQUEST, tOnLogoutRequest)
 		ret_val = (call)(pPlayer);
 	OUTER_LOOP_END_COND
 }
 
-void HookInterface::OnLogout(PlayerPointer pPlayer)
+void HookInterface::OnLogout(Player* pPlayer)
 {
 	OUTER_LOOP_BEGIN(SERVER_HOOK_EVENT_ON_LOGOUT, tOnLogout)
 		(call)(pPlayer);
 	OUTER_LOOP_END
 }
 
-void HookInterface::OnQuestAccept(PlayerPointer pPlayer, Quest * pQuest, ObjectPointer pObject)
+void HookInterface::OnQuestAccept(Player* pPlayer, Quest * pQuest, Object* pObject)
 {
 	OUTER_LOOP_BEGIN(SERVER_HOOK_EVENT_ON_QUEST_ACCEPT, tOnQuestAccept)
 		(call)(pPlayer, pQuest, pObject);
 	OUTER_LOOP_END
 }
 
-void HookInterface::OnZone(PlayerPointer pPlayer, uint32 Zone, uint32 OldZone)
+void HookInterface::OnZone(Player* pPlayer, uint32 Zone, uint32 OldZone)
 {
 	OUTER_LOOP_BEGIN(SERVER_HOOK_EVENT_ON_ZONE, tOnZone)
 		(call)(pPlayer, Zone, OldZone);
 	OUTER_LOOP_END
 }
 
-bool HookInterface::OnChat(PlayerPointer pPlayer, uint32 Type, uint32 Lang, string Message, string Misc)
+bool HookInterface::OnChat(Player* pPlayer, uint32 Type, uint32 Lang, string Message, string Misc)
 {
 	OUTER_LOOP_BEGIN_COND(SERVER_HOOK_EVENT_ON_CHAT, tOnChat)
 		ret_val = (call)(pPlayer, Type, Lang, Message, Misc);
 	OUTER_LOOP_END_COND
 }
 
-void HookInterface::OnEnterWorld2(PlayerPointer pPlayer)
+void HookInterface::OnEnterWorld2(Player* pPlayer)
 {
 	OUTER_LOOP_BEGIN(SERVER_HOOK_EVENT_ON_ENTER_WORLD_2, tOnEnterWorld)
 		(call)(pPlayer);
 	OUTER_LOOP_END
 }
 
-void HookInterface::OnQuestCancelled(PlayerPointer pPlayer, Quest * pQuest)
+void HookInterface::OnQuestCancelled(Player* pPlayer, Quest * pQuest)
 {
 	OUTER_LOOP_BEGIN(SERVER_HOOK_EVENT_ON_QUEST_CANCELLED, tOnQuestCancel)
 		(call)(pPlayer, pQuest);
 	OUTER_LOOP_END
 }
 
-void HookInterface::OnQuestFinished(PlayerPointer pPlayer, Quest * pQuest, ObjectPointer pObject)
+void HookInterface::OnQuestFinished(Player* pPlayer, Quest * pQuest, Object* pObject)
 {
 	OUTER_LOOP_BEGIN(SERVER_HOOK_EVENT_ON_QUEST_FINISHED, tOnQuestFinished)
 		(call)(pPlayer, pQuest, pObject);
 	OUTER_LOOP_END
 }
 
-void HookInterface::OnHonorableKill(PlayerPointer pPlayer, PlayerPointer pKilled)
+void HookInterface::OnHonorableKill(Player* pPlayer, Player* pKilled)
 {
 	OUTER_LOOP_BEGIN(SERVER_HOOK_EVENT_ON_HONORABLE_KILL, tOnHonorableKill)
 		(call)(pPlayer, pKilled);
 	OUTER_LOOP_END
 }
 
-void HookInterface::OnArenaFinish(PlayerPointer pPlayer, uint32 type, ArenaTeam* pTeam, bool victory, bool rated)
+void HookInterface::OnArenaFinish(Player* pPlayer, uint32 type, ArenaTeam* pTeam, bool victory, bool rated)
 {
 	OUTER_LOOP_BEGIN(SERVER_HOOK_EVENT_ON_ARENA_FINISH, tOnArenaFinish)
 		(call)(pPlayer, type, pTeam, victory, rated);
 	OUTER_LOOP_END
 }
 
-void HookInterface::OnContinentCreate(MapMgrPointer pMgr)
+void HookInterface::OnContinentCreate(MapMgr* pMgr)
 {
 	OUTER_LOOP_BEGIN(SERVER_HOOK_EVENT_ON_CONTINENT_CREATE, tOnContinentCreate)
 		(call)(pMgr);
 	OUTER_LOOP_END
 }
 
-void HookInterface::OnPostSpellCast(PlayerPointer pPlayer, SpellEntry * pSpell, UnitPointer pTarget)
+void HookInterface::OnPostSpellCast(Player* pPlayer, SpellEntry * pSpell, Unit* pTarget)
 {
 	OUTER_LOOP_BEGIN(SERVER_HOOK_EVENT_ON_POST_SPELL_CAST, tOnPostSpellCast)
 		(call)(pPlayer, pSpell, pTarget);
 	OUTER_LOOP_END
 }
 
-void HookInterface::OnAreaTrigger(PlayerPointer plr, uint32 areatrigger)
+void HookInterface::OnAreaTrigger(Player* plr, uint32 areatrigger)
 {
 	OUTER_LOOP_BEGIN(SERVER_HOOK_EVENT_ON_AREATRIGGER, tOnAreaTrigger)
 		(call)(plr, areatrigger);
 	OUTER_LOOP_END
 }
 
-void HookInterface::OnPlayerSaveToDB(PlayerPointer pPlayer, QueryBuffer* buf)
+void HookInterface::OnPlayerSaveToDB(Player* pPlayer, QueryBuffer* buf)
 {
 	OUTER_LOOP_BEGIN(SERVER_HOOK_EVENT_ON_PLAYER_SAVE_TO_DB, tOnPlayerSaveToDB)
 		(call)(pPlayer, buf);
 	OUTER_LOOP_END
 }
 
-void HookInterface::OnAuraRemove(PlayerPointer pPlayer, uint32 spellID)
+void HookInterface::OnAuraRemove(Player* pPlayer, uint32 spellID)
 {
 	OUTER_LOOP_BEGIN(SERVER_HOOK_EVENT_ON_AURA_REMOVE, tOnAuraRemove)
 		(call)(pPlayer, spellID);
+	OUTER_LOOP_END
+}
+
+void HookInterface::OnDestroyBuilding(GameObject* go)
+{
+	OUTER_LOOP_BEGIN(SERVER_HOOK_EVENT_ON_DESTROY_BUILDING,tOnDestroyBuilding)
+		(call)(go);
+	OUTER_LOOP_END
+}
+
+void HookInterface::OnDamageBuilding(GameObject* go)
+{
+	OUTER_LOOP_BEGIN(SERVER_HOOK_EVENT_ON_DAMAGE_BUILDING,tOnDamageBuilding)
+		(call)(go);
+	OUTER_LOOP_END
+}
+
+bool HookInterface::OnMountFlying(Player* plr)
+{
+	OUTER_LOOP_BEGIN_COND(SERVER_HOOK_EVENT_ON_MOUNT_FLYING,tOnMountFlying)
+		ret_val = (call)(plr);
+	OUTER_LOOP_END_COND
+}
+
+bool HookInterface::OnPreAuraRemove(Player* plr,uint32 spellID)
+{
+	OUTER_LOOP_BEGIN_COND(SERVER_HOOK_EVENT_ON_PRE_AURA_REMOVE,tOnPreAuraRemove)
+		ret_val = (call)(plr,spellID);
+	OUTER_LOOP_END_COND
+}
+
+void HookInterface::OnSlowLockOpen(GameObject* go,Player* plr)
+{
+	OUTER_LOOP_BEGIN(SERVER_HOOK_EVENT_ON_SLOW_LOCK_OPEN,tOnSlowLockOpen)
+		(call)(go,plr);
 	OUTER_LOOP_END
 }

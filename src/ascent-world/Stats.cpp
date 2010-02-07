@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 
@@ -68,7 +63,7 @@ uint32 getConColor(uint16 AttackerLvl, uint16 VictimLvl)
 #undef PLAYER_LEVEL_CAP
 }
 
-uint32 CalculateXpToGive(UnitPointer pVictim, UnitPointer pAttacker)
+uint32 CalculateXpToGive(Unit* pVictim, Unit* pAttacker)
 {
 	if(pVictim->IsPlayer())
 		return 0;
@@ -450,7 +445,7 @@ uint32 CalcStatForLevel(uint16 level, uint8 playerclass,uint8 Stat)
 	return gain;
 }
 
-uint32 CalculateDamage( UnitPointer pAttacker, UnitPointer pVictim, uint32 weapon_damage_type, SpellEntry* ability ) // spellid is used only for 2-3 spells, that have AP bonus
+uint32 CalculateDamage( Unit* pAttacker, Unit* pVictim, uint32 weapon_damage_type, SpellEntry* ability ) // spellid is used only for 2-3 spells, that have AP bonus
 {
 	//TODO: Some awesome formula to determine how much damage to deal
 	//consider this is melee damage
@@ -462,7 +457,7 @@ uint32 CalculateDamage( UnitPointer pAttacker, UnitPointer pVictim, uint32 weapo
 	//type of this UNIT_FIELD_ATTACK_POWER_MODS is unknown, not even uint32 disabled for now.
 
 	uint32 offset;
-	ItemPointer it = NULLITEM;
+	Item* it = NULL;
 
 	if(pAttacker->disarmed && pAttacker->IsPlayer())
 	{
@@ -488,7 +483,7 @@ uint32 CalculateDamage( UnitPointer pAttacker, UnitPointer pVictim, uint32 weapo
 	float bonus;
 	float wspeed;
 	float appbonuspct = 1.0f;
-	ItemPointer BonusItem = NULLITEM;
+	Item* BonusItem = NULL;
 	if( pAttacker->IsPlayer() && weapon_damage_type == MELEE )
 	{
 		BonusItem = TO_PLAYER(pAttacker)->GetItemInterface()->GetInventoryItem(EQUIPMENT_SLOT_MAINHAND);
@@ -513,9 +508,9 @@ uint32 CalculateDamage( UnitPointer pAttacker, UnitPointer pVictim, uint32 weapo
 		//ap += pAttacker->GetRAP();
 		ap += pVictim->RAPvModifier;
 
-		if(!pVictim->IsPlayer() && TO_CREATURE(pVictim)->GetCreatureName())
+		if(!pVictim->IsPlayer() && TO_CREATURE(pVictim)->GetCreatureInfo())
 		{
-			uint32 creatType = TO_CREATURE(pVictim)->GetCreatureName()->Type;
+			uint32 creatType = TO_CREATURE(pVictim)->GetCreatureInfo()->Type;
 			ap += (float)pAttacker->CreatureRangedAttackPowerMod[creatType];
 
 			if(pAttacker->IsPlayer())
@@ -529,7 +524,7 @@ uint32 CalculateDamage( UnitPointer pAttacker, UnitPointer pVictim, uint32 weapo
 		{
 			if(!pAttacker->disarmed)
 			{
-				ItemPointer it = TO_PLAYER(pAttacker)->GetItemInterface()->GetInventoryItem(EQUIPMENT_SLOT_RANGED);
+				Item* it = TO_PLAYER(pAttacker)->GetItemInterface()->GetInventoryItem(EQUIPMENT_SLOT_RANGED);
 				if(it)
 				{
 					wspeed = (float)it->GetProto()->Delay;
@@ -579,9 +574,9 @@ uint32 CalculateDamage( UnitPointer pAttacker, UnitPointer pVictim, uint32 weapo
 		//ap += pAttacker->GetAP();
 		ap += pVictim->APvModifier;
 
-		if(!pVictim->IsPlayer() && TO_CREATURE(pVictim)->GetCreatureName())
+		if(!pVictim->IsPlayer() && TO_CREATURE(pVictim)->GetCreatureInfo())
 		{
-			uint32 creatType = TO_CREATURE(pVictim)->GetCreatureName()->Type;
+			uint32 creatType = TO_CREATURE(pVictim)->GetCreatureInfo()->Type;
 			ap += (float)pAttacker->CreatureAttackPowerMod[creatType];
 
 			if(pAttacker->IsPlayer())
@@ -595,7 +590,7 @@ uint32 CalculateDamage( UnitPointer pAttacker, UnitPointer pVictim, uint32 weapo
 		{
 			if(!pAttacker->disarmed)
 			{
-				ItemPointer it = TO_PLAYER(pAttacker)->GetItemInterface()->GetInventoryItem(EQUIPMENT_SLOT_MAINHAND);
+				Item* it = TO_PLAYER(pAttacker)->GetItemInterface()->GetInventoryItem(EQUIPMENT_SLOT_MAINHAND);
 
 				if(it)
 					wspeed = (float)it->GetProto()->Delay;

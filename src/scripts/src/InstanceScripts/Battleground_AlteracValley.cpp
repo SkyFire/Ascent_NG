@@ -1,3 +1,17 @@
+/*
+ * Scripts for Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
+
 #include "StdAfx.h"
 #include "Setup.h"
 
@@ -33,14 +47,14 @@
 class DrektharAI : public CreatureAIScript
 {
 public:
-	unordered_set<UnitPointer> slaves;
+	unordered_set<Unit*> slaves;
 	ADD_CREATURE_FACTORY_FUNCTION(DrektharAI);
 
 	uint32 nrspells;
 	SP_AI_Spell spells[3];
 	bool m_spellcheck[3];
 
-	DrektharAI(CreaturePointer pCreature) : CreatureAIScript(pCreature)
+	DrektharAI(Creature* pCreature) : CreatureAIScript(pCreature)
 	{
 		nrspells = 3;
 
@@ -75,30 +89,30 @@ public:
 		spells[2].attackstoptimer = 2000; // 1sec
 	}
 
-	void OnCombatStart(UnitPointer mTarget)
+	void OnCombatStart(Unit* mTarget)
 	{
 		RegisterAIUpdateEvent(_unit->GetUInt32Value(UNIT_FIELD_BASEATTACKTIME));
 
 		_unit->SendChatMessage(CHAT_MSG_MONSTER_YELL, LANG_UNIVERSAL, "Stormpike filth! In my keep?! Slay them all!");
 		_unit->PlaySoundToSet(SOUND_ALLIANCE_CAPTURE);
 
-		unordered_set<UnitPointer>::iterator itr = slaves.begin();
+		unordered_set<Unit*>::iterator itr = slaves.begin();
 		for(; itr != slaves.end(); ++itr)
 		{
-			UnitPointer  pSlave = *itr;
+			Unit*  pSlave = *itr;
 			if(pSlave && pSlave->isAlive())
 				pSlave->GetAIInterface()->AttackReaction( mTarget, 1 );
 		}
 	}
 
-	void OnCombatStop(UnitPointer mTarget)
+	void OnCombatStop(Unit* mTarget)
 	{
 		RemoveAIUpdateEvent();
 
-		unordered_set<UnitPointer>::iterator itr = slaves.begin();
+		unordered_set<Unit*>::iterator itr = slaves.begin();
 		for(; itr != slaves.end(); ++itr)
 		{
-			UnitPointer  pSlave = *itr;
+			Unit*  pSlave = *itr;
 			if(pSlave && pSlave->isAlive())
 			{
 				pSlave->GetAIInterface()->WipeTargetList();
@@ -109,7 +123,7 @@ public:
 		}
 	}
 
-	void OnDied(UnitPointer  mKiller)
+	void OnDied(Unit*  mKiller)
 	{
 		RemoveAIUpdateEvent();
 	}
@@ -142,10 +156,10 @@ public:
 			_unit->GetAIInterface()->MoveTo(_unit->GetSpawnX(), _unit->GetSpawnY(), _unit->GetSpawnZ(), _unit->GetSpawnO());
 		}
 
-		unordered_set<UnitPointer>::iterator itr = slaves.begin();
+		unordered_set<Unit*>::iterator itr = slaves.begin();
 		for(; itr != slaves.end(); ++itr)
 		{
-			UnitPointer  pSlave = *itr;
+			Unit*  pSlave = *itr;
 			if(pSlave && pSlave->isAlive())
 			{
 				pSlave->GetAIInterface()->WipeTargetList();
@@ -161,7 +175,7 @@ public:
 		if(_unit->GetCurrentSpell() == NULL && _unit->GetAIInterface()->GetNextTarget())
 		{
 			float comulativeperc = 0;
-			UnitPointer target = NULLUNIT;
+			Unit* target = NULL;
 			for(uint32 i=0;i<nrspells;i++)
 			{
 				if(!spells[i].perctrigger) continue;
@@ -197,14 +211,14 @@ public:
 class VanndarStormpikeAI : public CreatureAIScript
 {
 public:
-	unordered_set<UnitPointer> slaves;
+	unordered_set<Unit*> slaves;
 	ADD_CREATURE_FACTORY_FUNCTION(VanndarStormpikeAI);
 
 	uint32 nrspells;
 	SP_AI_Spell spells[3];
 	bool m_spellcheck[3];
 
-	VanndarStormpikeAI(CreaturePointer pCreature) : CreatureAIScript(pCreature)
+	VanndarStormpikeAI(Creature* pCreature) : CreatureAIScript(pCreature)
 	{
 		// -- Number of spells to add --
 		nrspells = 3;
@@ -247,7 +261,7 @@ public:
 		_unit->MechanicsDispels[ DISPEL_MECHANIC_BANISH ] = 1;
 	}
 
-	void OnCombatStart(UnitPointer mTarget)
+	void OnCombatStart(Unit* mTarget)
 	{
 		RegisterAIUpdateEvent(_unit->GetUInt32Value(UNIT_FIELD_BASEATTACKTIME));
 		// Avatar!
@@ -256,29 +270,29 @@ public:
 		_unit->SendChatMessage(CHAT_MSG_MONSTER_YELL, LANG_UNIVERSAL, "Soldiers of Stormpike, your General is under attack! I require aid! Come! Come! Slay these mangy Frostwolf dogs.");
 		_unit->PlaySoundToSet(SOUND_HORDE_CAPTURE);
 
-		unordered_set<UnitPointer>::iterator itr = slaves.begin();
+		unordered_set<Unit*>::iterator itr = slaves.begin();
 		for(; itr != slaves.end(); ++itr)
 		{
-			UnitPointer  pSlave = *itr;
+			Unit*  pSlave = *itr;
 			if(pSlave && pSlave->isAlive())
 				pSlave->GetAIInterface()->AttackReaction( mTarget, 1 );
 		}
 	}
 
-	void OnDamageTaken(UnitPointer mAttacker, float fAmount)
+	void OnDamageTaken(Unit* mAttacker, float fAmount)
 	{
 
 	}
 
-	void OnCombatStop(UnitPointer mTarget)
+	void OnCombatStop(Unit* mTarget)
 	{
 		RemoveAIUpdateEvent();
 		_unit->RemoveAura(VANNDAR_AVATAR);
 
-		unordered_set<UnitPointer>::iterator itr = slaves.begin();
+		unordered_set<Unit*>::iterator itr = slaves.begin();
 		for(; itr != slaves.end(); ++itr)
 		{
-			UnitPointer  pSlave = *itr;
+			Unit*  pSlave = *itr;
 			if(pSlave && pSlave->isAlive())
 			{
 				pSlave->GetAIInterface()->WipeTargetList();
@@ -289,7 +303,7 @@ public:
 		}
 	}
 
-	void OnDied(UnitPointer  mKiller)
+	void OnDied(Unit*  mKiller)
 	{
 		RemoveAIUpdateEvent();
 	}
@@ -327,10 +341,10 @@ public:
 			_unit->GetAIInterface()->MoveTo(_unit->GetSpawnX(), _unit->GetSpawnY(), _unit->GetSpawnZ(), _unit->GetSpawnO());
 		}
 
-		unordered_set<UnitPointer>::iterator itr = slaves.begin();
+		unordered_set<Unit*>::iterator itr = slaves.begin();
 		for(; itr != slaves.end(); ++itr)
 		{
-			UnitPointer  pSlave = *itr;
+			Unit*  pSlave = *itr;
 			if(pSlave && pSlave->isAlive())
 			{
 				pSlave->GetAIInterface()->WipeTargetList();
@@ -346,7 +360,7 @@ public:
 		if(_unit->GetCurrentSpell() == NULL && _unit->GetAIInterface()->GetNextTarget())
 		{
 			float comulativeperc = 0;
-			UnitPointer target = NULLUNIT;
+			Unit* target = NULL;
 			for(uint32 i=0;i<nrspells;i++)
 			{
 				if(!spells[i].perctrigger) continue;
@@ -382,13 +396,13 @@ public:
 class SelfBuffNPCAI : public CreatureAIScript
 {
 public:
-	CreaturePointer m_master;
+	Creature* m_master;
 
 	ADD_CREATURE_FACTORY_FUNCTION(SelfBuffNPCAI);
 
-	SelfBuffNPCAI(CreaturePointer pCreature) : CreatureAIScript(pCreature)
+	SelfBuffNPCAI(Creature* pCreature) : CreatureAIScript(pCreature)
 	{
-		m_master = NULLCREATURE;
+		m_master = NULL;
 		uint32 castspell = 0;
 		uint32 linkNpc = 0;
 		switch(pCreature->GetEntry())
@@ -436,7 +450,7 @@ public:
 
 		if( linkNpc )
 		{
-			CreaturePointer  pLink = _unit->GetMapMgr()->GetInterface()->GetCreatureNearestCoords( _unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ(), linkNpc);
+			Creature*  pLink = _unit->GetMapMgr()->GetInterface()->GetCreatureNearestCoords( _unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ(), linkNpc);
 			if( pLink && pLink->GetEntry() == CN_VANNDAR_STORMPIKE)
 			{
 				static_cast<VanndarStormpikeAI*>(pLink->GetScript())->slaves.insert( _unit );
@@ -450,7 +464,7 @@ public:
 		}
 	}
 
-	void OnCombatStart(UnitPointer mTarget)
+	void OnCombatStart(Unit* mTarget)
 	{
 		if( m_master && m_master->isAlive() )
 			m_master->GetAIInterface()->AttackReaction( mTarget, 1 );
@@ -462,7 +476,7 @@ class BowmanAI : public CreatureAIScript
 public:
 	ADD_CREATURE_FACTORY_FUNCTION(BowmanAI);
 
-	BowmanAI(CreaturePointer pCreature) : CreatureAIScript(pCreature)
+	BowmanAI(Creature* pCreature) : CreatureAIScript(pCreature)
 	{
 		pCreature->GetAIInterface()->m_canMove = false;
 	}
@@ -472,27 +486,27 @@ public:
 		RegisterAIUpdateEvent(_unit->GetUInt32Value(UNIT_FIELD_BASEATTACKTIME));
 	}
 
-	void OnCombatStart(UnitPointer mTarget)
+	void OnCombatStart(Unit* mTarget)
 	{
 		
 	}
 
-	void OnCombatStop(UnitPointer mTarget)
+	void OnCombatStop(Unit* mTarget)
 	{
 
 	}
 
-	void OnDied(UnitPointer  mKiller)
+	void OnDied(Unit*  mKiller)
 	{
 		RemoveAIUpdateEvent();
 	}
 
 	void AIUpdate()
 	{
-		unordered_set<ObjectPointer>::iterator itr = _unit->GetInRangeOppFactsSetBegin();
+		unordered_set<Object*>::iterator itr = _unit->GetInRangeOppFactsSetBegin();
 		for(; itr != _unit->GetInRangeOppFactsSetEnd(); itr++)
 		{
-			ObjectPointer  pObj = (*itr);
+			Object*  pObj = (*itr);
 			if( pObj->IsUnit() && _unit->CanSee( TO_UNIT(pObj) ))
 			{
 				if( pObj->IsPlayer() && TO_PLAYER(pObj)->m_isGmInvisible )
@@ -523,7 +537,7 @@ public:
 	SP_AI_Spell spells[4];
 	bool m_spellcheck[4];
 
-	CaptainGalvangarAI(CreaturePointer pCreature) : CreatureAIScript(pCreature)
+	CaptainGalvangarAI(Creature* pCreature) : CreatureAIScript(pCreature)
 	{
 		nrspells = 4;
 
@@ -562,7 +576,7 @@ public:
 		spells[3].attackstoptimer = 1000; // 1sec
 	}
 
-	void OnCombatStart(UnitPointer mTarget)
+	void OnCombatStart(Unit* mTarget)
 	{
 		RegisterAIUpdateEvent(_unit->GetUInt32Value(UNIT_FIELD_BASEATTACKTIME));
 		
@@ -570,14 +584,14 @@ public:
 		_unit->PlaySoundToSet(SOUND_ALLIANCE_CAPTURE);
 	}
 
-	void OnCombatStop(UnitPointer mTarget)
+	void OnCombatStop(Unit* mTarget)
 	{
 		_unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
 		_unit->GetAIInterface()->SetAIState(STATE_IDLE);
 		RemoveAIUpdateEvent();
 	}
 
-	void OnDied(UnitPointer  mKiller)
+	void OnDied(Unit*  mKiller)
 	{
 		RemoveAIUpdateEvent();
 	}
@@ -603,7 +617,7 @@ public:
 		if(_unit->GetCurrentSpell() == NULL && _unit->GetAIInterface()->GetNextTarget())
 		{
 			float comulativeperc = 0;
-			UnitPointer target = NULLUNIT;
+			Unit* target = NULL;
 			for(uint32 i=0;i<nrspells;i++)
 			{
 				if(!spells[i].perctrigger) continue;
@@ -645,7 +659,7 @@ public:
 	SP_AI_Spell spells[4];
 	bool m_spellcheck[4];
 
-	BalindaStonehearthAI(CreaturePointer pCreature) : CreatureAIScript(pCreature)
+	BalindaStonehearthAI(Creature* pCreature) : CreatureAIScript(pCreature)
 	{
 		nrspells = 4;
 
@@ -686,7 +700,7 @@ public:
 		_unit->GetAIInterface()->m_canMove = false;
 	}
 
-	void OnCombatStart(UnitPointer mTarget)
+	void OnCombatStart(Unit* mTarget)
 	{
 		RegisterAIUpdateEvent(_unit->GetUInt32Value(UNIT_FIELD_BASEATTACKTIME));
 
@@ -694,14 +708,14 @@ public:
 		_unit->PlaySoundToSet(SOUND_ALLIANCE_CAPTURE);
 	}
 
-	void OnCombatStop(UnitPointer mTarget)
+	void OnCombatStop(Unit* mTarget)
 	{
 		_unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
 		_unit->GetAIInterface()->SetAIState(STATE_IDLE);
 		RemoveAIUpdateEvent();
 	}
 
-	void OnDied(UnitPointer  mKiller)
+	void OnDied(Unit*  mKiller)
 	{
 		RemoveAIUpdateEvent();
 	}
@@ -727,7 +741,7 @@ public:
 		if(_unit->GetCurrentSpell() == NULL && _unit->GetAIInterface()->GetNextTarget())
 		{
 			float comulativeperc = 0;
-			UnitPointer target = NULLUNIT;
+			Unit* target = NULL;
 			for(uint32 i=0;i<nrspells;i++)
 			{
 				if(!spells[i].perctrigger) continue;

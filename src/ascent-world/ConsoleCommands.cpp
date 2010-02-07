@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 #include <svn_revision.h>
@@ -45,7 +40,7 @@ bool HandleInfoCommand(BaseConsole * pConsole, int argc, const char * argv[])
 	pConsole->Write("======================================================================\r\n");
 	pConsole->Write("Server Information: \r\n");
 	pConsole->Write("======================================================================\r\n");
-	pConsole->Write("Server Revision: Ascent r%u/%s-%s-%s\r\n", BUILD_REVISION, CONFIG, PLATFORM_TEXT, ARCH);
+	pConsole->Write("Server Revision: AscentNG r%u/%s-%s-%s\r\n", BUILD_REVISION, CONFIG, PLATFORM_TEXT, ARCH);
 	pConsole->Write("Server Uptime: %s\r\n", sWorld.GetUptimeString().c_str());
 	pConsole->Write("Current Players: %u (%d GMs, %d queued)\r\n", clientsNum, gm,  0);
 	pConsole->Write("Alliance Online: %u\r\n",sWorld.AlliancePlayers);
@@ -131,7 +126,7 @@ bool HandleKickCommand(BaseConsole * pConsole, int argc, const char * argv[])
 		return false;
 
 	char pAnnounce[1024];
-	PlayerPointer pPlayer;
+	Player* pPlayer;
 
 	pPlayer = objmgr.GetPlayer(argv[1]);
 	if( pPlayer == NULL )
@@ -242,7 +237,7 @@ bool HandlePlayerInfoCommand(BaseConsole * pConsole, int argc, const char * argv
 	if(argc < 2)
 		return false;
 
-	PlayerPointer plr = objmgr.GetPlayer(argv[1]);
+	Player* plr = objmgr.GetPlayer(argv[1]);
 	if( plr == NULL )
 	{
 		pConsole->Write("Player not found.\r\n");
@@ -307,13 +302,13 @@ bool HandleSaveAllCommand(BaseConsole * pConsole, int argc, const char * argv[])
 bool HandleWhisperCommand(BaseConsole * pConsole, int argc, const char * argv[])
 {
 	char pAnnounce[1024];
-	PlayerPointer pPlayer;
+	Player* pPlayer;
 	string outstr;
 
 	if(argc < 3)
 		return false;
 
-	pPlayer = objmgr.GetPlayer(argv[1]);
+	pPlayer = objmgr.GetPlayer(argv[1],false);
 
 	if( pPlayer == NULL )
 	{

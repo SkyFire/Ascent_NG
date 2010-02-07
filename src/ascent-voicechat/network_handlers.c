@@ -1,19 +1,14 @@
 /*
  * Ascent MMORPG Server
- * Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
  *
  */
 
@@ -45,7 +40,7 @@ int voicechat_init_clientsocket()
 	}
 
 	// create a socket
-	fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	fd = (int)socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if( fd < 0 )
 	{
 		log_write(ERROR, "FATAL: socket() for udp socket returned an error. %d.", fd);
@@ -99,7 +94,7 @@ int voicechat_init_serversocket()
 	}
 
 	// create a socket
-	fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	fd = (int)socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if( fd < 0 )
 	{
 		log_write(ERROR, "FATAL: socket() for tcp socket returned an error. %d.", fd);

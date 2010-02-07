@@ -1,25 +1,17 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
-//
-// mapMgr->h
-//
 
 #ifndef __MAPMGR_H
 #define __MAPMGR_H
@@ -58,18 +50,18 @@ enum ObjectActiveState
 	OBJECT_STATE_ACTIVE   = 2,
 };
 
-typedef unordered_set<ObjectPointer > ObjectSet;
-typedef unordered_set<ObjectPointer > UpdateQueue;
-typedef unordered_set<PlayerPointer  > PUpdateQueue;
-typedef unordered_set<PlayerPointer  > PlayerSet;
-typedef HM_NAMESPACE::hash_map<uint32, ObjectPointer > StorageMap;
+typedef unordered_set<Object* > ObjectSet;
+typedef unordered_set<Object* > UpdateQueue;
+typedef unordered_set<Player*  > PUpdateQueue;
+typedef unordered_set<Player*  > PlayerSet;
+typedef HM_NAMESPACE::hash_map<uint32, Object* > StorageMap;
 typedef unordered_set<uint64> CombatProgressMap;
-typedef unordered_set<VehiclePointer> VehicleSet;
-typedef unordered_set<CreaturePointer> CreatureSet;
-typedef unordered_set<GameObjectPointer > GameObjectSet;
-typedef HM_NAMESPACE::hash_map<uint32, VehiclePointer> VehicleSqlIdMap;
-typedef HM_NAMESPACE::hash_map<uint32, CreaturePointer> CreatureSqlIdMap;
-typedef HM_NAMESPACE::hash_map<uint32, GameObjectPointer > GameObjectSqlIdMap;
+typedef unordered_set<Vehicle*> VehicleSet;
+typedef unordered_set<Creature*> CreatureSet;
+typedef unordered_set<GameObject* > GameObjectSet;
+typedef HM_NAMESPACE::hash_map<uint32, Vehicle*> VehicleSqlIdMap;
+typedef HM_NAMESPACE::hash_map<uint32, Creature*> CreatureSqlIdMap;
+typedef HM_NAMESPACE::hash_map<uint32, GameObject* > GameObjectSqlIdMap;
 
 #define MAX_TRANSPORTERS_PER_MAP 25
 
@@ -78,7 +70,7 @@ class Transporter;
 
 #define CALL_INSTANCE_SCRIPT_EVENT( Mgr, Func ) if ( Mgr != NULL && Mgr->GetScript() != NULL ) Mgr->GetScript()->Func
 
-class SERVER_DECL MapMgr : public CellHandler <MapCell>, public EventableObject,public ThreadContext, public std::tr1::enable_shared_from_this<MapMgr>
+class SERVER_DECL MapMgr : public CellHandler <MapCell>, public EventableObject,public ThreadContext
 {
 	friend class UpdateObjectThread;
 	friend class ObjectUpdaterThread;
@@ -90,26 +82,26 @@ public:
 
 	Mutex m_objectinsertlock;
 	ObjectSet m_objectinsertpool;
-	void AddObject(ObjectPointer);
+	void AddObject(Object*);
 
 ////////////////////////////////////////////////////////
 // Local (mapmgr) storage/generation of GameObjects
 /////////////////////////////////////////////
-	typedef HM_NAMESPACE::hash_map<uint32, GameObjectPointer > GameObjectMap;
+	typedef HM_NAMESPACE::hash_map<const uint32, GameObject* > GameObjectMap;
 	GameObjectMap m_gameObjectStorage;
 	uint32 m_GOHighGuid;
-	GameObjectPointer CreateGameObject(uint32 entry);
+	GameObject* CreateGameObject(uint32 entry);
 
-	ASCENT_INLINE uint32 GenerateGameobjectGuid()
+	ASCENT_INLINE const uint32 GenerateGameobjectGuid()
 	{
 		m_GOHighGuid &= 0x00FFFFFF;
 		return ++m_GOHighGuid;
 	}
 
-	ASCENT_INLINE GameObjectPointer GetGameObject(uint32 guid)
+	ASCENT_INLINE GameObject* GetGameObject(const uint32 guid)
 	{
 		GameObjectMap::iterator itr = m_gameObjectStorage.find(guid);
-		return (itr != m_gameObjectStorage.end()) ? m_gameObjectStorage[guid] : NULLGOB;
+		return (itr != m_gameObjectStorage.end()) ? m_gameObjectStorage[guid] : NULL;
 	}
 
 /////////////////////////////////////////////////////////
@@ -117,48 +109,48 @@ public:
 /////////////////////////////////////////////
 	uint32 m_VehicleArraySize;
 	uint32 m_VehicleHighGuid;
-	HM_NAMESPACE::unordered_map<uint32,VehiclePointer> m_VehicleStorage;
-	VehiclePointer CreateVehicle(uint32 entry);
+	HM_NAMESPACE::unordered_map<const uint32,Vehicle*> m_VehicleStorage;
+	Vehicle* CreateVehicle(uint32 entry);
 
-	__inline VehiclePointer GetVehicle(uint32 guid)
+	__inline Vehicle* GetVehicle(const uint32 guid)
 	{
-		return guid <= m_VehicleHighGuid ? m_VehicleStorage[guid] : NULLVEHICLE;
+		return guid <= m_VehicleHighGuid ? m_VehicleStorage[guid] : NULL;
 	}
 /////////////////////////////////////////////////////////
 // Local (mapmgr) storage/generation of Creatures
 /////////////////////////////////////////////
 	uint32 m_CreatureArraySize;
 	uint32 m_CreatureHighGuid;
-	HM_NAMESPACE::unordered_map<uint32,CreaturePointer> m_CreatureStorage;
-	CreaturePointer CreateCreature(uint32 entry);
+	HM_NAMESPACE::unordered_map<const uint32,Creature*> m_CreatureStorage;
+	Creature* CreateCreature(uint32 entry);
 
-	__inline CreaturePointer GetCreature(uint32 guid)
+	__inline Creature* GetCreature(const uint32 guid)
 	{
-		return guid <= m_CreatureHighGuid ? m_CreatureStorage[guid] : NULLCREATURE;
+		return guid <= m_CreatureHighGuid ? m_CreatureStorage[guid] : NULL;
 	}
 //////////////////////////////////////////////////////////
 // Local (mapmgr) storage/generation of DynamicObjects
 ////////////////////////////////////////////
 	uint32 m_DynamicObjectHighGuid;
-	typedef HM_NAMESPACE::hash_map<uint32, DynamicObjectPointer> DynamicObjectStorageMap;
+	typedef HM_NAMESPACE::hash_map<const uint32, DynamicObject*> DynamicObjectStorageMap;
 	DynamicObjectStorageMap m_DynamicObjectStorage;
-	DynamicObjectPointer CreateDynamicObject();
+	DynamicObject* CreateDynamicObject();
 	
-	ASCENT_INLINE DynamicObjectPointer GetDynamicObject(uint32 guid)
+	ASCENT_INLINE DynamicObject* GetDynamicObject(const uint32 guid)
 	{
 		DynamicObjectStorageMap::iterator itr = m_DynamicObjectStorage.find(guid);
-		return (itr != m_DynamicObjectStorage.end()) ? m_DynamicObjectStorage[guid] : NULLDYN;
+		return (itr != m_DynamicObjectStorage.end()) ? m_DynamicObjectStorage[guid] : NULL;
 	}
 
 //////////////////////////////////////////////////////////
 // Local (mapmgr) storage of pets
 ///////////////////////////////////////////
-	typedef HM_NAMESPACE::hash_map<uint32, PetPointer> PetStorageMap;
+	typedef HM_NAMESPACE::hash_map<const uint32, Pet*> PetStorageMap;
 	PetStorageMap m_PetStorage;
-	__inline PetPointer GetPet(uint32 guid)
+	__inline Pet* GetPet(const uint32 guid)
 	{
 		PetStorageMap::iterator itr = m_PetStorage.find(guid);
-		return (itr != m_PetStorage.end()) ? m_PetStorage[guid] : NULLPET;
+		return (itr != m_PetStorage.end()) ? m_PetStorage[guid] : NULL;
 	}
 
 //////////////////////////////////////////////////////////
@@ -166,13 +158,13 @@ public:
 ////////////////////////////////
     
     // double typedef lolz// a compile breaker..
-	typedef HM_NAMESPACE::hash_map<uint32, PlayerPointer> PlayerStorageMap;
+	typedef HM_NAMESPACE::hash_map<const uint32, Player*> PlayerStorageMap;
 
 	PlayerStorageMap m_PlayerStorage;
-	__inline PlayerPointer GetPlayer(uint32 guid)
+	__inline Player* GetPlayer(const uint32 guid)
 	{
 		PlayerStorageMap::iterator itr = m_PlayerStorage.find(guid);
-		return (itr != m_PlayerStorage.end()) ? m_PlayerStorage[guid] : NULLPLR;
+		return (itr != m_PlayerStorage.end()) ? m_PlayerStorage[guid] : NULL;
 	}
 
 //////////////////////////////////////////////////////////
@@ -201,8 +193,8 @@ public:
 //////////////////////////////////////////////////////////
 // Lookup Wrappers
 ///////////////////////////////////
-	UnitPointer GetUnit(const uint64 & guid);
-	ObjectPointer _GetObject(const uint64 & guid);
+	Unit* GetUnit(const uint64 & guid);
+	Object* _GetObject(const uint64 & guid);
 
 	bool run();
 	bool Do();
@@ -212,15 +204,15 @@ public:
 	void Init();
 	void Destructor();
 
-	void PushObject(ObjectPointer obj);
-	void PushStaticObject(ObjectPointer obj);
-	void RemoveObject(ObjectPointer obj, bool free_guid);
-	void ChangeObjectLocation(ObjectPointer obj); // update inrange lists
-	void ChangeFarsightLocation(PlayerPointer plr, UnitPointer farsight, bool apply);
-	void ChangeFarsightLocation(PlayerPointer plr, float X, float Y, bool apply);
+	void PushObject(Object* obj);
+	void PushStaticObject(Object* obj);
+	void RemoveObject(Object* obj, bool free_guid);
+	void ChangeObjectLocation(Object* obj); // update inrange lists
+	void ChangeFarsightLocation(Player* plr, Unit* farsight, bool apply);
+	void ChangeFarsightLocation(Player* plr, float X, float Y, bool apply);
 
 	//! Mark object as updated
-	void ObjectUpdated(ObjectPointer obj);
+	void ObjectUpdated(Object* obj);
 	void UpdateCellActivity(uint32 x, uint32 y, int radius);
 
 	// Terrain Functions
@@ -228,14 +220,24 @@ public:
 	ASCENT_INLINE float  GetWaterHeight(float x, float y) { return GetBaseMap()->GetWaterHeight(x, y); }
 	ASCENT_INLINE uint8  GetWaterType(float x, float y) { return GetBaseMap()->GetWaterType(x, y); }
 	ASCENT_INLINE uint8  GetWalkableState(float x, float y) { return GetBaseMap()->GetWalkableState(x, y); }
-	ASCENT_INLINE uint16 GetAreaID(float x, float y) { return GetBaseMap()->GetAreaID(x, y); }
+	ASCENT_INLINE uint16 GetAreaID(float x, float y, float z =0)
+	{
+		uint16 aid = GetBaseMap()->GetAreaID(x, y);
+		if(GetMapId() == 571)
+		{
+			//dirty fix for Dalaran sanctuary
+			if( z > 500.0f && (aid == 4551 || aid == 4553 || aid == 4556 || aid == 2817))
+				return 4395;
+		}
+		return aid;
+	}
 
 	ASCENT_INLINE uint32 GetMapId() { return _mapId; }
 
 	void AddForcedCell(MapCell * c);
 	void RemoveForcedCell(MapCell * c);
 
-	void PushToProcessed(PlayerPointer plr);
+	void PushToProcessed(Player* plr);
 
 	ASCENT_INLINE bool HasPlayers() { return (m_PlayerStorage.size() > 0); }
 	void TeleportPlayers();
@@ -252,6 +254,9 @@ public:
 	void LoadAllCells();
 	ASCENT_INLINE size_t GetPlayerCount() { return m_PlayerStorage.size(); }
 
+	void DespawnEvent(uint8 eventToRemove);
+	void SpawnEvent(uint8 eventId);
+
 	void _PerformObjectDuties();
 	uint32 mLoopCounter;
 	uint32 lastGameobjectUpdate;
@@ -262,15 +267,15 @@ public:
     uint32 iInstanceMode;
 
 	void UnloadCell(uint32 x,uint32 y);
-	void EventRespawnVehicle(VehiclePointer v, MapCell * p);
-	void EventRespawnCreature(CreaturePointer c, MapCell * p);
-	void EventRespawnGameObject(GameObjectPointer o, MapCell * c);
-	void SendMessageToCellPlayers(ObjectPointer obj, WorldPacket * packet, uint32 cell_radius = 2);
-	void SendChatMessageToCellPlayers(ObjectPointer obj, WorldPacket * packet, uint32 cell_radius, uint32 langpos, int32 lang, WorldSession * originator);
+	void EventRespawnVehicle(Vehicle* v, MapCell * p);
+	void EventRespawnCreature(Creature* c, MapCell * p);
+	void EventRespawnGameObject(GameObject* o, MapCell * c);
+	void SendMessageToCellPlayers(Object* obj, WorldPacket * packet, uint32 cell_radius = 2);
+	void SendChatMessageToCellPlayers(Object* obj, WorldPacket * packet, uint32 cell_radius, uint32 langpos, int32 lang, WorldSession * originator);
 
 	Instance * pInstance;
 	void BeginInstanceExpireCountdown();
-	void HookOnAreaTrigger(PlayerPointer plr, uint32 id);
+	void HookOnAreaTrigger(Player* plr, uint32 id);
 	
 	// better hope to clear any references to us when calling this :P
 	void InstanceShutdown()
@@ -293,7 +298,6 @@ public:
 
 protected:
 
-	bool m_sharedPtrDestructed;
 	//! Collect and send updates to clients
 	void _UpdateObjects();
 
@@ -301,10 +305,10 @@ private:
 	//! Objects that exist on map
  
 	uint32 _mapId;
-	set<ObjectPointer > _mapWideStaticObjects;
+	set<Object* > _mapWideStaticObjects;
 
 	bool _CellActive(uint32 x, uint32 y);
-	void UpdateInRangeSet(ObjectPointer obj, PlayerPointer plObj, MapCell* cell);
+	void UpdateInRangeSet(Object* obj, Player* plObj, MapCell* cell);
 
 public:
 	// Distance a Player can "see" other objects and receive updates from them (!! ALREADY dist*dist !!)
@@ -336,15 +340,15 @@ public:
 	CreatureSet activeCreatures;
 	VehicleSet activeVehicles;
 	EventableObjectHolder eventHolder;
-	BattlegroundPointer m_battleground;
-	unordered_set<CorpsePointer > m_corpses;
+	CBattleground* m_battleground;
+	unordered_set<Corpse* > m_corpses;
 	VehicleSqlIdMap _sqlids_vehicles;
 	CreatureSqlIdMap _sqlids_creatures;
 	GameObjectSqlIdMap _sqlids_gameobjects;
 
-	VehiclePointer GetSqlIdVehicle(uint32 sqlid);
-	CreaturePointer GetSqlIdCreature(uint32 sqlid);
-	GameObjectPointer GetSqlIdGameObject(uint32 sqlid);
+	Vehicle* GetSqlIdVehicle(uint32 sqlid);
+	Creature* GetSqlIdCreature(uint32 sqlid);
+	GameObject* GetSqlIdGameObject(uint32 sqlid);
 	deque<uint32> _reusable_guids_creature;
 	deque<uint32> _reusable_guids_vehicle;
 
@@ -369,6 +373,7 @@ public:
 	// send packet functions for state manager
 	void SendPacketToPlayers(int32 iZoneMask, int32 iFactionMask, WorldPacket *pData);
 	void SendPacketToPlayers(int32 iZoneMask, int32 iFactionMask, StackPacket *pData);
+	void EventSendPacketToPlayers(int32 iZoneMask, int32 iFactionMask, WorldPacket *pData);
 	void SendPvPCaptureMessage(int32 iZoneMask, uint32 ZoneId, const char * Format, ...);
 
 	// auras :< (world pvp)

@@ -1,4 +1,4 @@
-Ascent Win32/64 Installation Instructions - Updated version 2009
+Ascent Win32/64 Installation Instructions - Updated version 2010
 =========================================
 
 Download the distribution from one of these mirrors;

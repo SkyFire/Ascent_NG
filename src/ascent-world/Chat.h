@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #ifndef WOWSERVER_CHAT_H
 #define WOWSERVER_CHAT_H
@@ -185,10 +180,10 @@ public:
 	void RedSystemMessage(WorldSession *m_session, const char *message, ...);
 	void GreenSystemMessage(WorldSession *m_session, const char *message, ...);
 	void BlueSystemMessage(WorldSession *m_session, const char *message, ...);
-	void RedSystemMessageToPlr(PlayerPointer plr, const char *message, ...);
-	void GreenSystemMessageToPlr(PlayerPointer plr, const char *message, ...);
-	void BlueSystemMessageToPlr(PlayerPointer plr, const char *message, ...);
-	void SystemMessageToPlr(PlayerPointer plr, const char *message, ...);
+	void RedSystemMessageToPlr(Player* plr, const char *message, ...);
+	void GreenSystemMessageToPlr(Player* plr, const char *message, ...);
+	void BlueSystemMessageToPlr(Player* plr, const char *message, ...);
+	void SystemMessageToPlr(Player* plr, const char *message, ...);
 	   
 protected:
 
@@ -370,8 +365,8 @@ protected:
 	//BG
 	bool HandleSetBGScoreCommand(const char* args, WorldSession *m_session);
 
-	PlayerPointer getSelectedChar(WorldSession *m_session, bool showerror = true);
-	CreaturePointer getSelectedCreature(WorldSession *m_session, bool showerror = true);
+	Player* getSelectedChar(WorldSession *m_session, bool showerror = true);
+	Creature* getSelectedCreature(WorldSession *m_session, bool showerror = true);
 	bool HandleGOScale(const char* args, WorldSession *m_session);
 	bool HandleReviveStringcommand(const char* args, WorldSession* m_session);
 	bool HandleMountCommand(const char* args, WorldSession* m_session);
@@ -423,6 +418,8 @@ protected:
 	bool HandleCreatePetCommand(const char* args, WorldSession* m_session);
 	bool HandleAddPetSpellCommand(const char* args, WorldSession* m_session);
 	bool HandleRemovePetSpellCommand(const char* args, WorldSession* m_session);
+	bool HandleAddPetTalentPoints(const char* args, WorldSession* m_session);
+	bool HandleResetPetTalents(const char* args, WorldSession* m_session);
 	bool HandleRenamePetCommand(const char* args, WorldSession* m_session);
 #ifdef USE_SPECIFIC_AIAGENTS
 	bool HandlePetSpawnAIBot(const char * args, WorldSession * m_session);
@@ -430,7 +427,6 @@ protected:
 
 	// shutdown
 	bool HandleShutdownCommand(const char* args, WorldSession* m_session);
-	bool HandleShutdownRestartCommand(const char* args, WorldSession* m_session);
 
 	// whispers
 	bool HandleAllowWhispersCommand(const char* args, WorldSession* m_session);

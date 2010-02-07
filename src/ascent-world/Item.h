@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #ifndef WOWSERVER_ITEM_H
 #define WOWSERVER_ITEM_H
@@ -122,18 +117,18 @@ public:
 	virtual void Destructor();
 	virtual void Init();
 
-	void Create( uint32 itemid, PlayerPointer owner );
+	void Create( uint32 itemid, Player* owner );
 
 	ASCENT_INLINE ItemPrototype* GetProto() const { return m_itemProto; }
 	ASCENT_INLINE void SetProto( ItemPrototype* pr ) { m_itemProto = pr; }
 
-	ASCENT_INLINE PlayerPointer GetOwner() const { return m_owner; }
-	void SetOwner( PlayerPointer owner );
+	ASCENT_INLINE Player* GetOwner() const { return m_owner; }
+	void SetOwner( Player* owner );
 
 	ASCENT_INLINE bool IsContainer(){ return ( m_objectTypeId == TYPEID_CONTAINER ) ? true : false; }
 	
 	//! DB Serialization
-	void LoadFromDB( Field *fields, PlayerPointer plr, bool light );
+	void LoadFromDB( Field *fields, Player* plr, bool light );
 	void SaveToDB( int8 containerslot, int8 slot, bool firstsave, QueryBuffer* buf );
 	bool LoadAuctionItemFromDB( uint64 guid );
 	void DeleteFromDB();
@@ -250,7 +245,7 @@ protected:
 	ItemPrototype* m_itemProto;
 	EnchantmentMap Enchantments;
 	uint32 _fields[ITEM_END];//this mem is wasted in case of container... but this will be fixed in future
-	PlayerPointer m_owner; // let's not bother the manager with unneeded requests
+	Player* m_owner; // let's not bother the manager with unneeded requests
 	uint32 random_prop;
 	uint32 random_suffix;
 };
@@ -258,9 +253,9 @@ protected:
 uint32 GetSkillByProto( uint32, uint32 );
 
 uint32 GetSellPriceForItem( ItemPrototype* proto, uint32 count );
-uint32 GetBuyPriceForItem( ItemPrototype* proto, uint32 count, PlayerPointer plr, CreaturePointer vendor );
+uint32 GetBuyPriceForItem( ItemPrototype* proto, uint32 count, Player* plr, Creature* vendor );
 
 uint32 GetSellPriceForItem( uint32 itemid, uint32 count);
-uint32 GetBuyPriceForItem( uint32 itemid, uint32 count, PlayerPointer plr, CreaturePointer vendor );
+uint32 GetBuyPriceForItem( uint32 itemid, uint32 count, Player* plr, Creature* vendor );
 
 #endif

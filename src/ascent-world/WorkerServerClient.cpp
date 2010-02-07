@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 #ifdef CLUSTERING
@@ -37,31 +32,56 @@ void WSClient::OnRead()
 	{
 		if(!_cmd)
 		{
-			if(GetReadBufferSize() < 6)
+			if(readBuffer.GetSize() < 6)
 				break;
 
-			Read(2, (uint8*)&_cmd);
-			Read(4, (uint8*)&_remaining);
+			readBuffer.Read((uint8*)&_cmd, 2);
+			readBuffer.Read((uint8*)&_remaining, 4);
 		}
 
-		if(_remaining && GetReadBufferSize() < _remaining)
+		if(_remaining && readBuffer.GetSize() < _remaining)
 			break;
 
 		if(_cmd == ISMSG_WOW_PACKET)
 		{
-			/* optimized version for packet passing, to reduce latency! ;) */
-			uint32 sid = *(uint32*)&m_readBuffer[0];
-			uint16 op  = *(uint16*)&m_readBuffer[4];
-			uint32 sz  = *(uint32*)&m_readBuffer[6];			
+			/*
+			uint8 * ReceiveBuffer = (uint8*)GetReadBuffer().GetBufferStart();
+						/ * optimized version for packet passing, to reduce latency! ;) * /
+						uint32 sid = *(uint32*)&ReceiveBuffer[0];
+						uint16 op  = *(uint16*)&ReceiveBuffer[4];
+						uint32 sz  = *(uint32*)&ReceiveBuffer[6];			
+						WorldSession * session = sClusterInterface.GetSession(sid);
+						if(session != NULL)
+						{
+							WorldPacket * pck = new WorldPacket(op, sz);
+							pck->resize(sz);
+							memcpy((void*)pck->contents(), &ReceiveBuffer[10], sz);
+							session->QueuePacket(pck);
+						}
+						readBuffer.Remove(sz + 10/ *header* /);
+						_cmd = 0;
+						continue;*/
+			
+
+			uint32 sid = 0;
+			uint16 op = 0;
+			uint32 sz = 0;
+			GetReadBuffer().Read(&sid, 4);
+			GetReadBuffer().Read(&op, 2);
+			GetReadBuffer().Read(&sz, 4);
+
 			WorldSession * session = sClusterInterface.GetSession(sid);
 			if(session != NULL)
 			{
 				WorldPacket * pck = new WorldPacket(op, sz);
-				pck->resize(sz);
-				memcpy((void*)pck->contents(), &m_readBuffer[10], sz);
-				session->QueuePacket(pck);
+				if (sz > 0)
+				{
+					pck->resize(sz);
+					GetReadBuffer().Read((void*)pck->contents(), sz);
+				}
+				if(session) session->QueuePacket(pck);
+				else delete pck;
 			}
-			RemoveReadBufferBytes(sz + 10/*header*/, false);
 			_cmd = 0;
 			continue;
 		}
@@ -69,7 +89,7 @@ void WSClient::OnRead()
 		WorldPacket * pck = new WorldPacket(_cmd, _remaining);
 		_cmd = 0;
 		pck->resize(_remaining);
-		Read(_remaining, (uint8*)pck->contents());
+		readBuffer.Read((uint8*)pck->contents(), _remaining);
 
 		/* we could handle auth here */
 		switch(_cmd)
@@ -87,6 +107,12 @@ void WSClient::OnRead()
 void WSClient::OnConnect()
 {
 	sClusterInterface.SetSocket(this);
+}
+
+void WSClient::OnDisconnect()
+{
+	sClusterInterface.ConnectionDropped();
+	sSocketGarbageCollector.QueueSocket(this);
 }
 
 void WSClient::SendPacket(WorldPacket * data)

@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 
@@ -96,7 +91,7 @@ void WorldSession::HandleCreatureQueryOpcode( WorldPacket & recv_data )
 
 		if(lcn == NULL)
 		{
-			OUT_DEBUG("WORLD: CMSG_CREATURE_QUERY '%s'", ci->Name);
+			DEBUG_LOG("WORLD","HandleCreatureQueryOpcode CMSG_CREATURE_QUERY '%s'", ci->Name);
 			data << (uint32)entry;
 			data << ci->Name;
 			data << uint8(0) << uint8(0) << uint8(0);
@@ -104,7 +99,7 @@ void WorldSession::HandleCreatureQueryOpcode( WorldPacket & recv_data )
 		}
 		else
 		{
-			OUT_DEBUG("WORLD: CMSG_CREATURE_QUERY '%s' (localized to %s)", ci->Name, lcn->Name);
+			DEBUG_LOG("WORLD","HandleCreatureQueryOpcode CMSG_CREATURE_QUERY '%s' (localized to %s)", ci->Name, lcn->Name);
 			data << (uint32)entry;
 			data << lcn->Name;
 			data << uint8(0) << uint8(0) << uint8(0);
@@ -152,7 +147,7 @@ void WorldSession::HandleGameObjectQueryOpcode( WorldPacket & recv_data )
 	recv_data >> entryID;
 	recv_data >> guid;
 
-	OUT_DEBUG("WORLD: CMSG_GAMEOBJECT_QUERY '%u'", entryID);
+	DEBUG_LOG("WORLD","HandleGameObjectQueryOpcode CMSG_GAMEOBJECT_QUERY '%u'", entryID);
 
 	goinfo = GameObjectNameStorage.LookupEntry(entryID);
 	if(goinfo == NULL)
@@ -202,13 +197,13 @@ void WorldSession::HandleGameObjectQueryOpcode( WorldPacket & recv_data )
 //////////////////////////////////////////////////////////////
 void WorldSession::HandleCorpseQueryOpcode(WorldPacket &recv_data)
 {
-	OUT_DEBUG("WORLD: Received MSG_CORPSE_QUERY");
+	DEBUG_LOG("WORLD","HandleCorpseQueryOpcode Received MSG_CORPSE_QUERY");
 
-	CorpsePointer pCorpse;
+	Corpse* pCorpse;
 	//WorldPacket data(MSG_CORPSE_QUERY, 21);
 	uint8 databuffer[100];
 	StackPacket data(MSG_CORPSE_QUERY, databuffer, 100);
-	MapInfo *pMapinfo;
+	MapInfo *pPMapinfo = NULL;
 
 	if(_player->isDead())
 		_player->BuildPlayerRepop();
@@ -216,10 +211,11 @@ void WorldSession::HandleCorpseQueryOpcode(WorldPacket &recv_data)
 	pCorpse = objmgr.GetCorpseByOwner(_player->GetLowGUID());
 	if(pCorpse)
 	{
-		pMapinfo = WorldMapInfoStorage.LookupEntry(pCorpse->GetMapId());
-		if(pMapinfo)
+		MapInfo *pPMapinfo = NULL;
+		pPMapinfo = WorldMapInfoStorage.LookupEntry(pCorpse->GetMapId());
+		if(pPMapinfo == NULL)
 		{
-			if(pMapinfo->type == INSTANCE_NULL || pMapinfo->type == INSTANCE_PVP)
+			if(pPMapinfo != NULL && !(pPMapinfo->type == INSTANCE_NULL || pPMapinfo->type == INSTANCE_PVP))
 			{
 				data << uint8(0x01); //show ?
 				data << pCorpse->GetMapId(); // mapid (that tombstones shown on)
@@ -232,11 +228,12 @@ void WorldSession::HandleCorpseQueryOpcode(WorldPacket &recv_data)
 			else
 			{
 				data << uint8(0x01); //show ?
-				data << pMapinfo->repopmapid; // mapid (that tombstones shown on)
-				data << pMapinfo->repopx;
-				data << pMapinfo->repopy;
-				data << pMapinfo->repopz;
+				data << pPMapinfo->repopmapid; // mapid (that tombstones shown on)
+				data << pPMapinfo->repopx;
+				data << pPMapinfo->repopy;
+				data << pPMapinfo->repopz;
 				data << pCorpse->GetMapId(); //instance mapid (needs to be same as mapid to be able to recover corpse)
+				data << uint32(0); // 3.2.2
 				SendPacket(&data);
 			}
 		}
@@ -250,6 +247,7 @@ void WorldSession::HandleCorpseQueryOpcode(WorldPacket &recv_data)
 			data << pCorpse->GetPositionY();
 			data << pCorpse->GetPositionZ();
 			data << pCorpse->GetMapId(); //instance mapid (needs to be same as mapid to be able to recover corpse)
+			data << uint32(0); // 3.2.2
 			SendPacket(&data);
 
 		}
@@ -318,7 +316,7 @@ void WorldSession::HandleInrangeQuestgiverQuery(WorldPacket & recv_data)
 	uint8 databuffer[10000];
 	StackPacket data(SMSG_QUESTGIVER_STATUS_MULTIPLE, databuffer, 10000);
 	Object::InRangeSet::iterator itr;
-	CreaturePointer pCreature;
+	Creature* pCreature;
 	uint32 count = 0;
 	data << count;
 

@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 
@@ -31,17 +26,18 @@ x = skip
 */
 const char * gAchievementRewardFormat					= "uuuu";
 const char * gAreaTriggerFormat							= "ucuusffffuu";
-const char * gCreatureNameFormat						= "usssuuuuuuuuuuffcc";
-const char * gCreatureProtoFormat						= "uuuuuuufuuuffuffuuuuuuuuuuuffsuuuufffuuic";
+const char * gCreatureNameFormat						= "usssuuuuuuuuuuuffcc";
+const char * gCreatureProtoFormat						= "uuuuuuufuuuffuffuuuuuuuuuuuffsuibuufffuuic";
+const char * gCreatureProtoHeroicFormat                 = "uuuuuffuuuuuuuusu";
 const char * gFishingFormat								= "uuu";
 const char * gGameObjectNameFormat						= "uuusuuuuuuuuuuuuuuuuuuuuuuuu";
 const char * gGraveyardFormat							= "uffffuuuux";
 const char * gItemPageFormat							= "usu";
-const char * gItemPrototypeFormat						= "uuuussssuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuffuffuffuffuffuuuuuuuuuufuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuusuuuuuuuuuuuuuuuuuuuuuuuuuu";
+const char * gItemPrototypeFormat						= "uuuussssuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuffuffuffuffuffuuuuuuuuuufuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuusuuuuuuuuuuuuuuuuuuuuuuuuuu";
 const char * gNpcTextFormat								= "ufssuuuuuuufssuuuuuuufssuuuuuuufssuuuuuuufssuuuuuuufssuuuuuuufssuuuuuuufssuuuuuuu";
 const char * gQuestFormat								= "uuuuuuuuuuuuuuuuuuuussssssssssuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuc";
 const char * gTeleportCoordFormat						= "uxuffff";
-const char * gWorldMapInfoFormat						= "uuuuufffusuuuuuuufub";
+const char * gWorldMapInfoFormat						= "uuuuufffusuuuuuufub"; //The last bool(b) for Clustering
 const char * gRandomItemCreationFormat					= "uuuu";
 const char * gRandomCardCreationFormat					= "uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu";
 const char * gScrollCreationFormat						= "uu";
@@ -53,6 +49,7 @@ SERVER_DECL SQLStorage<AchievementReward, HashMapStorageContainer<AchievementRew
 SERVER_DECL SQLStorage<AreaTrigger, HashMapStorageContainer<AreaTrigger> >					AreaTriggerStorage;
 SERVER_DECL SQLStorage<CreatureInfo, HashMapStorageContainer<CreatureInfo> >				CreatureNameStorage;
 SERVER_DECL SQLStorage<CreatureProto, HashMapStorageContainer<CreatureProto> >				CreatureProtoStorage;
+SERVER_DECL SQLStorage<CreatureProtoHeroic, HashMapStorageContainer<CreatureProtoHeroic> >	CreatureProtoHeroicStorage;
 SERVER_DECL SQLStorage<FishingZoneEntry, HashMapStorageContainer<FishingZoneEntry> >		FishingZoneStorage;
 SERVER_DECL SQLStorage<GameObjectInfo, HashMapStorageContainer<GameObjectInfo> >			GameObjectNameStorage;
 SERVER_DECL SQLStorage<GraveyardTeleport, HashMapStorageContainer<GraveyardTeleport> >		GraveyardStorage;
@@ -527,15 +524,17 @@ void ObjectMgr::LoadExtraItemStuff()
 }
 
 #define make_task(storage, itype, storagetype, tablename, format) tl.AddTask( new Task( \
-	new NoSharedCallbackP2< SQLStorage< itype, storagetype< itype > >, const char *, const char *> \
+	new CallbackP2< SQLStorage< itype, storagetype< itype > >, const char *, const char *> \
     (&storage, &SQLStorage< itype, storagetype< itype > >::Load, tablename, format) ) )
 
 void Storage_FillTaskList(TaskList & tl)
 {
+	//std::string worldmap_info = Config.MainConfig.GetStringDefault("Cluster", "MapInfoTable", "worldmap_info");
 	make_task(ItemPrototypeStorage, ItemPrototype, ArrayStorageContainer, "items", gItemPrototypeFormat);
 	make_task(CreatureNameStorage, CreatureInfo, HashMapStorageContainer, "creature_names", gCreatureNameFormat);
 	make_task(GameObjectNameStorage, GameObjectInfo, HashMapStorageContainer, "gameobject_names", gGameObjectNameFormat);
 	make_task(CreatureProtoStorage, CreatureProto, HashMapStorageContainer, "creature_proto", gCreatureProtoFormat);
+	make_task(CreatureProtoHeroicStorage, CreatureProtoHeroic, HashMapStorageContainer, "creature_proto_heroic", gCreatureProtoHeroicFormat);
 	make_task(AreaTriggerStorage, AreaTrigger, HashMapStorageContainer, "areatriggers", gAreaTriggerFormat);
 	make_task(ItemPageStorage, ItemPage, HashMapStorageContainer, "itempages", gItemPageFormat);
 	make_task(QuestStorage, Quest, HashMapStorageContainer, "quests", gQuestFormat);
@@ -543,7 +542,8 @@ void Storage_FillTaskList(TaskList & tl)
 	make_task(TeleportCoordStorage, TeleportCoords, HashMapStorageContainer, "teleport_coords", gTeleportCoordFormat);
 	make_task(FishingZoneStorage, FishingZoneEntry, HashMapStorageContainer, "fishing", gFishingFormat);
 	make_task(NpcTextStorage, GossipText, HashMapStorageContainer, "npc_text", gNpcTextFormat);
-	make_task(WorldMapInfoStorage, MapInfo, ArrayStorageContainer, "worldmap_info", gWorldMapInfoFormat);
+	make_task(WorldMapInfoStorage, MapInfo, ArrayStorageContainer, "worldmap_info", gWorldMapInfoFormat); //without cluster
+//	tl.AddTask(new Task(new CallbackP2<SQLStorage< MapInfo, ArrayStorageContainer<MapInfo> >, std::string, const char*>(&WorldMapInfoStorage, &SQLStorage< MapInfo, ArrayStorageContainer<MapInfo> >::Load, worldmap_info, gWorldMapInfoFormat))); //With Cluster
 	make_task(ZoneGuardStorage, ZoneGuardEntry, HashMapStorageContainer, "zoneguards", gZoneGuardsFormat);
 	make_task(AchievementRewardStorage, AchievementReward, HashMapStorageContainer, "achievement_rewards", gAchievementRewardFormat);
 	make_task(RandomItemCreationStorage, RandomItemCreation, HashMapStorageContainer, "randomitemcreation", gRandomItemCreationFormat);
@@ -598,6 +598,24 @@ void Storage_Cleanup()
 		itr->Destruct();
 	}
 	AreaTriggerStorage.Cleanup();
+	{
+		StorageContainerIterator<ItemPage> * itr = ItemPageStorage.MakeIterator();
+		ItemPage * i;
+		while(!itr->AtEnd())
+		{
+			i = itr->Get();
+
+			if (i->text)
+			{
+				free(i->text);
+				i->text = NULL;
+			}
+
+			if(!itr->Inc())
+				break;
+		}
+		itr->Destruct();
+	}
 	ItemPageStorage.Cleanup();
 	RandomItemCreationStorage.Cleanup();
 	RandomCardCreationStorage.Cleanup();
@@ -719,7 +737,8 @@ bool LoadAdditionalTable(const char * TableName, const char * SecondName)
 		TeleportCoordStorage.LoadAdditionalData(SecondName, gTeleportCoordFormat);
 	else if(!stricmp(TableName, "graveyards"))			// Graveyards
 		GraveyardStorage.LoadAdditionalData(SecondName, gGraveyardFormat);
-	else if(!stricmp(TableName, "worldmap_info"))		// WorldMapInfo
+	else if(!stricmp(TableName, "worldmap_info"))		// WorldMapInfo without Cluster
+//	else if(!stricmp(TableName, Config.MainConfig.GetStringDefault("Cluster", "MapInfoTable", "worldmap_info").c_str()))		// WorldMapInfo with Cluster
 		WorldMapInfoStorage.LoadAdditionalData(SecondName, gWorldMapInfoFormat);
 	else if(!stricmp(TableName, "zoneguards"))
 		ZoneGuardStorage.LoadAdditionalData(SecondName, gZoneGuardsFormat);
@@ -754,7 +773,8 @@ bool Storage_ReloadTable(const char * TableName)
 		TeleportCoordStorage.Reload();
 	else if(!stricmp(TableName, "graveyards"))			// Graveyards
 		GraveyardStorage.Reload();
-	else if(!stricmp(TableName, "worldmap_info"))		// WorldMapInfo
+	else if(!stricmp(TableName, "worldmap_info"))		// WorldMapInfo without cluster
+//	else if(!stricmp(TableName, Config.MainConfig.GetStringDefault("Cluster", "MapInfoTable", "worldmap_info").c_str()))		//WorldMap Info with Cluster
 		WorldMapInfoStorage.Reload();
 	else if(!stricmp(TableName, "zoneguards"))
 		ZoneGuardStorage.Reload();

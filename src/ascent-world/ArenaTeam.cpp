@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 
@@ -147,7 +142,7 @@ void ArenaTeam::Destroy()
 bool ArenaTeam::AddMember(PlayerInfo * info)
 {
 	uint32 base_field;
-	PlayerPointer plr = info->m_loggedInPlayer;
+	Player* plr = info->m_loggedInPlayer;
 	if(m_memberCount >= m_slots)
 		return false;
 
@@ -156,9 +151,9 @@ bool ArenaTeam::AddMember(PlayerInfo * info)
 	m_members[m_memberCount++].Info = info;
 	SaveToDB();
 
-	if(plr)
+	if(plr!=NULL)
 	{
-		base_field = (m_type*6) + PLAYER_FIELD_ARENA_TEAM_INFO_1_1;
+		base_field = (m_type*7) + PLAYER_FIELD_ARENA_TEAM_INFO_1_1;
 		plr->SetUInt32Value(base_field, m_id);
 		plr->SetUInt32Value(base_field+1,m_leader);
 		plr->GetSession()->SystemMessage("You are now a member of the arena team, '%s'.", m_name.c_str());
@@ -182,7 +177,7 @@ bool ArenaTeam::RemoveMember(PlayerInfo * info)
 			SaveToDB();
 
 			if(info->m_loggedInPlayer)
-				info->m_loggedInPlayer->SetUInt32Value(PLAYER_FIELD_ARENA_TEAM_INFO_1_1 + (m_type*6), 0);
+				info->m_loggedInPlayer->SetUInt32Value(PLAYER_FIELD_ARENA_TEAM_INFO_1_1 + (m_type*7), 0);
 
 			info->arenaTeam[m_type] = NULL;
 			return true;
@@ -317,12 +312,12 @@ void ArenaTeam::SetLeader(PlayerInfo * info)
 		if(m_members[i].Info == info)		/* new leader */
 		{
 			if(m_members[i].Info->m_loggedInPlayer)
-				m_members[i].Info->m_loggedInPlayer->SetUInt32Value(PLAYER_FIELD_ARENA_TEAM_INFO_1_1 + (m_type*6) + 1, 0);
+				m_members[i].Info->m_loggedInPlayer->SetUInt32Value(PLAYER_FIELD_ARENA_TEAM_INFO_1_1 + (m_type*7) + 1, 0);
 		}
 		else if(m_members[i].Info->guid == old_leader)
 		{
 			if(m_members[i].Info->m_loggedInPlayer)
-				m_members[i].Info->m_loggedInPlayer->SetUInt32Value(PLAYER_FIELD_ARENA_TEAM_INFO_1_1 + (m_type*6) + 1, 1);
+				m_members[i].Info->m_loggedInPlayer->SetUInt32Value(PLAYER_FIELD_ARENA_TEAM_INFO_1_1 + (m_type*7) + 1, 1);
 		}
 	}
 
@@ -397,7 +392,7 @@ void WorldSession::HandleArenaTeamAddMemberOpcode(WorldPacket & recv_data)
 	if(!pTeam->HasMember(GetPlayer()->GetLowGUID()))
 		GetPlayer()->SoftDisconnect();
 
-	PlayerPointer plr = objmgr.GetPlayer(player_name.c_str(), false);
+	Player* plr = objmgr.GetPlayer(player_name.c_str(), false);
 	if(plr == NULL)
 	{
 		SystemMessage("Player `%s` is non-existent or not online.", player_name.c_str());
@@ -553,7 +548,7 @@ void WorldSession::HandleArenaTeamInviteDenyOpcode(WorldPacket & recv_data)
 	if(team == NULL)
 		return;
 
-	PlayerPointer plr = objmgr.GetPlayer(team->m_leader);
+	Player* plr = objmgr.GetPlayer(team->m_leader);
 	if(plr != NULL)
 		plr->GetSession()->SystemMessage("%s denied your arena team invitation for %s.", _player->GetName(), team->m_name.c_str());
 }

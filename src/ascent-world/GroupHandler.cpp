@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 
@@ -29,7 +24,7 @@ void WorldSession::HandleGroupInviteOpcode( WorldPacket & recv_data )
 	CHECK_PACKET_SIZE(recv_data, 1);
 	WorldPacket data(100);
 	std::string membername;
-	PlayerPointer player = NULLPLR;
+	Player* player = NULL;
 	Group *group = NULL;
 
 	recv_data >> membername;
@@ -133,7 +128,7 @@ void WorldSession::HandleGroupAcceptOpcode( WorldPacket & recv_data )
 {
 	CHECK_INWORLD_RETURN;
 
-	PlayerPointer player = objmgr.GetPlayer(_player->GetInviter());
+	Player* player = objmgr.GetPlayer(_player->GetInviter());
 	if ( !player )
 		return;
 	
@@ -168,7 +163,7 @@ void WorldSession::HandleGroupDeclineOpcode( WorldPacket & recv_data )
 	CHECK_INWORLD_RETURN;
 	WorldPacket data(SMSG_GROUP_DECLINE, 100);
 
-	PlayerPointer player = objmgr.GetPlayer(_player->GetInviter());
+	Player* player = objmgr.GetPlayer(_player->GetInviter());
 	if(!player) return;
 
 	data << GetPlayer()->GetName();
@@ -186,7 +181,7 @@ void WorldSession::HandleGroupUninviteOpcode( WorldPacket & recv_data )
 	CHECK_INWORLD_RETURN;
 	CHECK_PACKET_SIZE(recv_data, 1);
 	std::string membername;
-	PlayerPointer player;
+	Player* player;
 	PlayerInfo * info;
 
 	recv_data >> membername;
@@ -204,7 +199,7 @@ void WorldSession::HandleGroupUninviteGUIDOpcode( WorldPacket & recv_data )
 	if(!_player->IsInWorld()) return;
 	CHECK_PACKET_SIZE(recv_data, 1);
 	std::string membername;
-	PlayerPointer player;
+	Player* player;
 	PlayerInfo * info;
 	uint64 guid;
 	recv_data >> guid;
@@ -224,7 +219,7 @@ void WorldSession::HandleGroupSetLeaderOpcode( WorldPacket & recv_data )
 	CHECK_PACKET_SIZE(recv_data, 1);
 	WorldPacket data;
 	uint64 MemberGuid;
-	PlayerPointer player;
+	Player* player;
 
 	recv_data >> MemberGuid;
 	
@@ -294,8 +289,8 @@ void WorldSession::HandleLootMethodOpcode( WorldPacket & recv_data )
 		return;
 	}
 	
-	// TODO: fix me burlex 
-	//PlayerPointer plyr = objmgr.GetPlayer((uint32)lootMaster);
+	// TODO: fix me zed 
+	//Player* plyr = objmgr.GetPlayer((uint32)lootMaster);
 	//if(!plyr)return;
 	Group* pGroup = _player->GetGroup();
 	if( pGroup != NULL)
@@ -324,9 +319,12 @@ void WorldSession::HandleSetPlayerIconOpcode(WorldPacket& recv_data)
 {
 	CHECK_INWORLD_RETURN;
 
+	Group * pGroup = _player->GetGroup();
+	if(pGroup == NULL)
+		return;
+
 	uint64 guid;
 	uint8 icon;
-	Group * pGroup = _player->GetGroup();
 	
 	recv_data >> icon;
 	if(icon == 0xFF)
@@ -354,7 +352,7 @@ void WorldSession::HandleSetPlayerIconOpcode(WorldPacket& recv_data)
 	}
 }
 
-void WorldSession::SendPartyCommandResult(PlayerPointer pPlayer, uint32 p1, std::string name, uint32 err)
+void WorldSession::SendPartyCommandResult(Player* pPlayer, uint32 p1, std::string name, uint32 err)
 {
 	CHECK_INWORLD_RETURN;
 	// if error message do not work, please sniff it and leave me a message

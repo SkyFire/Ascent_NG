@@ -1,29 +1,24 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #ifndef WOWSERVER_DYNAMICOBJECT_H
 #define WOWSERVER_DYNAMICOBJECT_H
 
 struct SpellEntry;
 
-typedef unordered_set<UnitPointer >  DynamicObjectList;
-typedef unordered_set<UnitPointer >  FactionRangeList;
+typedef unordered_set<Unit* >  DynamicObjectList;
+typedef unordered_set<Unit* >  FactionRangeList;
 
 class SERVER_DECL DynamicObject : public Object
 {
@@ -33,11 +28,11 @@ public:
 	virtual void Destructor();
 	virtual void Init();
 
-	void Create(ObjectPointer caster, SpellPointer pSpell, float x, float y, float z, uint32 duration, float radius);
+	void Create(Object* caster, Spell* pSpell, float x, float y, float z, uint32 duration, float radius);
 	void UpdateTargets();
 
-	void AddInRangeObject(ObjectPointer pObj);
-	void OnRemoveInRangeObject(ObjectPointer pObj);
+	void AddInRangeObject(Object* pObj);
+	void OnRemoveInRangeObject(Object* pObj);
 	void Remove();
 
 	//Accessors
@@ -46,11 +41,11 @@ public:
 protected:
 	
 	SpellEntry * m_spellProto;
-	UnitPointer u_caster;
-	PlayerPointer p_caster;
-	ObjectPointer m_caster;
-	GameObjectPointer g_caster;
-	SpellPointer m_parentSpell;
+	Unit* u_caster;
+	Player* p_caster;
+	Object* m_caster;
+	GameObject* g_caster;
+	Spell* m_parentSpell;
 	DynamicObjectList targets;
 	
 	uint32 m_aliveDuration;

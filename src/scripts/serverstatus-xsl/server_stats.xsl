@@ -25,7 +25,7 @@
 
 <xsl:template match="status">
 	<table width="100%" border="0" cellspacing="1" cellpadding="3">
-		<tr class="head"><th colspan="4">Ascent Server Status (<b>www.ascentcommunity.com</b>)</th></tr>
+		<tr class="head"><th colspan="4">AscentNG Server Status (<b>www.ascentemulator.net</b>)</th></tr>
 		<tr>
 			<th>Platform: </th><td><xsl:value-of select="platform"/></td>
 			<th>Uptime: </th><td><xsl:value-of select="uptime"/></td>
@@ -669,7 +669,7 @@
                 <xsl:when test="areaid = 53">Thieves Camp</xsl:when>
                 <xsl:when test="areaid = 54">Jasperlode Mine</xsl:when>
 
-                <xsl:when test="areaid = 55">Valley of Heroes UNUSED</xsl:when>
+                <xsl:when test="areaid = 55">Valley of Heroes</xsl:when>
                 <xsl:when test="areaid = 56">Heroes' Vigil</xsl:when>
                 <xsl:when test="areaid = 57">Fargodeep Mine</xsl:when>
                 <xsl:when test="areaid = 59">Northshire Vineyards</xsl:when>
@@ -679,9 +679,9 @@
                 <xsl:when test="areaid = 62">Brackwell Pumpkin Patch</xsl:when>
                 <xsl:when test="areaid = 63">The Stonefield Farm</xsl:when>
                 <xsl:when test="areaid = 64">The Maclure Vineyards</xsl:when>
-                <xsl:when test="areaid = 65">***On Map Dungeon***</xsl:when>
-                <xsl:when test="areaid = 66">***On Map Dungeon***</xsl:when>
-                <xsl:when test="areaid = 67">***On Map Dungeon***</xsl:when>
+                <xsl:when test="areaid = 65">Dragonblight</xsl:when>
+                <xsl:when test="areaid = 66">Zul'Drak</xsl:when>
+                <xsl:when test="areaid = 67">The Storm Peaks</xsl:when>
 
                 <xsl:when test="areaid = 68">Lake Everstill</xsl:when>
                 <xsl:when test="areaid = 69">Lakeshire</xsl:when>
@@ -820,7 +820,7 @@
                 <xsl:when test="areaid = 207">The Great Sea</xsl:when>
                 <xsl:when test="areaid = 208">Unused Ironcladcove</xsl:when>
                 <xsl:when test="areaid = 209">Shadowfang Keep</xsl:when>
-                <xsl:when test="areaid = 210">***On Map Dungeon***</xsl:when>
+                <xsl:when test="areaid = 210">Icecrown</xsl:when>
                 <xsl:when test="areaid = 211">Iceflow Lake</xsl:when>
 
                 <xsl:when test="areaid = 212">Helm's Bed Lake</xsl:when>
@@ -888,7 +888,7 @@
 
                 <xsl:when test="areaid = 272">Tarren Mill</xsl:when>
                 <xsl:when test="areaid = 275">Durnholde Keep</xsl:when>
-                <xsl:when test="areaid = 276">UNUSED Stonewrought Pass</xsl:when>
+                <xsl:when test="areaid = 276">Stonewrought Pass</xsl:when>
                 <xsl:when test="areaid = 277">The Foothill Caverns</xsl:when>
                 <xsl:when test="areaid = 278">Lordamere Internment Camp</xsl:when>
                 <xsl:when test="areaid = 279">Dalaran</xsl:when>
@@ -909,7 +909,7 @@
 
                 <xsl:when test="areaid = 294">Eastern Strand</xsl:when>
                 <xsl:when test="areaid = 295">Western Strand</xsl:when>
-                <xsl:when test="areaid = 296">South Seas UNUSED</xsl:when>
+                <xsl:when test="areaid = 296">South Seas</xsl:when>
                 <xsl:when test="areaid = 297">Jaguero Isle</xsl:when>
                 <xsl:when test="areaid = 298">Baradin Bay</xsl:when>
                 <xsl:when test="areaid = 299">Menethil Bay</xsl:when>
@@ -1017,7 +1017,7 @@
                 <xsl:when test="areaid = 391">The Merchant Coast</xsl:when>
                 <xsl:when test="areaid = 392">Ratchet</xsl:when>
                 <xsl:when test="areaid = 393">Darkspear Strand</xsl:when>
-                <xsl:when test="areaid = 394">Darrowmere Lake UNUSED</xsl:when>
+                <xsl:when test="areaid = 394">Grizzly Hills</xsl:when>
 
                 <xsl:when test="areaid = 395">Caer Darrow UNUSED</xsl:when>
                 <xsl:when test="areaid = 396">Winterhoof Water Well</xsl:when>
@@ -1031,7 +1031,7 @@
                 <xsl:when test="areaid = 404">Bael'dun Digsite</xsl:when>
                 <xsl:when test="areaid = 405">Desolace</xsl:when>
                 <xsl:when test="areaid = 406">Stonetalon Mountains</xsl:when>
-                <xsl:when test="areaid = 407">Orgrimmar UNUSED</xsl:when>
+                <xsl:when test="areaid = 407">Orgrimmar</xsl:when>
 
                 <xsl:when test="areaid = 408">Gillijim's Isle</xsl:when>
                 <xsl:when test="areaid = 409">Island of Doctor Lapidis</xsl:when>
@@ -1129,7 +1129,7 @@
                 <xsl:when test="areaid = 491">Razorfen Kraul</xsl:when>
                 <xsl:when test="areaid = 492">Raven Hill Cemetery</xsl:when>
                 <xsl:when test="areaid = 493">Moonglade</xsl:when>
-                <xsl:when test="areaid = 495">DELETE ME</xsl:when>
+                <xsl:when test="areaid = 495">Howling Fjord</xsl:when>
 
                 <xsl:when test="areaid = 496">Brackenwall Village</xsl:when>
                 <xsl:when test="areaid = 497">Swamplight Manor</xsl:when>
@@ -1761,7 +1761,7 @@
                 <xsl:when test="areaid = 2777">UNUSED Alterac Valley</xsl:when>
                 <xsl:when test="areaid = 2797">Blackfathom Deeps</xsl:when>
 
-                <xsl:when test="areaid = 2817">***On Map Dungeon***</xsl:when>
+                <xsl:when test="areaid = 2817">Crystalsong Forest</xsl:when>
                 <xsl:when test="areaid = 2837">The Master's Cellar</xsl:when>
                 <xsl:when test="areaid = 2838">Stonewrought Pass</xsl:when>
                 <xsl:when test="areaid = 2839">Alterac Valley</xsl:when>
@@ -1986,7 +1986,7 @@
                 <xsl:when test="areaid = 3535">Hellfire Citadel</xsl:when>
 
                 <xsl:when test="areaid = 3536">Thrallmar</xsl:when>
-                <xsl:when test="areaid = 3537">REUSE</xsl:when>
+                <xsl:when test="areaid = 3537">Borean Tundra</xsl:when>
                 <xsl:when test="areaid = 3538">Honor Hold</xsl:when>
                 <xsl:when test="areaid = 3539">The Stair of Destiny</xsl:when>
                 <xsl:when test="areaid = 3540">Twisting Nether</xsl:when>
@@ -2189,7 +2189,7 @@
                 <xsl:when test="areaid = 3709">Night Elf Village</xsl:when>
 
                 <xsl:when test="areaid = 3710">Nordrassil</xsl:when>
-                <xsl:when test="areaid = 3711">Black Temple</xsl:when>
+                <xsl:when test="areaid = 3711">Sholazar Basin</xsl:when>
                 <xsl:when test="areaid = 3712">Area 52</xsl:when>
                 <xsl:when test="areaid = 3713">The Blood Furnace</xsl:when>
                 <xsl:when test="areaid = 3714">The Shattered Halls</xsl:when>
@@ -2476,7 +2476,13 @@
                 <xsl:when test="areaid = 3957">Sha'tari Outpost</xsl:when>
 
                 <xsl:when test="areaid = 3958">Sha'tari Base Camp</xsl:when>
+                <xsl:when test="areaid = 4032">Valiance Keep</xsl:when>
+                <xsl:when test="areaid = 4125">Temple City of En' kilah</xsl:when>
+                <xsl:when test="areaid = 4129">Warsong Hold</xsl:when>
+                <xsl:when test="areaid = 4197">Wintergrasp</xsl:when>
                 <xsl:when test="areaid = 4298">The Scarlet Enclave</xsl:when>
+                <xsl:when test="areaid = 4395">Dalaran</xsl:when>
+                <xsl:when test="areaid = 4742">Hrothgar's Landing</xsl:when>
             </xsl:choose>
          </td>
          

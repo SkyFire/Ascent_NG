@@ -392,11 +392,51 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
+				RelativePath="..\src\GossipScripts\Gossip_BoreanTundra.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\GossipScripts\Gossip_Guard.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\src\GossipScripts\Gossip_Innkeepers.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\src\GossipScripts\GuardGossip.cpp"
+				RelativePath="..\src\GossipScripts\Gossip_Moonglade.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\GossipScripts\Gossip_Mulgore.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\GossipScripts\Gossip_Shattrath.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\GossipScripts\Gossip_Stormwind.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\GossipScripts\Gossip_Tanaris.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\GossipScripts\Gossip_Teldrassil.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\GossipScripts\Gossip_Theramore.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\GossipScripts\Gossip_Trainer.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\GossipScripts\Gossip_WyrmrestTemple.cpp"
 				>
 			</File>
 		</Filter>

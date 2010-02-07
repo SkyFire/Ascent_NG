@@ -1,15 +1,16 @@
-/*****************************************************************************/
-/* StormLibTest.cpp                       Copyright (c) Ladislav Zezula 2003 */
-/*---------------------------------------------------------------------------*/
-/* This module uses very brutal test methods for StormLib. It extracts all   */
-/* files from the archive with Storm.dll and with stormlib and compares them,*/
-/* then tries to build a copy of the entire archive, then removes a few files*/
-/* from the archive and adds them back, then compares the two archives, ...  */
-/*---------------------------------------------------------------------------*/
-/*   Date    Ver   Who  Comment                                              */
-/* --------  ----  ---  -------                                              */
-/* 25.03.03  1.00  Lad  The first version of StormLibTest.cpp                */
-/*****************************************************************************/
+/*
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #define _CRT_SECURE_NO_DEPRECATE
 #include <io.h>

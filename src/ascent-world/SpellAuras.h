@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 //! 4-bit flag
 enum AURA_FLAGS
@@ -198,7 +193,7 @@ enum MOD_TYPES
     SPELL_AURA_MOD_BASE_RESISTANCE_PCT = 142,           // Mod Base Resistance %
     SPELL_AURA_MOD_RESISTANCE_EXCLUSIVE = 143,          // Mod Resistance Exclusive
     SPELL_AURA_SAFE_FALL = 144,                         // Safe Fall
-    SPELL_AURA_CHARISMA = 145,                          // Charisma
+	SPELL_AURA_MOD_PET_TALENT_POINTS = 145,             // Mod Pet Talent Points
     SPELL_AURA_PERSUADED = 146,                         // Persuaded
     SPELL_AURA_ADD_CREATURE_IMMUNITY = 147,             // Add Creature Immunity
     SPELL_AURA_RETAIN_COMBO_POINTS = 148,               // Retain Combo Points
@@ -379,11 +374,11 @@ struct ProcTriggerSpell
 
 typedef set<uint32> AreaAuraList;
 
-class SERVER_DECL Aura : public EventableObject, public std::tr1::enable_shared_from_this<Aura>
+class SERVER_DECL Aura : public EventableObject
 {
 	uint64 periodic_target;
 public:
-    Aura(SpellEntry *proto, int32 duration,ObjectPointer caster, UnitPointer target);
+    Aura(SpellEntry *proto, int32 duration,Object* caster, Unit* target);
 	~Aura();
 
 	void ExpireRemove();
@@ -416,14 +411,17 @@ public:
 
 	bool m_applied;
 
-	ObjectPointer GetCaster();
+	Unit* GetUnitCaster();
+	ASCENT_INLINE Object* GetCaster() {return TO_OBJECT(GetUnitCaster());}
 	ASCENT_INLINE uint64 GetCasterGUID(){return m_casterGuid;}
-	UnitPointer GetUnitCaster();
-	ASCENT_INLINE UnitPointer GetTarget() { return m_target; }
+
+	ASCENT_INLINE Object* GetTarget() {return ((m_target != NULL && m_target->IsInWorld()) ? TO_OBJECT(m_target): NULL);}
+	ASCENT_INLINE Unit* GetUnitTarget() {return TO_UNIT(GetTarget());}
+	ASCENT_INLINE uint64 GetTargetGUID(){return m_target->GetGUID();}
 
 	void RemoveIfNecessary();
 
-	AuraPointer  StrongerThat(AuraPointer aur);
+	Aura*  StrongerThat(Aura* aur);
 	void ApplyModifiers(bool apply);
 	void UpdateModifiers();
 	void AddAuraVisual();
@@ -432,7 +430,7 @@ public:
 	void EventUpdatePlayerAA(float r);
 	void EventRelocateRandomTarget();
 	void RemoveAA();
-	void AttemptDispel(UnitPointer pCaster, bool canResist = true);
+	void AttemptDispel(Unit* pCaster, bool canResist = true);
 	bool m_dispelled;
 	uint32 m_resistPctChance;
 		
@@ -458,7 +456,7 @@ public:
 	}
 
 	uint32 procCharges;
-	uint32 GetMaxProcCharges(UnitPointer caster);
+	uint32 GetMaxProcCharges(Unit* caster);
 	void ModProcCharges(int32 mod);
 	uint32 stackSize;
 	void ModStackSize(int32 mod);
@@ -677,6 +675,7 @@ public:
 	void SpellAuraReduceAOEDamageTaken(bool apply);
 	void SpellAuraHasteRanged(bool apply);
 	void SpellAuraReflectInfront(bool apply);
+	void SpellAuraModPetTalentPoints(bool apply);
 	
 	void UpdateAuraModDecreaseSpeed();
 
@@ -703,15 +702,14 @@ public:
 
 	// log message's
 	void SendPeriodicAuraLog(uint32 amt, uint32 Flags);
-	static void SendPeriodicAuraLog(UnitPointer Caster, UnitPointer Target, SpellEntry *sp, uint32 Amount, uint32 abs_dmg, uint32 resisted_damage, uint32 Flags, uint32 pSpellId = 0);
-	static void SendPeriodicAuraLog(const uint64& CasterGuid, UnitPointer Target, SpellEntry *sp, uint32 Amount, uint32 abs_dmg, uint32 resisted_damage, uint32 Flags, uint32 pSpellId = 0);
+	static void SendPeriodicAuraLog(Unit* Caster, Unit* Target, SpellEntry *sp, uint32 Amount, uint32 abs_dmg, uint32 resisted_damage, uint32 Flags, uint32 pSpellId = 0);
+	static void SendPeriodicAuraLog(const uint64& CasterGuid, Unit* Target, SpellEntry *sp, uint32 Amount, uint32 abs_dmg, uint32 resisted_damage, uint32 Flags, uint32 pSpellId = 0);
 
 	bool WasCastInDuel() { return m_castInDuel; }
 
 	SpellEntry * m_spellProto;
 	Modifier * mod;
 	AreaAuraList targets;//this is only used for AA
-	uint64 m_casterGuid;
 
 	uint32 m_auraSlot;
 
@@ -759,7 +757,7 @@ private:
 	void SetCasterFaction(uint32 faction){ m_casterfaction = faction; }
 	ASCENT_INLINE void DurationPctMod(uint32 mechanic);
 
-	ASCENT_INLINE bool IsInrange(float x1,float y1, float z1, ObjectPointer o,float square_r)
+	ASCENT_INLINE bool IsInrange(float x1,float y1, float z1, Object* o,float square_r)
 	{
 		float t;
 		float r;
@@ -772,8 +770,8 @@ private:
 		return ( r<=square_r);
 	}
 	
-	UnitPointer m_target;
-	PlayerPointer p_target;
+	Unit* m_target;
+	uint64 m_casterGuid;
 	uint32 timeleft;
 	int32 m_duration; // in msecs
 //	bool m_positive;
@@ -787,8 +785,8 @@ private:
 protected:
 	uint32 m_casterfaction;
 
-	void SendInterrupted(uint8 result, ObjectPointer m_caster);
-	void SendChannelUpdate(uint32 time, ObjectPointer m_caster);
+	void SendInterrupted(uint8 result, Object* m_caster);
+	void SendChannelUpdate(uint32 time, Object* m_caster);
 	void SpecialCases();
 public:
 	bool m_deleted;

@@ -1,27 +1,22 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 
 #define BASE_RESOURCES_GAIN 10
-#define RESOURCES_WARNING_THRESHOLD 1800
-#define RESOURCES_WINVAL 2000
+#define RESOURCES_WARNING_THRESHOLD 1400
+#define RESOURCES_WINVAL 1600
 #define RESOURCES_TO_GAIN_BH 200
 #define BASE_BH_GAIN 14
 uint32 buffentrys[3] = {180380,180362,180146};
@@ -133,11 +128,12 @@ uint32 buffentrys[3] = {180380,180362,180146};
 		30,
 	};
 
-//								<10 <20 <30 <40 <50 <60 <70 70
-static int resHonorTable[8] = { 0,  0,  4,  7,  11, 19, 20, 20 };
-static int winHonorTable[8] = { 0,  0,  4,  7,  11, 19, 20, 20 };
+/*								<10 <20 <30 <40 <50 <60 <70 70  80
+static int resHonorTable[9] = { 0,  0,  4,  7,  11, 19, 20, 20, 30 };
+static int winHonorTable[9] = { 0,  0,  4,  7,  11, 19, 20, 20, 30 };
 
 static uint32 resourcesToGainBH = 330;
+*/
 
 /* End BG Data */
 
@@ -284,7 +280,7 @@ void ArathiBasin::SpawnControlPoint(uint32 Id, uint32 Type)
 void ArathiBasin::OnCreate()
 {
 	// Alliance Gate
-	GameObjectPointer gate = SpawnGameObject(180255, 1284.597290f, 1281.166626f, -15.977916f, 0.76f, 32, 114, 1.5799990f);
+	GameObject* gate = SpawnGameObject(180255, 1284.597290f, 1281.166626f, -15.977916f, 0.76f, 32, 114, 1.5799990f);
 	gate->SetByte(GAMEOBJECT_BYTES_1,GAMEOBJECT_BYTES_ANIMPROGRESS, 100);
 	gate->PushToWorld(m_mapMgr);
 	m_gates.push_back(gate);
@@ -376,13 +372,13 @@ void ArathiBasin::OnCreate()
 void ArathiBasin::OnStart()
 {
 	for(uint32 i = 0; i < 2; ++i) {
-		for(set<PlayerPointer  >::iterator itr = m_players[i].begin(); itr != m_players[i].end(); ++itr) {
+		for(set<Player*  >::iterator itr = m_players[i].begin(); itr != m_players[i].end(); ++itr) {
 			(*itr)->RemoveAura(BG_PREPARATION);
 		}
 	}
 
 	// open gates
-	for(list< GameObjectPointer >::iterator itr = m_gates.begin(); itr != m_gates.end(); ++itr)
+	for(list< GameObject* >::iterator itr = m_gates.begin(); itr != m_gates.end(); ++itr)
 	{
 		(*itr)->SetUInt32Value(GAMEOBJECT_FLAGS, 64);
 		(*itr)->SetByte(GAMEOBJECT_BYTES_1,GAMEOBJECT_BYTES_STATE, 0);
@@ -394,7 +390,7 @@ void ArathiBasin::OnStart()
 	m_started = true;
 }
 
-ArathiBasin::ArathiBasin( MapMgrPointer mgr, uint32 id, uint32 lgroup, uint32 t) : CBattleground(mgr,id,lgroup,t)
+ArathiBasin::ArathiBasin( MapMgr* mgr, uint32 id, uint32 lgroup, uint32 t) : CBattleground(mgr,id,lgroup,t)
 {
 	uint32 i;
 
@@ -408,12 +404,15 @@ ArathiBasin::ArathiBasin( MapMgrPointer mgr, uint32 id, uint32 lgroup, uint32 t)
 	m_playerCountPerTeam=15;
 	m_lgroup = lgroup;
 
+	m_bonusHonor = HonorHandler::CalculateHonorPointsFormula(lgroup*10,lgroup*10);
+	m_resToGainBH = 330;
+
 	for(i = 0; i < AB_NUM_CONTROL_POINTS; ++i)
 	{
-		m_buffs[i] = NULLGOB;
-		m_controlPointAuras[i] = NULLGOB;
-		m_controlPoints[i] = NULLGOB;
-		m_spiritGuides[i] = NULLCREATURE;
+		m_buffs[i] = NULL;
+		m_controlPointAuras[i] = NULL;
+		m_controlPoints[i] = NULL;
+		m_spiritGuides[i] = NULL;
 		m_basesAssaultedBy[i] = -1;
 		m_basesOwnedBy[i] = -1;
 		m_basesLastOwnedBy[i] = -1;
@@ -442,31 +441,28 @@ ArathiBasin::~ArathiBasin()
 		// buffs may not be spawned, so delete them if they're not
 		if(m_buffs[i] != NULL)
 		{
-			m_buffs[i]->m_battleground = NULLBATTLEGROUND;
+			m_buffs[i]->m_battleground = NULL;
 			if( !m_buffs[i]->IsInWorld() )
 			{
 				m_buffs[i]->Destructor();
-				m_buffs[i] = NULLGOB;
 			}
 		}
 
 		if(m_controlPoints[i] != NULL)
 		{
-			m_controlPoints[i]->m_battleground = NULLBATTLEGROUND;
+			m_controlPoints[i]->m_battleground = NULL;
 			if( !m_controlPoints[i]->IsInWorld() )
 			{
 				m_controlPoints[i]->Destructor();
-				m_controlPoints[i] = NULLGOB;
 			}
 		}
 
 		if(m_controlPointAuras[i])
 		{
-			m_controlPointAuras[i]->m_battleground = NULLBATTLEGROUND;
+			m_controlPointAuras[i]->m_battleground = NULL;
 			if( !m_controlPointAuras[i]->IsInWorld() )
 			{
 				m_controlPointAuras[i]->Destructor();
-				m_controlPointAuras[i] = NULLGOB;
 			}
 		}
 	}
@@ -496,12 +492,13 @@ void ArathiBasin::EventUpdateResources(uint32 Team)
 		current_resources = RESOURCES_WINVAL;
 
 	m_resources[Team] = current_resources;
-	if((current_resources - m_lastHonorGainResources[Team]) >= resourcesToGainBH)
+	if((current_resources - m_lastHonorGainResources[Team]) >= m_resToGainBH)
 	{
-		for(set<PlayerPointer  >::iterator itr = m_players[Team].begin(); itr != m_players[Team].end(); ++itr)
+		m_lastHonorGainResources[Team] += m_resToGainBH;
+		for(set< Player* >::iterator itr = m_players[Team].begin(); itr != m_players[Team].end(); ++itr)
 		{
-			(*itr)->m_bgScore.BonusHonor += resHonorTable[m_lgroup];
-			HonorHandler::AddHonorPointsToPlayer((*itr), resHonorTable[m_lgroup]);
+			(*itr)->m_bgScore.BonusHonor += m_bonusHonor;
+			HonorHandler::AddHonorPointsToPlayer((*itr), m_bonusHonor);
 		}
 	}
 
@@ -523,30 +520,34 @@ void ArathiBasin::EventUpdateResources(uint32 Team)
 		m_losingteam = (Team) ? 0 : 1;
 		m_nextPvPUpdateTime = 0;
 
-		sEventMgr.RemoveEvents(shared_from_this());
-		sEventMgr.AddEvent(TO_CBATTLEGROUND(shared_from_this()), &CBattleground::Close, EVENT_BATTLEGROUND_CLOSE, 120000, 1,0);
+		sEventMgr.RemoveEvents(this);
+		sEventMgr.AddEvent(TO_CBATTLEGROUND(this), &CBattleground::Close, EVENT_BATTLEGROUND_CLOSE, 120000, 1,0);
 
 		/* add the marks of honor to all players */
 		SpellEntry * winner_spell = dbcSpell.LookupEntry(24953);
 		SpellEntry * loser_spell = dbcSpell.LookupEntry(24952);
 		for(uint32 i = 0; i < 2; ++i)
 		{
-			for(set<PlayerPointer  >::iterator itr = m_players[i].begin(); itr != m_players[i].end(); ++itr)
+			for(set<Player*  >::iterator itr = m_players[i].begin(); itr != m_players[i].end(); ++itr)
 			{
 				(*itr)->Root();
 
-				if( (*itr)->HasFlag(PLAYER_FLAGS, 0x2) )
+				if( (*itr)->HasFlag(PLAYER_FLAGS, PLAYER_FLAG_AFK) )
 					continue;
 
 				if(i == m_losingteam)
+				{
 					(*itr)->CastSpell((*itr), loser_spell, true);
+					(*itr)->m_bgScore.BonusHonor += m_bonusHonor;
+					HonorHandler::AddHonorPointsToPlayer((*itr), m_bonusHonor);
+				}
 				else
 				{
 					(*itr)->CastSpell((*itr), winner_spell, true);
-					(*itr)->m_bgScore.BonusHonor += winHonorTable[m_lgroup];
-					HonorHandler::AddHonorPointsToPlayer((*itr), winHonorTable[m_lgroup]);
+					(*itr)->m_bgScore.BonusHonor += 2*m_bonusHonor;
+					HonorHandler::AddHonorPointsToPlayer((*itr), 2*m_bonusHonor);
 					uint32 diff = abs((int32)(m_resources[i] - m_resources[i ? 0 : 1]));
-					(*itr)->GetAchievementInterface()->HandleAchievementCriteriaWinBattleground( m_mapMgr->GetMapId(), diff, ((uint32)UNIXTIME - m_startTime) / 1000, TO_CBATTLEGROUND(shared_from_this()));
+					(*itr)->GetAchievementInterface()->HandleAchievementCriteriaWinBattleground( m_mapMgr->GetMapId(), diff, ((uint32)UNIXTIME - m_startTime) / 1000, TO_CBATTLEGROUND(this));
 				}
 			}
 		}
@@ -556,19 +557,19 @@ void ArathiBasin::EventUpdateResources(uint32 Team)
 	m_mainLock.Release();
 }
 
-void ArathiBasin::HookOnPlayerDeath(PlayerPointer plr)
+void ArathiBasin::HookOnPlayerDeath(Player* plr)
 {
 	// nothing in this BG
 	plr->m_bgScore.Deaths++;
 	UpdatePvPData();
 }
 
-void ArathiBasin::HookOnMount(PlayerPointer plr)
+void ArathiBasin::HookOnMount(Player* plr)
 {
 	// nothing in this BG
 }
 
-void ArathiBasin::HookOnPlayerKill(PlayerPointer plr, UnitPointer pVictim)
+void ArathiBasin::HookOnPlayerKill(Player* plr, Unit* pVictim)
 {
 	if(pVictim->IsPlayer())
 	{
@@ -577,29 +578,29 @@ void ArathiBasin::HookOnPlayerKill(PlayerPointer plr, UnitPointer pVictim)
 	}
 }
 
-void ArathiBasin::HookOnHK(PlayerPointer plr)
+void ArathiBasin::HookOnHK(Player* plr)
 {
 	plr->m_bgScore.HonorableKills++;
 	UpdatePvPData();
 }
 
-void ArathiBasin::OnAddPlayer(PlayerPointer plr)
+void ArathiBasin::OnAddPlayer(Player* plr)
 {
 	if(!m_started)
 		plr->CastSpell(plr, BG_PREPARATION, true);
 }
 
-void ArathiBasin::OnRemovePlayer(PlayerPointer plr)
+void ArathiBasin::OnRemovePlayer(Player* plr)
 {
 	plr->RemoveAura(BG_PREPARATION);
 }
 
-void ArathiBasin::HookFlagDrop(PlayerPointer plr, GameObjectPointer obj)
+void ArathiBasin::HookFlagDrop(Player* plr, GameObject* obj)
 {
 	// nothing?
 }
 
-void ArathiBasin::HookFlagStand(PlayerPointer plr, GameObjectPointer obj)
+void ArathiBasin::HookFlagStand(Player* plr, GameObject* obj)
 {
 	// nothing?
 }
@@ -612,7 +613,7 @@ LocationVector ArathiBasin::GetStartingCoords(uint32 Team)
 		return LocationVector(1314.932495f, 1311.246948f, -9.00952f,3.802896f);
 }
 
-void ArathiBasin::HookOnAreaTrigger(PlayerPointer plr, uint32 id)
+void ArathiBasin::HookOnAreaTrigger(Player* plr, uint32 id)
 {
 	uint32 spellid=0;
 	int32 buffslot = -1;
@@ -662,20 +663,20 @@ void ArathiBasin::HookOnAreaTrigger(PlayerPointer plr, uint32 id)
 		m_buffs[x]->RemoveFromWorld(false);
 
 		// respawn it in buffrespawntime
-		sEventMgr.AddEvent(TO_ARATHIBASIN(shared_from_this()),&ArathiBasin::SpawnBuff,x,EVENT_AB_RESPAWN_BUFF,AB_BUFF_RESPAWN_TIME,1,EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+		sEventMgr.AddEvent(TO_ARATHIBASIN(this),&ArathiBasin::SpawnBuff,x,EVENT_AB_RESPAWN_BUFF,AB_BUFF_RESPAWN_TIME,1,EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
 
 		// cast the spell on the player
 		SpellEntry * sp = dbcSpell.LookupEntryForced(spellid);
 		if(sp)
 		{
-			SpellPointer pSpell(new Spell(plr, sp, true, NULLAURA));
+			Spell* pSpell(new Spell(plr, sp, true, NULL));
 			SpellCastTargets targets(plr->GetGUID());
 			pSpell->prepare(&targets);
 		}
 	}
 }
 
-bool ArathiBasin::HookHandleRepop(PlayerPointer plr)
+bool ArathiBasin::HookHandleRepop(Player* plr)
 {
 	/* our uber leet ab graveyard handler */
 	LocationVector dest( NoBaseGYLocations[plr->m_bgTeam][0], NoBaseGYLocations[plr->m_bgTeam][1], NoBaseGYLocations[plr->m_bgTeam][2], 0.0f );
@@ -751,7 +752,7 @@ void ArathiBasin::CaptureControlPoint(uint32 Id, uint32 Team)
 	if(m_capturedBases[Team]==1)
 	{
 		// first
-		sEventMgr.AddEvent(TO_ARATHIBASIN(shared_from_this()),&ArathiBasin::EventUpdateResources, (uint32)Team, EVENT_AB_RESOURCES_UPDATE_TEAM_0+Team, ResourceUpdateIntervals[1], 0,
+		sEventMgr.AddEvent(TO_ARATHIBASIN(this),&ArathiBasin::EventUpdateResources, (uint32)Team, EVENT_AB_RESOURCES_UPDATE_TEAM_0+Team, ResourceUpdateIntervals[1], 0,
 			EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
 	}
 	else
@@ -761,7 +762,7 @@ void ArathiBasin::CaptureControlPoint(uint32 Id, uint32 Team)
 	}
 }
 
-void ArathiBasin::AssaultControlPoint(PlayerPointer pPlayer, uint32 Id)
+void ArathiBasin::AssaultControlPoint(Player* pPlayer, uint32 Id)
 {
 #if defined(BG_ANTI_CHEAT) && !defined(_DEBUG)
 	if(!m_started)
@@ -794,12 +795,12 @@ void ArathiBasin::AssaultControlPoint(PlayerPointer pPlayer, uint32 Id)
 		// this control point just got taken over by someone! oh noes!
 		if( m_spiritGuides[Id] != NULL )
 		{
-			map<CreaturePointer,set<uint32> >::iterator itr = m_resurrectMap.find(m_spiritGuides[Id]);
+			map<Creature*,set<uint32> >::iterator itr = m_resurrectMap.find(m_spiritGuides[Id]);
 			if( itr != m_resurrectMap.end() )
 			{
 				for( set<uint32>::iterator it2 = itr->second.begin(); it2 != itr->second.end(); ++it2 )
 				{
-					PlayerPointer r_plr = m_mapMgr->GetPlayer( *it2 );
+					Player* r_plr = m_mapMgr->GetPlayer( *it2 );
 					if( r_plr != NULL && r_plr->isDead() )
 					{
 						HookHandleRepop( r_plr );
@@ -809,7 +810,7 @@ void ArathiBasin::AssaultControlPoint(PlayerPointer pPlayer, uint32 Id)
 			}
 			m_resurrectMap.erase( itr );
 			m_spiritGuides[Id]->Despawn( 0, 0 );
-			m_spiritGuides[Id] = NULLCREATURE;
+			m_spiritGuides[Id] = NULL;
 		}
 
 		// detract one from the teams controlled points
@@ -848,7 +849,7 @@ void ArathiBasin::AssaultControlPoint(PlayerPointer pPlayer, uint32 Id)
 		m_mapMgr->GetStateManager().UpdateWorldState(AssaultFields[Id][Owner], 0);
 
 		// make sure the event does not trigger
-		sEventMgr.RemoveEvents(shared_from_this(), EVENT_AB_CAPTURE_CP_1 + Id);
+		sEventMgr.RemoveEvents(this, EVENT_AB_CAPTURE_CP_1 + Id);
 
 		// no need to remove the spawn, SpawnControlPoint will do this.
 	} 
@@ -869,14 +870,14 @@ void ArathiBasin::AssaultControlPoint(PlayerPointer pPlayer, uint32 Id)
 	m_mapMgr->GetStateManager().UpdateWorldState(AssaultFields[Id][Team], 1);
 
 	// create the 60 second event.
-	sEventMgr.AddEvent(TO_ARATHIBASIN(shared_from_this()), &ArathiBasin::CaptureControlPoint, Id, Team, EVENT_AB_CAPTURE_CP_1 + Id, 60000, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+	sEventMgr.AddEvent(TO_ARATHIBASIN(this), &ArathiBasin::CaptureControlPoint, Id, Team, EVENT_AB_CAPTURE_CP_1 + Id, 60000, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
 
 	// update players info
 	pPlayer->m_bgScore.MiscData[BG_SCORE_AB_BASE_ASSAULTED]++;
 	UpdatePvPData();
 }
 
-bool ArathiBasin::HookSlowLockOpen( GameObjectPointer pGo, PlayerPointer pPlayer, SpellPointer pSpell)
+bool ArathiBasin::HookSlowLockOpen( GameObject* pGo, Player* pPlayer, Spell* pSpell)
 {
 	if( pPlayer->m_bgFlagIneligible )
 		return false;
@@ -892,7 +893,7 @@ bool ArathiBasin::HookSlowLockOpen( GameObjectPointer pGo, PlayerPointer pPlayer
 	return false;
 }
 
-void ArathiBasin::HookGenerateLoot(PlayerPointer plr, CorpsePointer pCorpse)
+void ArathiBasin::HookGenerateLoot(Player* plr, Corpse* pCorpse)
 {
 	// add some money
 	float gold = ((float(plr->getLevel()) / 2.5f)+1) * 100.0f;			// fix this later
@@ -908,13 +909,13 @@ void ArathiBasin::HookOnShadowSight()
 
 void ArathiBasin::SetIsWeekend(bool isweekend) 
 {
+	m_isWeekend = isweekend;
 	if (isweekend)
 	{
-		resourcesToGainBH = 200;
+		m_resToGainBH = 200;
 	}
 	else
 	{
-		resourcesToGainBH = 330;
+		m_resToGainBH = 330;
 	}
 }
-

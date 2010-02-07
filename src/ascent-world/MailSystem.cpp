@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 initialiseSingleton(MailSystem);
@@ -148,8 +143,8 @@ void Mailbox::DeleteMessage(MailMessage* Message)
 	else
 	{
 		// delete the message, there are no other references to it.
-		Messages.erase(Message->message_id);
 		CharacterDatabase.WaitExecute("DELETE FROM mailbox WHERE message_id = %u", Message->message_id);
+		Messages.erase(Message->message_id);
 	}
 }
 
@@ -172,23 +167,33 @@ WorldPacket * Mailbox::MailboxListingPacket()
 {
 	WorldPacket * data = new WorldPacket(SMSG_MAIL_LIST_RESULT, 500);
 	MessageMap::iterator itr;
+	uint32 realcount = 0;
 	uint32 count = 0;
 	uint32 t = (uint32)UNIXTIME;
+	*data << uint32(0);	 // realcount - this can be used to tell the client we have more mail than that fits into this packet
 	*data << uint8(0);	 // size placeholder
 
 	for(itr = Messages.begin(); itr != Messages.end(); ++itr)
 	{
+
+		if(count >= 50)
+		{
+			++realcount;
+			continue;
+		}
+
 		if(AddMessageToListingPacket(*data, &itr->second))
 			++count;
-	
-		if(count == 25)
-			break;
+		{
+			++realcount;
+		}
 	}
 
-	const_cast<uint8*>(data->contents())[0] = count;
+	data->put<uint32>(0, realcount); 
+	data->put<uint8>(4, count); 
 
 	// do cleanup on request mail
-//	CleanupExpiredMessages();
+	//CleanupExpiredMessages();
 	return data;
 }
 
@@ -198,7 +203,7 @@ bool Mailbox::AddMessageToListingPacket(WorldPacket& data,MailMessage *msg)
 	uint32 j;
 	size_t pos;
 	vector<uint64>::iterator itr;
-	ItemPointer pItem;
+	Item* pItem;
 
 	// add stuff
 	if(msg->deleted_flag || msg->Expired() || (uint32)UNIXTIME < msg->delivery_time)
@@ -333,7 +338,7 @@ void MailSystem::DeliverMessage(MailMessage* message)
 {
 	message->SaveToDB();
 
-	PlayerPointer plr = objmgr.GetPlayer((uint32)message->player_guid);
+	Player* plr = objmgr.GetPlayer((uint32)message->player_guid);
 	if(plr != NULL)
 	{
 		plr->m_mailBox->AddMessage(message);
@@ -354,7 +359,7 @@ void MailSystem::ReturnToSender(MailMessage* message)
 	msg.sender_guid = message->player_guid;
 
 	// remove the old message
-	PlayerPointer plr = objmgr.GetPlayer((uint32)message->player_guid);
+	Player* plr = objmgr.GetPlayer((uint32)message->player_guid);
 	if(plr != NULL)
 	{
 		plr->m_mailBox->DeleteMessage(message);
@@ -485,10 +490,10 @@ void WorldSession::HandleSendMail(WorldPacket & recv_data )
 	uint8 itemslot;
 	uint8 i;
 	uint64 itemguid;
-	vector< ItemPointer > items;
-	vector< ItemPointer >::iterator itr;
+	vector< Item* > items;
+	vector< Item* >::iterator itr;
 	string recepient;
-	ItemPointer pItem;
+	Item* pItem;
 	int8 real_item_slot;
 
 	recv_data >> gameobject >> recepient;
@@ -617,7 +622,7 @@ void WorldSession::HandleSendMail(WorldPacket & recv_data )
 				continue;		// should never be hit.
 
 			pItem->RemoveFromWorld();
-			pItem->SetOwner( NULLPLR );
+			pItem->SetOwner( NULL );
 			pItem->SaveToDB( INVENTORY_SLOT_NOT_SET, 0, true, NULL );
 			msg.items.push_back( pItem->GetUInt32Value(OBJECT_FIELD_GUID) );
 				
@@ -727,7 +732,7 @@ void WorldSession::HandleTakeItem(WorldPacket & recv_data )
 	}
 
 	// grab the item
-	ItemPointer item = objmgr.LoadItem( *itr );
+	Item* item = objmgr.LoadItem( *itr );
 	if(item == 0)
 	{
 		// doesn't exist
@@ -746,7 +751,6 @@ void WorldSession::HandleTakeItem(WorldPacket & recv_data )
 		SendPacket(&data);
 
 		item->Destructor();
-		item = NULLITEM;
 		return;
 	}
 
@@ -760,7 +764,6 @@ void WorldSession::HandleTakeItem(WorldPacket & recv_data )
 			data << uint32(MAIL_ERR_BAG_FULL);
 			SendPacket(&data);
 			item->Destructor();
-			item = NULLITEM;
 			return;
 		}
 	}
@@ -906,7 +909,7 @@ void WorldSession::HandleMailCreateTextItem(WorldPacket & recv_data )
 		return;
 	}
 
-	ItemPointer pItem = objmgr.CreateItem(8383, _player);
+	Item* pItem = objmgr.CreateItem(8383, _player);
 	pItem->SetUInt32Value(ITEM_FIELD_ITEM_TEXT_ID, message_id);
 	if( _player->GetItemInterface()->AddItemToFreeSlot(pItem) )
 	{
@@ -921,7 +924,6 @@ void WorldSession::HandleMailCreateTextItem(WorldPacket & recv_data )
 	else
 	{
 		pItem->Destructor();
-		pItem = NULLITEM;
 	}
 }
 

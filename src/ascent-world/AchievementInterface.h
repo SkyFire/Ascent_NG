@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #ifndef _ACHIEVEMENT_INTERFACE_H
 #define _ACHIEVEMENT_INTERFACE_H
@@ -180,7 +175,7 @@ typedef std::map<uint32, AchievementCriteriaSet*>					AchievementCriteriaMap;
 
 class SERVER_DECL AchievementInterface
 {
-	PlayerPointer m_player;
+	Player* m_player;
 	map<uint32,AchievementData*> m_achivementDataMap;
 private:
 	void GiveRewardsForAchievement(AchievementEntry * ae);
@@ -195,7 +190,7 @@ private:
 	WorldPacket* m_achievementInspectPacket;
 
 public:
-	AchievementInterface(PlayerPointer plr);
+	AchievementInterface(Player* plr);
 	~AchievementInterface();
 
 	void LoadFromDB( QueryResult * pResult );
@@ -213,7 +208,7 @@ public:
 	// Handlers for misc events
 	//-----------------------------------------------------------------
 	void HandleAchievementCriteriaKillCreature(uint32 killedMonster);
-	void HandleAchievementCriteriaWinBattleground(uint32 bgMapId, uint32 scoreMargin, uint32 time, BattlegroundPointer bg);
+	void HandleAchievementCriteriaWinBattleground(uint32 bgMapId, uint32 scoreMargin, uint32 time, CBattleground* bg);
 	void HandleAchievementCriteriaRequiresAchievement(uint32 achievementId);
 	void HandleAchievementCriteriaLevelUp(uint32 level);
 	void HandleAchievementCriteriaOwnItem(uint32 itemId, uint32 stack = 1);
@@ -227,7 +222,7 @@ public:
 	void HandleAchievementCriteriaBuyBankSlot(bool retroactive = false);
 	void HandleAchievementCriteriaFlightPathsTaken();
 	void HandleAchievementCriteriaExploreArea(uint32 areaId, uint32 explorationFlags);
-	void HandleAchievementCriteriaDoEmote(uint32 emoteId, UnitPointer pTarget);
+	void HandleAchievementCriteriaDoEmote(uint32 emoteId, Unit* pTarget);
 	void HandleAchievementCriteriaCompleteQuestsInZone(uint32 zoneId);
 	void HandleAchievementCriteriaReachSkillLevel(uint32 skillId, uint32 skillLevel);
 	void HandleAchievementCriteriaWinDuel();

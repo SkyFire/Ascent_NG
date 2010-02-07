@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 #define SWIMMING_TOLERANCE_LEVEL -0.08f
@@ -79,7 +74,7 @@ void WorldSession::HandleMoveWorldportAckOpcode( WorldPacket & recv_data )
 	if(_player->m_CurrentTransporter && _player->GetMapId() != _player->m_CurrentTransporter->GetMapId())
 	{
 		/* wow, our pc must really suck. */
-		TransporterPointer pTrans = _player->m_CurrentTransporter;
+		Transporter* pTrans = _player->m_CurrentTransporter;
 		float c_tposx = pTrans->GetPositionX() + _player->m_TransporterX;
 		float c_tposy = pTrans->GetPositionY() + _player->m_TransporterY;
 		float c_tposz = pTrans->GetPositionZ() + _player->m_TransporterZ;
@@ -105,7 +100,10 @@ void WorldSession::HandleMoveWorldportAckOpcode( WorldPacket & recv_data )
 void WorldSession::HandleMoveTeleportAckOpcode( WorldPacket & recv_data )
 {
 	uint64 guid;
-	recv_data >> guid;
+	WoWGuid wguid;
+	recv_data >> wguid;
+	guid = wguid.GetOldGuid();
+
 	if(guid == _player->GetGUID())
 	{
 		if(sWorld.antihack_teleport && !(HasGMPermissions() && sWorld.no_antihack_on_gm) && _player->GetPlayerStatus() != TRANSFER_PENDING)
@@ -141,11 +139,11 @@ void WorldSession::HandleMoveTeleportAckOpcode( WorldPacket & recv_data )
 
 }
 
-void _HandleBreathing(MovementInfo &movement_info, PlayerPointer _player, WorldSession * pSession)
+void _HandleBreathing(MovementInfo &movement_info, Player* _player, WorldSession * pSession)
 {
 
 	// Very dirty way of fixing swim bug in serpent lake :(
-	// The waterlavel at the entrance is NOT the same as where you surface again.
+	// The waterlevel at the entrance is NOT the same as where you surface again.
 	// This keeps players in breathing mode until they drown.
 	if( _player->GetAreaID() == 3653 )
 	{
@@ -326,7 +324,7 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
 		return;
 
 	// spell cancel on movement, for now only fishing is added
-	ObjectPointer t_go = _player->m_SummonedObject;
+	Object* t_go = _player->m_SummonedObject;
 	uint32 mstime = mTimeStamp();
 	if (t_go)
 	{
@@ -456,17 +454,18 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
 	if(_player->m_inRangePlayers.size())
 	{
 		move_time = (movement_info.time - (mstime - m_clientTimeDelay)) + MOVEMENT_PACKET_TIME_DELAY + mstime;
-		memcpy(&movement_packet[pos], recv_data.contents(), recv_data.size());
-		movement_packet[pos+6]=0;
+		memcpy(&movement_packet[0], recv_data.contents(), recv_data.size());
+		movement_packet[pos+6] = 0;
 
 		/************************************************************************/
 		/* Distribute to all inrange players.                                   */
 		/************************************************************************/
-		for(unordered_set<PlayerPointer  >::iterator itr = _player->m_inRangePlayers.begin(); itr != _player->m_inRangePlayers.end(); ++itr)
+		for(unordered_set<Player*  >::iterator itr = _player->m_inRangePlayers.begin(); itr != _player->m_inRangePlayers.end(); ++itr)
 		{
 			if( (*itr)->GetSession() && (*itr)->IsInWorld() )
 			{
 				*(uint32*)&movement_packet[pos+6] = uint32(move_time + (*itr)->GetSession()->m_moveDelayTime);
+
 #if defined(ENABLE_COMPRESSED_MOVEMENT) && defined(ENABLE_COMPRESSED_MOVEMENT_FOR_PLAYERS)
 				if( _player->GetPositionNC().Distance2DSq((*itr)->GetPosition()) >= World::m_movementCompressThreshold )
 					(*itr)->AppendMovementData( recv_data.GetOpcode(), uint16(recv_data.size() + pos), movement_packet );
@@ -478,7 +477,6 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
 			}
 		}
 	}
-
 	/************************************************************************/
 	/* Falling damage checks                                                */
 	/************************************************************************/
@@ -523,7 +521,7 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
 			if( _player->isAlive() && !_player->GodModeCheat && falldistance > 12 && ( getMSTime() >= _player->m_fallDisabledUntil ) )
 			{
 				// 1.7% damage for each unit fallen on Z axis over 13
-				UnitPointer toDamage = TO_UNIT(_player);
+				Unit* toDamage = TO_UNIT(_player);
 				if( _player->m_CurrentVehicle )
 					toDamage = _player->m_CurrentVehicle;
 
@@ -567,7 +565,7 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
 			if(_player->m_CurrentTransporter)
 			{
 				_player->m_CurrentTransporter->RemovePlayer(_player);
-				_player->m_CurrentTransporter = NULLTRANSPORT;
+				_player->m_CurrentTransporter = NULL;
 			}
 
 			_player->m_TransporterGUID = 0;
@@ -586,18 +584,21 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
 				if( _player->m_CurrentVehicle )
 					_player->m_CurrentVehicle->RemovePassenger( _player );
 
-				uint64 OldTransGUID = movement_info.transGuid.GetOldGuid();
-				_player->m_CurrentTransporter = objmgr.GetTransporter(GUID_LOPART(OldTransGUID));
-				if(_player->m_CurrentTransporter)
+				uint64 transporterGUID = movement_info.transGuid.GetOldGuid();
+				Transporter* t = objmgr.GetTransporter(GUID_LOPART(transporterGUID));
+				if( t )
+				{
+					_player->m_CurrentTransporter = t;
 					_player->m_CurrentTransporter->AddPlayer(_player);
 
-				/* set variables */
-				_player->m_TransporterGUID = movement_info.transGuid.GetOldGuid();
-				_player->m_TransporterUnk = movement_info.transTime;
-				_player->m_TransporterX = movement_info.transX;
-				_player->m_TransporterY = movement_info.transY;
-				_player->m_TransporterZ = movement_info.transZ;
-				_player->DelaySpeedHack(5000);
+					/* set variables */
+					_player->m_TransporterGUID = movement_info.transGuid.GetOldGuid();
+					_player->m_TransporterUnk = movement_info.transTime;
+					_player->m_TransporterX = movement_info.transX;
+					_player->m_TransporterY = movement_info.transY;
+					_player->m_TransporterZ = movement_info.transZ;
+					_player->DelaySpeedHack(5000);
+				}
 			}
 			else
 			{
@@ -611,7 +612,7 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
 		/*float x = movement_info.x - movement_info.transX;
 		float y = movement_info.y - movement_info.transY;
 		float z = movement_info.z - movement_info.transZ;
-		TransporterPointer trans = _player->m_CurrentTransporter;
+		Transporter* trans = _player->m_CurrentTransporter;
 		if(trans) sChatHandler.SystemMessageToPlr(_player, "Client t pos: %f %f\nServer t pos: %f %f   Diff: %f %f", x,y, trans->GetPositionX(), trans->GetPositionY(), trans->CalcDistance(x,y,z), trans->CalcDistance(movement_info.x, movement_info.y, movement_info.z));*/
 	}
 
@@ -689,6 +690,8 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
 
 void WorldSession::HandleMoveTimeSkippedOpcode( WorldPacket & recv_data )
 {
+	CHECK_INWORLD_RETURN
+
 	uint64 guid;
 	uint32 time_dif;
 	uint8 buf[16];
@@ -776,7 +779,7 @@ void WorldSession::HandleTeleportToUnitOpcode(WorldPacket & recv_data)
 	CHECK_INWORLD_RETURN;
 
 	uint8 unk;
-	UnitPointer target;
+	Unit* target;
 	recv_data >> unk;
 
 	if(!HasGMPermissions())
@@ -815,6 +818,7 @@ void WorldSession::HandleMoveFallResetOpcode(WorldPacket & recvPacket)
 void MovementInfo::init(WorldPacket & data)
 {
 	unk13 = 0;
+	data >> guid;
 	data >> flags >> flag16 >> time;
 	data >> x >> y >> z >> orientation;
 
@@ -872,7 +876,7 @@ void MovementInfo::write(WorldPacket & data)
 	{
 		data << spline_unk;
 	}
-	
+
 	if(unk13)
 		data << unk13;
 }

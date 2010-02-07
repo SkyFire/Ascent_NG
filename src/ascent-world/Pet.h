@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #ifndef _PET_H
 #define _PET_H
@@ -76,20 +71,24 @@ enum StableState
 	STABLE_STATE_ACTIVE		= 1,
 	STABLE_STATE_PASSIVE	= 2
 };
+
+
+enum StableResult
+{
+	STABLERESULT_FAIL_CANT_AFFORD		= 0x01,
+	STABLERESULT_FAIL					= 0x06,
+	STABLERESULT_STABLE_SUCCESS			= 0x08,
+	STABLERESULT_UNSTABLE_SUCCESS		= 0x09,
+	STABLERESULT_BUY_SLOT_SUCCESS		= 0x0A
+};
+
+#define MAX_STABLE_SLOTS 4
+
 enum HappinessState
 {
 	UNHAPPY		=1,
 	CONTENT		=2,
 	HAPPY		=3
-};
-enum LoyaltyLevel
-{
-	REBELIOUS	=1,
-	UNRULY		=2,
-	SUBMISIVE	=3,
-	DEPENDABLE	=4,
-	FAITHFUL	=5,
-	BEST_FRIEND	=6
 };
 
 enum AutoCastEvents
@@ -108,6 +107,7 @@ enum AutoCastEvents
 #define AUTOCAST_SPELL_STATE 0xC100
 
 typedef map<SpellEntry*, uint16> PetSpellMap;
+typedef map<uint32, uint8> PetTalentMap;
 struct PlayerPet;
 
 class SERVER_DECL Pet : public Creature
@@ -122,11 +122,10 @@ public:
 	virtual void Init();
 	virtual void Destructor();
 
-	void LoadFromDB(PlayerPointer owner, PlayerPet * pi);
-	void CreateAsSummon(uint32 entry, CreatureInfo *ci, CreaturePointer created_from_creature, UnitPointer owner, SpellEntry *created_by_spell, uint32 type, uint32 expiretime);
+	void LoadFromDB(Player* owner, PlayerPet * pi);
+	void CreateAsSummon(uint32 entry, CreatureInfo *ci, Creature* created_from_creature, Unit* owner, SpellEntry *created_by_spell, uint32 type, uint32 expiretime);
 
 	virtual void Update(uint32 time);
-	void OnPushToWorld();
 
 	ASCENT_INLINE uint32 GetXP(void) { return m_PetXP; }
 
@@ -162,10 +161,13 @@ public:
 
 	void DelayedRemove(bool bTime, bool bDeath);
 
-	ASCENT_INLINE PlayerPointer GetPetOwner() { return m_Owner; }
-	ASCENT_INLINE void ClearPetOwner() { m_Owner = NULLPLR; }
+	ASCENT_INLINE Player* GetPetOwner() { return m_Owner; }
+	ASCENT_INLINE void ClearPetOwner() { m_Owner = NULL; }
+
+	/* Level and XP related functions */
 	void GiveXP(uint32 xp);
 	uint32 GetNextLevelXP(uint32 currentlevel);
+	void LevelUpTo(uint32 level);
 	void ApplyStatsForLevel();
 	void ApplySummonLevelAbilities();
 	void ApplyPetLevelAbilities();
@@ -177,7 +179,9 @@ public:
 	void SetActionBarSlot(uint32 slot, uint32 spell){ ActionBar[ slot ] = spell; }
 
 	void LoadSpells();
-	void AddSpell(SpellEntry * sp, bool learning);
+	void AddSpell(SpellEntry * sp, bool learning, bool sendspells = true);
+	void LearnSpell(uint32 spellid);
+	void LearnLevelupSpells();
 	void RemoveSpell(SpellEntry * sp);
 	void WipeSpells();
 	uint32 GetUntrainCost();
@@ -186,7 +190,8 @@ public:
 	ASCENT_INLINE void RemoveSpell(uint32 SpellID)
 	{
 		SpellEntry * sp = dbcSpell.LookupEntry(SpellID);
-		if(sp) RemoveSpell(sp);
+		if(sp)
+			RemoveSpell(sp);
 	}
 	ASCENT_INLINE void SetSpellState(uint32 SpellID, uint16 State)
 	{
@@ -206,15 +211,12 @@ public:
 	
 	AI_Spell*CreateAISpell(SpellEntry * info);
 	ASCENT_INLINE PetSpellMap* GetSpells() { return &mSpells; }
-	ASCENT_INLINE bool IsSummon() { return Summon; }
+	ASCENT_INLINE bool IsSummonedPet() { return Summon; }
 
 	void __fastcall SetAutoCastSpell(AI_Spell*sp);
 	void Rename(string NewName);
 	ASCENT_INLINE string& GetName() { return m_name; }
 	void AddPetSpellToOwner(uint32 spellId);
-	uint16 SpellTP(uint32 spellId);
-	uint16 GetUsedTP();
-	void UpdateTP();
 	
 	void HandleAutoCastEvent(uint32 Type);
 	AI_Spell*HandleAutoCastEvent();
@@ -222,12 +224,20 @@ public:
 	float GetHappinessDmgMod() { return 0.25f * GetHappinessState() + 0.5f; };
 	const char* GetPetName() { return m_name.c_str(); }
 
+	/* Pet Talents! */
+	ASCENT_INLINE uint8 GetUnspentPetTalentPoints() { return GetByte( UNIT_FIELD_BYTES_1, 1); }
+	ASCENT_INLINE void SetUnspentPetTalentPoints(uint8 points) { SetByte(UNIT_FIELD_BYTES_1, 1, points);}
+	ASCENT_INLINE uint8 GetSpentPetTalentPoints() { return GetPetTalentPointsAtLevel() - GetUnspentPetTalentPoints(); }
+	void InitTalentsForLevel(bool creating = false);
+	bool ResetTalents(bool costs);
+	void InitializeTalents();
+	std::map<uint32, uint8> m_talents;
+
 protected:
-	bool bHasLoyalty;
-	PlayerPointer m_Owner;
+	Player* m_Owner;
 	uint32 m_PetXP;
 	PetSpellMap mSpells;
-	PlayerPet * mPi;
+	PlayerPet * m_PlayerPetInfo;
 	uint32 ActionBar[10];   // 10 slots
 	
 	std::map<uint32, AI_Spell*> m_AISpellStore;
@@ -236,7 +246,6 @@ protected:
 
 	uint32 m_PartySpellsUpdateTimer;
 	uint32 m_HappinessTimer;
-	uint32 m_LoyaltyTimer;
 	uint32 m_PetNumber;
 
 	uint32 m_Action;
@@ -244,22 +253,17 @@ protected:
 	uint32 m_ExpireTime;
 	uint32 m_Diet;
 	uint64 m_OwnerGuid;
-	int16 TP;
-	int32 LoyaltyPts;
-	uint32 LoyaltyXP;
 	bool bExpires;
 	bool Summon;
 	string m_name;
-	uint8 GetLoyaltyLevel(){return ((GetUInt32Value(UNIT_FIELD_BYTES_1) >> 8) & 0xff);};
 	HappinessState GetHappinessState();
 	uint32 GetHighestRankSpell(uint32 spellId);
-	bool UpdateLoyalty(char pts);
+	uint8 GetPetTalentPointsAtLevel();
 
 	list<AI_Spell*> m_autoCastSpells[AUTOCAST_EVENT_COUNT];
 	bool m_dismissed;
 };
 
-#define PET_LOYALTY_UPDATE_TIMER 120000
 #define PET_HAPPINESS_UPDATE_VALUE 333000
 #define PET_HAPPINESS_UPDATE_TIMER 7500
 #define PET_PARTY_SPELLS_UPDATE_TIMER 10000

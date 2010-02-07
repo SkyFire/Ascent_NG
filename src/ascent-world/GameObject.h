@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #ifndef WOWSERVER_GAMEOBJECT_H
 #define WOWSERVER_GAMEOBJECT_H
@@ -118,6 +113,8 @@ enum GameObjectFlags
 	GO_FLAG_UNK1            = 0x10,                         //
 	GO_FLAG_NODESPAWN       = 0x20,                         //never despawn, typically for doors, they just change state
 	GO_FLAG_TRIGGERED       = 0x40,                         //typically, summoned objects. Triggered by spell or other events
+	GO_FLAG_DAMAGED			= 0x200,
+	GO_FLAG_DESTROYED		= 0x400,
 };
 
 enum GameObjectDynFlags
@@ -133,7 +130,7 @@ public:
 	/************************************************************************/
 	/* LUA Stuff                                                            */
 	/************************************************************************/
-/*	typedef struct { const char *name; int(*mfunc)(lua_State*,GameObjectPointer ); } RegType;
+/*	typedef struct { const char *name; int(*mfunc)(lua_State*,GameObject* ); } RegType;
 	static const char className[];
 	static RegType methods[];
 
@@ -154,7 +151,7 @@ public:
 
 	virtual void Update(uint32 p_time);
 
-	void Spawn( MapMgrPointer m);
+	void Spawn( MapMgr* m);
 	void Despawn(uint32 time);
 
 	//void _EnvironmentalDamageUpdate();
@@ -167,12 +164,12 @@ public:
 	void DeleteFromDB();
 	void EventCloseDoor();
 	uint64 m_rotation;
-	void UpdateRotation();
+	void UpdateRotation(float orientation3 = 0.0f, float orientation4 = 0.0f);
 
 	//Fishing stuff
-	void UseFishingNode(PlayerPointer player);
-	void EndFishing(PlayerPointer player,bool abort);
-	void FishHooked(PlayerPointer player);
+	void UseFishingNode(Player* player);
+	void EndFishing(Player* player,bool abort);
+	void FishHooked(Player* player);
 	
 	// Quests
 	void _LoadQuests();
@@ -186,15 +183,15 @@ public:
 	std::list<QuestRelation *>::iterator QuestsEnd() { return m_quests->end(); };
 	void SetQuestList(std::list<QuestRelation *>* qst_lst) { m_quests = qst_lst; };
 
-	void SetSummoned(UnitPointer mob)
+	void SetSummoned(Unit* mob)
 	{
 		m_summoner = mob;
 		m_summonedGo = true;
 	}
-	UnitPointer CreateTemporaryGuardian(uint32 guardian_entry,uint32 duration,float angle, UnitPointer u_caster);
+	Unit* CreateTemporaryGuardian(uint32 guardian_entry,uint32 duration,float angle, Unit* u_caster, uint8 Slot);
 	void _Expire();
 	
-	void ExpireAndDelete();
+	void ExpireAndDelete(uint32 delay = 1);
 
 	ASCENT_INLINE bool isQuestGiver()
 	{
@@ -206,7 +203,7 @@ public:
 
 	/// Quest data
 	std::list<QuestRelation *>* m_quests;
-   
+
 	uint32 *m_ritualmembers;
 	uint32 m_ritualcaster,m_ritualtarget;
 	uint16 m_ritualspell;
@@ -220,13 +217,12 @@ public:
 	int32 charges;//used for type==22,to limit number of usages.
 	bool invisible;//invisible
 	uint8 invisibilityFlag;
-	UnitPointer m_summoner;
+	Unit* m_summoner;
 	int8 bannerslot;
 	int8 bannerauraslot;
-	BattlegroundPointer m_battleground;
+	CBattleground* m_battleground;
 
 	void CallScriptUpdate();
-   
 
 	ASCENT_INLINE GameObjectAIScript* GetScript() { return myScript; }
 
@@ -235,14 +231,15 @@ public:
 	ASCENT_INLINE bool HasAI() { return spell != 0; }
 	GOSpawn * m_spawn;
 	void OnPushToWorld();
-	void OnRemoveInRangeObject(ObjectPointer pObj);
+	void OnRemoveInRangeObject(Object* pObj);
 	void RemoveFromWorld(bool free_guid);
 
 	ASCENT_INLINE bool CanMine(){return (mines_remaining > 0);}
 	ASCENT_INLINE void UseMine(){ if(mines_remaining) mines_remaining--;}
 	void CalcMineRemaining(bool force)
 	{
-		mines_remaining = 0;//3.0.9
+		if(force || !mines_remaining)
+			mines_remaining = GetInfo()->sound4 + RandomUInt(GetInfo()->sound5 - GetInfo()->sound4) - 1;
 	}
 
 	uint32 GetGOReqSkill();
@@ -256,6 +253,11 @@ public:
 //	custom functions for scripting
 	void SetState(uint8 state);
 	uint8 GetState();
+
+	//Destructable Building
+	uint32 Health;
+	void TakeDamage(uint32 ammount);
+	void Rebuild();
 
 protected:
 

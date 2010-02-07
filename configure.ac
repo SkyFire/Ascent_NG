@@ -1,8 +1,8 @@
 ## Process this file with autoconf to produce a configure script.
 
-AC_INIT([Ascent],
+AC_INIT([AscentNG],
         [3.6],
-        [www.ascentcommunity.com],
+        [www.ascentemulator.net],
         [ascent])
 
 AC_PREREQ(2.5)
@@ -293,7 +293,7 @@ AC_OUTPUT
 
 echo
 echo "===================================="
-echo "Ascent configure report:"
+echo "AscentNG configure report:"
 echo
 echo " Core:" 
 echo "             os: ${OSNAME}"

@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Scripts for Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 
@@ -58,7 +53,7 @@ static const uint32 g_allianceStateFields[3] = { WORLDSTATE_HELLFIRE_STADIUM_ALL
 static const uint32 g_neutralStateFields[3] = { WORLDSTATE_HELLFIRE_STADIUM_NEUTRAL, WORLDSTATE_HELLFIRE_OVERLOOK_NEUTRAL, WORLDSTATE_HELLFIRE_BROKENHILL_NEUTRAL };
 
 // updates clients visual counter, and adds the buffs to players if needed
-ASCENT_INLINE void UpdateTowerCount(shared_ptr<MapMgr> mgr)
+ASCENT_INLINE void UpdateTowerCount(MapMgr* mgr)
 {
 	if(!mgr)
 		return;
@@ -107,9 +102,9 @@ class HellfirePeninsulaBannerAI : public GameObjectAIScript
 	uint32 m_bannerStatus;
 
 public:
-	GameObjectPointer  pBanner;
+	GameObject*  pBanner;
 
-	HellfirePeninsulaBannerAI(GameObjectPointer go) : GameObjectAIScript(go)
+	HellfirePeninsulaBannerAI(GameObject* go) : GameObjectAIScript(go)
 	{
 		m_bannerStatus = BANNER_STATUS_NEUTRAL;
 		Status = 50;
@@ -146,13 +141,13 @@ public:
 		//   the value of the map is a timestamp of the last update, to avoid cpu time wasted
 		//   doing lookups of objects that have already been updated
 
-		unordered_set<PlayerPointer>::iterator itr = _gameobject->GetInRangePlayerSetBegin();		
-		unordered_set<PlayerPointer>::iterator itrend = _gameobject->GetInRangePlayerSetEnd();
+		unordered_set<Player*>::iterator itr = _gameobject->GetInRangePlayerSetBegin();		
+		unordered_set<Player*>::iterator itrend = _gameobject->GetInRangePlayerSetEnd();
 		map<uint32,uint32>::iterator it2, it3;
 		uint32 timeptr = (uint32)UNIXTIME;
 		bool in_range;
 		bool is_valid;
-		PlayerPointer plr = NULLPLR;
+		Player* plr = NULL;
 		
 		for(; itr != itrend; ++itr)
 		{
@@ -161,7 +156,7 @@ public:
 			else
 				is_valid = true;
 
-			in_range = (_gameobject->GetDistanceSq((*itr)) <= BANNER_RANGE) ? true : false;
+			in_range = (_gameobject->GetDistance2dSq((*itr)) <= BANNER_RANGE) ? true : false;
 
 			it2 = StoredPlayers.find((*itr)->GetLowGUID());
 			if( it2 == StoredPlayers.end() )
@@ -401,7 +396,7 @@ public:
 // Zone Hook
 //////////////////////////////////////////////////////////////////////////
 
-void ZoneHook(PlayerPointer plr, uint32 Zone, uint32 OldZone)
+void ZoneHook(Player* plr, uint32 Zone, uint32 OldZone)
 {
 	static uint32 spellids[2] = { HELLFIRE_SUPERORITY_ALLIANCE, HELLFIRE_SUPERORITY_HORDE };
 	if( Zone == ZONE_HELLFIRE_PENINSULA )
@@ -435,7 +430,7 @@ struct sgodata
 	uint32 is_banner;
 };
 
-void SpawnObjects(shared_ptr<MapMgr> pmgr)
+void SpawnObjects(MapMgr* pmgr)
 {
 	if(!pmgr || pmgr->GetMapId() != 530)
 		return;
@@ -461,11 +456,11 @@ void SpawnObjects(shared_ptr<MapMgr> pmgr)
 		p = &godata[i];
 		p2 = &godata_banner[i];
 
-		GameObjectPointer pGo = pmgr->GetInterface()->SpawnGameObject(p->entry, p->posx, p->posy, p->posz, p->facing, false, 0, 0);
+		GameObject* pGo = pmgr->GetInterface()->SpawnGameObject(p->entry, p->posx, p->posy, p->posz, p->facing, false, 0, 0);
 		if( pGo == NULL )
 			continue;
 
-		GameObjectPointer pGo2 = pmgr->GetInterface()->SpawnGameObject(p2->entry, p2->posx, p2->posy, p2->posz, p2->facing, false, 0, 0);
+		GameObject* pGo2 = pmgr->GetInterface()->SpawnGameObject(p2->entry, p2->posx, p2->posy, p2->posz, p2->facing, false, 0, 0);
 		if( pGo2 == NULL )
 			continue;
 

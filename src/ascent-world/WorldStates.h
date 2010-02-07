@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #ifndef __WORLD_STATES_H
 #define __WORLD_STATES_H
@@ -216,10 +211,7 @@
 #define WORLDSTATE_EOTS_PVP_CAPTURE_BAR_DISPLAY					2718
 #define WORLDSTATE_EOTS_PVP_CAPTURE_BAR_VALUE					2719
 
-/**
-* Battleground
-* Strand of the Ancients
-*/
+/*** Battleground Strand of the Ancients ***/
 
 // Progress bar
 #define WORLDSTATE_SOTA_CAPTURE_BAR_DISPLAY					3536
@@ -238,10 +230,64 @@
 #define WORLDSTATE_SOTA_TIMER_2						3560 //second digit
 #define WORLDSTATE_SOTA_TIMER_3						3561 //third digit
 
-/**
- * World PvP
- * Hellfire Peninsula
- */
+
+/*** Battleground  The Isle of Conquest ***/
+
+enum IOC_WORLD_STATES
+{
+	WORLDSTATE_IOC_ALLIANCE_SCORE						= 4221,		// it is right?
+	WORLDSTATE_IOC_HORDE_SCORE							= 4222,		// is it right?
+	WORLDSTATE_IOC_ALLIANCE_EAST_GATE					= 4326,
+	WORLDSTATE_IOC_ALLIANCE_GATE_DESTROYED_1			= 4323,		// wich gate is it?	(east)
+	WORLDSTATE_IOC_ALLIANCE_GATE_DESTROYED_2			= 4325,		// wich gate is it? (west)
+	WORLDSTATE_IOC_ALLIANCE_GATE_DESTROYED_3			= 4324,		// wich gate is it? (fornt)
+	WORLDSTATE_IOC_ALLIANCE_WEST_GATE					= 4327,
+	WORLDSTATE_IOC_ALLIANCE_FRONT_GATE					= 4328,
+	WORLDSTATE_IOC_ALLIANCE_KEEP_ALLIANCE_CONTROLLED	= 4339,	
+	WORLDSTATE_IOC_ALLIANCE_KEEP_HORDE_CONTROLLED		= 4340,
+	WORLDSTATE_IOC_ALLIANCE_KEEP_ALLIANCE_ASSAULTED		= 4342,
+	WORLDSTATE_IOC_ALLIANCE_KEEP_HORDE_ASSAULTED		= 4343,
+	WORLDSTATE_IOC_ALLIANCE_KEEP_NETURAL				= 4341,
+	WORLDSTATE_IOC_HORDE_KEEP_ALLIANCE_CONTROLLED		= 4344,
+	WORLDSTATE_IOC_HORDE_KEEP_HORDE_CONTROLLED			= 4345,
+	WORLDSTATE_IOC_HORDE_KEEP_ALLIANCE_ASSAULTED		= 4347,
+	WORLDSTATE_IOC_HORDE_KEEP_HORDE_ASSAULTED			= 4348,
+	WORLDSTATE_IOC_HORDE_KEEP_NETURAL					= 4346,
+	WORLDSTATE_IOC_DOCKS_ALLIANCE_CONTROLLED			= 4304,
+	WORLDSTATE_IOC_DOCKS_HORDE_CONTROLLED				= 4303,
+	WORLDSTATE_IOC_DOCKS_ALLIANCE_ASSAULTED				= 4305,
+	WORLDSTATE_IOC_DOCKS_HORDE_ASSAULTED				= 4302,
+	WORLDSTATE_IOC_DOCKS_NETURAL						= 4301,
+	WORLDSTATE_IOC_HANGAR_ALLIANCE_CONTROLLED			= 4299,
+	WORLDSTATE_IOC_HANGAR_HORDE_CONTROLLED				= 4298,
+	WORLDSTATE_IOC_HANGAR_ALLIANCE_ASSAULTED			= 4300,
+	WORLDSTATE_IOC_HANGAR_HORDE_ASSAULTED				= 4297,
+	WORLDSTATE_IOC_HANGAR_NETURAL						= 4296,
+	WORLDSTATE_IOC_QUARRY_ALLIANCE_CONTROLLED			= 4309,
+	WORLDSTATE_IOC_QUARRY_HORDE_CONTROLLED				= 4308,
+	WORLDSTATE_IOC_QUARRY_ALLIANCE_ASSAULTED			= 4310,
+	WORLDSTATE_IOC_QUARRY_HORDE_ASSAULTED				= 4307,
+	WORLDSTATE_IOC_QUARRY_NETURAL						= 4306,
+	WORLDSTATE_IOC_REFINERY_ALLIANCE_CONTROLLED			= 4314,
+	WORLDSTATE_IOC_REFINERY_HORDE_CONTROLLED			= 4313,
+	WORLDSTATE_IOC_REFINERY_ALLIANCE_ASSAULTED			= 4315,
+	WORLDSTATE_IOC_REFINERY_HORDE_ASSAULTED				= 4312,
+	WORLDSTATE_IOC_REFINERY_NETURAL						= 4311,
+	WORLDSTATE_IOC_WORKSHOP_ALLIANCE_CONTROLLED			= 4229,
+	WORLDSTATE_IOC_WORKSHOP_HORDE_CONTROLLED			= 4230,
+	WORLDSTATE_IOC_WORKSHOP_ALLIANCE_ASSAULTED			= 4228,
+	WORLDSTATE_IOC_WORKSHOP_HORDE_ASSAULTED				= 4293,
+	WORLDSTATE_IOC_WORKSHOP_NETURAL						= 4294,			
+	WORLDSTATE_IOC_HORDE_EAST_GATE						= 4319,
+	WORLDSTATE_IOC_HORDE_GATE_DESTROYED_1				= 4322,		// wich gate is it? (front)
+	WORLDSTATE_IOC_HORDE_GATE_DESTROYED_2				= 4320,		// wich gate is it? (east)
+	WORLDSTATE_IOC_HORDE_GATE_DESTROYED_3				= 4321,		// wich gate is it? (west)
+	WORLDSTATE_IOC_HORDE_WEST_GATE						= 4318,
+	WORLDSTATE_IOC_HORDE_FRONT_GATE						= 4317,	
+};
+
+
+/*** World PvP Hellfire Peninsula ***/
 
 // Tower Counter Value
 #define WORLDSTATE_HELLFIRE_ALLIANCE_TOWERS_CONTROLLED			2476

@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 
@@ -123,7 +118,7 @@ void Player::smsg_InitialFactions()
 		{
 			if(rep->flag & 2 && rep->standing >= 0)
 			{
-				printf("listid %u\n", i);
+				DEBUG_LOG("Player","smsg_InitialFactions reputationByListId[%u]", i);
 			}
 			// TODO fix. Structure is right but need to filter sent data.
 			// crashes client when opening rep window with assert((value >= min) && (value <= max))
@@ -422,7 +417,7 @@ void Player::UpdateInrangeSetsBasedOnReputation()
 {
 	// This function assumes that the opp faction set for player = the opp faction set for the unit.
 	InRangeSet::iterator itr;
-	UnitPointer pUnit;
+	Unit* pUnit;
 	bool rep_value;
 	bool enemy_current;
 	for( itr = m_objectsInRange.begin(); itr != m_objectsInRange.end(); ++itr )
@@ -444,7 +439,7 @@ void Player::UpdateInrangeSetsBasedOnReputation()
 	}
 }
 
-void Player::Reputation_OnKilledUnit(UnitPointer pUnit, bool InnerLoop)
+void Player::Reputation_OnKilledUnit(Unit* pUnit, bool InnerLoop)
 {
 	// add rep for on kill
 	if(pUnit->GetTypeId() != TYPEID_UNIT || pUnit->IsPet())
@@ -460,7 +455,7 @@ void Player::Reputation_OnKilledUnit(UnitPointer pUnit, bool InnerLoop)
 		{
 			for(it = m_Group->GetSubGroup(i)->GetGroupMembersBegin(); it != m_Group->GetSubGroup(i)->GetGroupMembersEnd(); ++it)
 			{
-				if((*it)->m_loggedInPlayer && (*it)->m_loggedInPlayer->isInRange(plr_shared_from_this(),100.0f))
+				if((*it)->m_loggedInPlayer && (*it)->m_loggedInPlayer->isInRange(TO_PLAYER(this),100.0f))
 					(*it)->m_loggedInPlayer->Reputation_OnKilledUnit(pUnit, true);
 			}
 		}
@@ -495,7 +490,7 @@ void Player::Reputation_OnKilledUnit(UnitPointer pUnit, bool InnerLoop)
 	}
 	else
 	{
-		if(IS_INSTANCE(GetMapId()) && objmgr.HandleInstanceReputationModifiers(player_shared_from_this(), pUnit))
+		if(IS_INSTANCE(GetMapId()) && objmgr.HandleInstanceReputationModifiers(TO_PLAYER(this), pUnit))
 			return;
 
 		if(pUnit->m_factionDBC->RepListId < 0)

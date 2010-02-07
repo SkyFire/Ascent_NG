@@ -1,21 +1,17 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Scripts for Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
+
 
 #include "StdAfx.h"
 
@@ -56,7 +52,7 @@ int32 silithyst_gathered[2] = { 0, 0 };
 int32 winners = -1;
 bool locked = false;
 
-void InitWorldStates(shared_ptr<MapMgr> pmgr)
+void InitWorldStates(MapMgr* pmgr)
 {
 	if(!pmgr)
 		return;
@@ -68,7 +64,7 @@ void InitWorldStates(shared_ptr<MapMgr> pmgr)
 	}
 }
 
-void SilithusZoneHook(PlayerPointer plr, uint32 Zone, uint32 OldZone)
+void SilithusZoneHook(Player* plr, uint32 Zone, uint32 OldZone)
 {
 	if(!plr)
 		return;
@@ -85,7 +81,7 @@ void SilithusZoneHook(PlayerPointer plr, uint32 Zone, uint32 OldZone)
 	}
 }
 
-void AreatriggerHook(PlayerPointer pPlayer, uint32 triggerID)
+void AreatriggerHook(Player* pPlayer, uint32 triggerID)
 {
 	if(!pPlayer)
 		return;
@@ -127,10 +123,10 @@ void AreatriggerHook(PlayerPointer pPlayer, uint32 triggerID)
 class SilithystPickup : public GameObjectAIScript
 {
 public:
-	SilithystPickup(GameObjectPointer goinstance) : GameObjectAIScript(goinstance) {}
-	static GameObjectAIScript *Create(GameObjectPointer  GO) { return new SilithystPickup(GO); }
+	SilithystPickup(GameObject* goinstance) : GameObjectAIScript(goinstance) {}
+	static GameObjectAIScript *Create(GameObject*  GO) { return new SilithystPickup(GO); }
 
-	void OnActivate(PlayerPointer  pPlayer)
+	void OnActivate(Player*  pPlayer)
 	{
 		if( pPlayer && !pPlayer->HasAura( SILITHYST_SPELL ) )
 			pPlayer->CastSpell(pPlayer, SILITHYST_SPELL, true);
@@ -140,7 +136,7 @@ public:
 	}
 };
 
-void DropFlag(PlayerPointer  pPlayer, uint32 spellID)
+void DropFlag(Player*  pPlayer, uint32 spellID)
 {
 	if( !pPlayer || spellID != SILITHYST_SPELL )
 		return;
@@ -150,11 +146,11 @@ void DropFlag(PlayerPointer  pPlayer, uint32 spellID)
 	if( pAreaTrigger )
 		if( pPlayer->CalcDistance(pAreaTrigger->x,pAreaTrigger->y,pAreaTrigger->z) > 10.0f )
 		{
-			GameObjectPointer pGo = pPlayer->GetMapMgr()->GetInterface()->SpawnGameObject(SILITHYST_MOUND, pPlayer->GetPositionX(), pPlayer->GetPositionY(), pPlayer->GetPositionZ(), 0, true, 0, 0);
+			GameObject* pGo = pPlayer->GetMapMgr()->GetInterface()->SpawnGameObject(SILITHYST_MOUND, pPlayer->GetPositionX(), pPlayer->GetPositionY(), pPlayer->GetPositionZ(), 0, true, 0, 0);
 			if( pGo == NULL )
 			{
 				pGo->Destructor();
-				pGo = NULLGOB;
+				pGo = NULL;
 			}
 		};
 }

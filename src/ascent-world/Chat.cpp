@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 
@@ -200,12 +195,12 @@ void CommandTableStorage::Init()
 		{ "energy",	 'm', NULL,	"Energy Points",	   NULL, UNIT_FIELD_POWER4,	UNIT_FIELD_MAXPOWER4, 1 },
 		{ "level",	  'm', &ChatHandler::HandleModifyLevelCommand,"Level", NULL, 0, 0, 0 },
 		{ "armor",	  'm', NULL,	"Armor",			   NULL, UNIT_FIELD_STAT1,			  0,		   1 },
-		{ "holy",	   'm', NULL,	"Holy Resistance",	 NULL, UNIT_FIELD_RESISTANCES_1,	 0,		   1 },
-		{ "fire",	   'm', NULL,	"Fire Resistance",	 NULL, UNIT_FIELD_RESISTANCES_2,	 0,		   1 },
-		{ "nature",	 'm', NULL,	"Nature Resistance",   NULL, UNIT_FIELD_RESISTANCES_3,	 0,		   1 },
-		{ "frost",	  'm', NULL,	"Frost Resistance",	NULL, UNIT_FIELD_RESISTANCES_4,	 0,		   1 },
-		{ "shadow",	 'm', NULL,	"Shadow Resistance",   NULL, UNIT_FIELD_RESISTANCES_5,	 0,		   1 },
-		{ "arcane",	 'm', NULL,	"Arcane Resistance",   NULL, UNIT_FIELD_RESISTANCES_6,	 0,		   1 },
+		{ "holy",	   'm', NULL,	"Holy Resistance",	 NULL, UNIT_FIELD_RESISTANCES + 1,	 0,		   1 },
+		{ "fire",	   'm', NULL,	"Fire Resistance",	 NULL, UNIT_FIELD_RESISTANCES + 2,	 0,		   1 },
+		{ "nature",	 'm', NULL,	"Nature Resistance",   NULL, UNIT_FIELD_RESISTANCES + 3,	 0,		   1 },
+		{ "frost",	  'm', NULL,	"Frost Resistance",	NULL, UNIT_FIELD_RESISTANCES + 4,	 0,		   1 },
+		{ "shadow",	 'm', NULL,	"Shadow Resistance",   NULL, UNIT_FIELD_RESISTANCES + 5,	 0,		   1 },
+		{ "arcane",	 'm', NULL,	"Arcane Resistance",   NULL, UNIT_FIELD_RESISTANCES + 6,	 0,		   1 },
 		{ "damage",	 'm', NULL,	"Unit Damage Min/Max", NULL, UNIT_FIELD_MINDAMAGE,  UNIT_FIELD_MAXDAMAGE,2 },
 		{ "scale",	  'm', NULL,	"Size/Scale",		  NULL, OBJECT_FIELD_SCALE_X, 0,					2 },
 		{ "gold",	   'm', &ChatHandler::HandleModifyGoldCommand,  "Gold/Money/Copper",	  NULL,   0,  0,  0 },
@@ -402,7 +397,7 @@ void CommandTableStorage::Init()
 
 	static ChatCommand accountCommandTable[] =
 	{
-		{ "ban",	'a', &ChatHandler::HandleAccountBannedCommand,	"Ban account. .account ban name timeperiod",		NULL, 0, 0, 0 },
+		{ "ban",	'a', &ChatHandler::HandleAccountBannedCommand,	"Ban account. .account ban name timeperiod reason",	NULL, 0, 0, 0 },
 		{ "unban",	'z', &ChatHandler::HandleAccountUnbanCommand,	"Unbans account x.",								NULL, 0, 0, 0 },
 		{ "level",	'z', &ChatHandler::HandleAccountLevelCommand,	"Sets gm level on account. <username><gm_lvl>.",	NULL, 0, 0, 0 },
 		{ "mute",	'a', &ChatHandler::HandleAccountMuteCommand,	"Mutes account for <timeperiod>.",					NULL, 0, 0, 0 },
@@ -428,6 +423,8 @@ void CommandTableStorage::Init()
 		{ "renamepet",		'm', &ChatHandler::HandleRenamePetCommand,		"Renames a pet to <name>.",		NULL, 0, 0, 0 },
 		{ "addspell",		'm', &ChatHandler::HandleAddPetSpellCommand,	"Teaches pet <spell>.",			NULL, 0, 0, 0 },
 		{ "removespell",	'm', &ChatHandler::HandleRemovePetSpellCommand,	"Removes pet spell <spell>.",	NULL, 0, 0, 0 },
+		{ "addtalentpoints",'m', &ChatHandler::HandleAddPetTalentPoints,    "Adds <x> talent points to pet",NULL, 0, 0, 0 },
+		{ "resettalents",   'm', &ChatHandler::HandleResetPetTalents,       "Resets the pets talents",      NULL, 0, 0, 0 },
 		{ NULL,				  0, NULL,										"",								NULL,0,0,0},
 	};
 	dupe_command_table(petCommandTable, _petCommandTable);
@@ -540,7 +537,7 @@ void CommandTableStorage::Init()
 		{ "exitinstance",  'm', &ChatHandler::HandleExitInstanceCommand,  "Exits current instance, return to entry point.", NULL, 0, 0, 0 },
 		{ "reloadtable",	  'm', &ChatHandler::HandleDBReloadCommand,	  "Reloads some of the database tables", NULL, 0, 0, 0 },
 		{ "shutdown", 'z', &ChatHandler::HandleShutdownCommand, "Initiates server shutdown in <x> seconds.", NULL, 0, 0, 0 },
-		{ "restart", 'z', &ChatHandler::HandleShutdownRestartCommand, "Initiates server restart in <x> seconds.", NULL, 0, 0, 0 },
+		{ "restart", 'z', &ChatHandler::HandleShutdownCommand, "Initiates server restart in <x> seconds.", NULL, 0, 0, 0 },
 		{ "allowwhispers", 'c', &ChatHandler::HandleAllowWhispersCommand, "Allows whispers from player <s> while in gmon mode.", NULL, 0, 0, 0 },
 		{ "blockwhispers", 'c', &ChatHandler::HandleBlockWhispersCommand, "Blocks whispers from player <s> while in gmon mode.", NULL, 0, 0, 0 },
 		{ "advanceallskills", 'm', &ChatHandler::HandleAdvanceAllSkillsCommand, "Advances all skills <x> points.", NULL, 0, 0, 0 },
@@ -556,7 +553,7 @@ void CommandTableStorage::Init()
 		{ "formationlink2", 'm', &ChatHandler::HandleFormationLink2Command, "Sets formation slave with distance and angle", NULL, 0, 0, 0 },
 		{ "formationclear", 'm', &ChatHandler::HandleFormationClearCommand, "Removes formation from creature", NULL, 0, 0, 0 },
 		{ "playall", 'z', &ChatHandler::HandleGlobalPlaySoundCommand, "Plays a sound to the entire server.", NULL, 0, 0, 0 },
-		{ "addipban", 'm', &ChatHandler::HandleIPBanCommand, "Adds an address to the IP ban table: <address> [duration]\nDuration must be a number optionally followed by a character representing the calendar subdivision to use (h>hours, d>days, w>weeks, m>months, y>years, default minutes)\nLack of duration results in a permanent ban.", NULL, 0, 0, 0 },
+		{ "addipban", 'm', &ChatHandler::HandleIPBanCommand, "Adds an address to the IP ban table: <address>/<mask> <duration>\n Mask represents a subnet mask, use /32 to ban a single ip.\nDuration should be a number followed by a character representing the calendar subdivision to use (h>hours, d>days, w>weeks, m>months, y>years, default minutes).", NULL, 0, 0, 0 },
 		{ "delipban", 'm', &ChatHandler::HandleIPUnBanCommand, "Deletes an address from the IP ban table: <address>", NULL, 0, 0, 0},
 		{ "renamechar", 'm', &ChatHandler::HandleRenameCommand, "Renames character x to y.", NULL, 0, 0, 0 },
 		{ "forcerenamechar", 'm', &ChatHandler::HandleForceRenameCommand, "Forces character x to rename his char next login", NULL, 0, 0, 0 },
@@ -739,13 +736,19 @@ bool ChatHandler::ExecuteCommandInTable(ChatCommand *table, const char* text, Wo
 int ChatHandler::ParseCommands(const char* text, WorldSession *session)
 {
 	if (!session)
+	{
 		return 0;
+	}
 
 	if(!*text)
+	{
 		return 0;
+	}
 
 	if(session->GetPermissionCount() == 0 && sWorld.m_reqGmForCommands)
+	{
 		return 0;
+	}
 
 	if(text[0] != '!' && text[0] != '.') // let's not confuse users
 		return 0;
@@ -815,10 +818,10 @@ WorldPacket* ChatHandler::FillSystemMessageData(const char *message) const
 	return data;
 }
 
-PlayerPointer ChatHandler::getSelectedChar(WorldSession *m_session, bool showerror)
+Player* ChatHandler::getSelectedChar(WorldSession *m_session, bool showerror)
 {
 	uint64 guid;
-	PlayerPointer chr;
+	Player* chr;
 	
 	guid = m_session->GetPlayer()->GetSelection();
 	
@@ -835,16 +838,16 @@ PlayerPointer ChatHandler::getSelectedChar(WorldSession *m_session, bool showerr
 	{
 		if(showerror) 
 			RedSystemMessage(m_session, "This command requires that you select a player.");
-		return NULLPLR;
+		return NULL;
 	}
 
 	return chr;
 }
 
-CreaturePointer ChatHandler::getSelectedCreature(WorldSession *m_session, bool showerror)
+Creature* ChatHandler::getSelectedCreature(WorldSession *m_session, bool showerror)
 {
 	uint64 guid;
-	CreaturePointer creature = NULLCREATURE;
+	Creature* creature = NULL;
 
 	guid = m_session->GetPlayer()->GetSelection();
 	if(GET_TYPE_FROM_GUID(guid) == HIGHGUID_TYPE_PET)
@@ -860,7 +863,7 @@ CreaturePointer ChatHandler::getSelectedCreature(WorldSession *m_session, bool s
 	{
 		if(showerror) 
 			RedSystemMessage(m_session, "This command requires that you select a creature.");
-		return NULLCREATURE;
+		return NULL;
 	}
 }
 
@@ -937,7 +940,7 @@ void ChatHandler::BlueSystemMessage(WorldSession *m_session, const char *message
 	delete data;
 }
 
-void ChatHandler::RedSystemMessageToPlr(PlayerPointer plr, const char *message, ...)
+void ChatHandler::RedSystemMessageToPlr(Player* plr, const char *message, ...)
 {
 	if( !message || !plr->GetSession() ) return;
 	va_list ap;
@@ -947,7 +950,7 @@ void ChatHandler::RedSystemMessageToPlr(PlayerPointer plr, const char *message, 
 	RedSystemMessage(plr->GetSession(), (const char*)msg1);
 }
 
-void ChatHandler::GreenSystemMessageToPlr(PlayerPointer plr, const char *message, ...)
+void ChatHandler::GreenSystemMessageToPlr(Player* plr, const char *message, ...)
 {
 	if( !message || !plr->GetSession() ) return;
 	va_list ap;
@@ -957,7 +960,7 @@ void ChatHandler::GreenSystemMessageToPlr(PlayerPointer plr, const char *message
 	GreenSystemMessage(plr->GetSession(), (const char*)msg1);
 }
 
-void ChatHandler::BlueSystemMessageToPlr(PlayerPointer plr, const char *message, ...)
+void ChatHandler::BlueSystemMessageToPlr(Player* plr, const char *message, ...)
 {
 	if( !message || !plr->GetSession() ) return;
 	va_list ap;
@@ -967,7 +970,7 @@ void ChatHandler::BlueSystemMessageToPlr(PlayerPointer plr, const char *message,
 	BlueSystemMessage(plr->GetSession(), (const char*)msg1);
 }
 
-void ChatHandler::SystemMessageToPlr(PlayerPointer plr, const char* message, ...)
+void ChatHandler::SystemMessageToPlr(Player* plr, const char* message, ...)
 {
 	if( !message || !plr->GetSession() ) return;
 	va_list ap;
@@ -979,14 +982,16 @@ void ChatHandler::SystemMessageToPlr(PlayerPointer plr, const char* message, ...
 
 bool ChatHandler::CmdSetValueField(WorldSession *m_session, uint32 field, uint32 fieldmax, const char *fieldname, const char *args)
 {
-	if(!args) return false;
+	if(!args)
+		return false;
+
 	char* pvalue = strtok((char*)args, " ");
 	uint32 mv, av;
 
-	if (!pvalue)
-		return false;
-	else
+	if (pvalue)
 		av = atol(pvalue);
+	else
+		return false;
 
 	if(fieldmax)
 	{
@@ -997,26 +1002,27 @@ bool ChatHandler::CmdSetValueField(WorldSession *m_session, uint32 field, uint32
 			mv = atol(pvaluemax);
 	}
 	else
-	{
 		mv = 0;
-	}
 
-	if (av <= 0 && mv > 0)
+	//valid UNIT_FIELD?
+	if(field <= OBJECT_END || field > UNIT_END )
 	{  
-		RedSystemMessage(m_session, "Values are invalid. Value must be < max (if max exists), and both must be > 0.");
+		RedSystemMessage(m_session, "Specified field is not valid.");
 		return true;   
 	}
-	if(fieldmax)
+	if (av <= 0 )
+	{  
+		RedSystemMessage(m_session, "Values are invalid. Value must be > 0.");
+		return true;   
+	}
+	if(fieldmax && (mv < av || mv <= 0))
 	{
-		if(mv < av || mv <= 0)
-		{
-			RedSystemMessage(m_session, "Values are invalid. Value must be < max (if max exists), and both must be > 0.");
-			return true;  
-		}
+		RedSystemMessage(m_session, "Values are invalid. Max value must be >= new value.");
+		return true;  
 	}
 
-	PlayerPointer plr = getSelectedChar(m_session, false);
-	if(plr)
+	Player* plr = getSelectedChar(m_session, false);
+	if(plr!=NULL)
 	{  
 		sGMLog.writefromsession(m_session, "used modify field value: %s, %u on %s", fieldname, av, plr->GetName());
 		if(fieldmax)
@@ -1032,33 +1038,21 @@ bool ChatHandler::CmdSetValueField(WorldSession *m_session, uint32 field, uint32
 
 		if(field == UNIT_FIELD_STAT1) av /= 2;
 		if(field == UNIT_FIELD_BASE_HEALTH) 
-		{
 			plr->SetUInt32Value(UNIT_FIELD_HEALTH, av);
-		}
 
 		plr->SetUInt32Value(field, av);
 
-		if(fieldmax) {
+		if(fieldmax)
 			plr->SetUInt32Value(fieldmax, mv);
-		}
 	}
 	else
 	{
-		CreaturePointer cr = getSelectedCreature(m_session, false);
+		Creature* cr = getSelectedCreature(m_session, false);
 		if(cr)
 		{
-			if(!(field < UNIT_END && fieldmax < UNIT_END)) return false;
-			std::string creaturename = "Unknown Being";
-			if(cr->GetCreatureName())
-				creaturename = cr->GetCreatureName()->Name;
-			if(fieldmax)
-				BlueSystemMessage(m_session, "Setting %s of %s to %d/%d.", fieldname, creaturename.c_str(), av, mv);
-			else
-				BlueSystemMessage(m_session, "Setting %s of %s to %d.", fieldname, creaturename.c_str(), av);
+			std::string creaturename = cr->GetCreatureInfo() ? cr->GetCreatureInfo()->Name : "Unknown Being";
+
 			sGMLog.writefromsession(m_session, "used modify field value: [creature]%s, %u on %s", fieldname, av, creaturename.c_str());
-			if(field == UNIT_FIELD_STAT1) av /= 2;
-			if(field == UNIT_FIELD_BASE_HEALTH) 
-				cr->SetUInt32Value(UNIT_FIELD_HEALTH, av);
 
 			switch(field)
 			{
@@ -1066,22 +1060,32 @@ bool ChatHandler::CmdSetValueField(WorldSession *m_session, uint32 field, uint32
 				{
 					if(cr->m_spawn)
 						WorldDatabase.Execute("UPDATE creature_spawns SET faction = %u WHERE entry = %u", av, cr->m_spawn->entry);
+					cr->_setFaction();
 				}break;
 			case UNIT_NPC_FLAGS:
 				{
 					if(cr->proto)
 						WorldDatabase.Execute("UPDATE creature_proto SET npcflags = %u WHERE entry = %u", av, cr->proto->Id);
 				}break;
+			case UNIT_FIELD_STAT1:
+				{
+					av /= 2;
+				}break;
+			case UNIT_FIELD_BASE_HEALTH:
+				{
+					cr->SetUInt32Value(UNIT_FIELD_HEALTH, av);
+				}break;
 			}
 
 			cr->SetUInt32Value(field, av);
 
-			if(fieldmax) {
+			if(fieldmax)
+			{
 				cr->SetUInt32Value(fieldmax, mv);
+				BlueSystemMessage(m_session, "Setting %s of %s to %d/%d.", fieldname, creaturename.c_str(), av, mv);
 			}
-			// reset faction
-			if(field == UNIT_FIELD_FACTIONTEMPLATE)
-				cr->_setFaction();
+			else
+				BlueSystemMessage(m_session, "Setting %s of %s to %d.", fieldname, creaturename.c_str(), av);
 
 			cr->SaveToDB();
 		}
@@ -1130,8 +1134,8 @@ bool ChatHandler::CmdSetFloatField(WorldSession *m_session, uint32 field, uint32
 		}
 	}
 
-	PlayerPointer plr = getSelectedChar(m_session, false);
-	if(plr)
+	Player* plr = getSelectedChar(m_session, false);
+	if(plr!=NULL)
 	{  
 		sGMLog.writefromsession(m_session, "used modify field value: %s, %f on %s", fieldname, av, plr->GetName());
 		if(fieldmax)
@@ -1149,13 +1153,13 @@ bool ChatHandler::CmdSetFloatField(WorldSession *m_session, uint32 field, uint32
 	}
 	else
 	{
-		CreaturePointer cr = getSelectedCreature(m_session, false);
+		Creature* cr = getSelectedCreature(m_session, false);
 		if(cr)
 		{
 			if(!(field < UNIT_END && fieldmax < UNIT_END)) return false;
 			std::string creaturename = "Unknown Being";
-			if(cr->GetCreatureName())
-				creaturename = cr->GetCreatureName()->Name;
+			if(cr->GetCreatureInfo())
+				creaturename = cr->GetCreatureInfo()->Name;
 			if(fieldmax)
 				BlueSystemMessage(m_session, "Setting %s of %s to %.1f/%.1f.", fieldname, creaturename.c_str(), av, mv);
 			else
@@ -1178,7 +1182,7 @@ bool ChatHandler::CmdSetFloatField(WorldSession *m_session, uint32 field, uint32
 bool ChatHandler::HandleGetPosCommand(const char* args, WorldSession *m_session)
 {
 	/*if(m_session->GetPlayer()->GetSelection() == 0) return false;
-	CreaturePointer creature = objmgr.GetCreature(m_session->GetPlayer()->GetSelection());
+	Creature* creature = objmgr.GetCreature(m_session->GetPlayer()->GetSelection());
 
 	if(!creature) return false;
 	BlueSystemMessage(m_session, "Creature Position: \nX: %f\nY: %f\nZ: %f\n", creature->GetPositionX(), creature->GetPositionY(), creature->GetPositionZ());
@@ -1194,7 +1198,7 @@ bool ChatHandler::HandleGetPosCommand(const char* args, WorldSession *m_session)
 
 bool ChatHandler::HandleDebugRetroactiveQuestAchievements(const char *args, WorldSession *m_session)
 {
-	PlayerPointer pTarget = getSelectedChar(m_session, true );
+	Player* pTarget = getSelectedChar(m_session, true );
 	if(!pTarget) return true;
 
 	pTarget->RetroactiveCompleteQuests();

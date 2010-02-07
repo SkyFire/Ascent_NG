@@ -1,21 +1,17 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
+
 
 #ifndef _MAP_SCRIPT_INTERFACE_H
 #define _MAP_SCRIPT_INTERFACE_H
@@ -34,19 +30,20 @@ class Player;
 class SERVER_DECL MapScriptInterface
 {
 public:
-	MapScriptInterface(MapMgrPointer mgr);
+	MapScriptInterface(MapMgr* mgr);
 	~MapScriptInterface();
 
-	template<class T, uint32 TypeId> shared_ptr<T> GetObjectNearestCoords(uint32 Entry, float x, float y, float z = 0.0f, float ClosestDist = 999999.0f)
+	template<class T, uint32 TypeId> T* GetObjectNearestCoords(uint32 Entry, float x, float y, float z, float ClosestDist)
 	{
 		MapCell * pCell = mapMgr->GetCell(mapMgr->GetPosX(x), mapMgr->GetPosY(y));
-		if(pCell == 0)
-			return CAST(T, NULLPTR);
 
-		ObjectPointer ClosestObject;
+		if(pCell == NULL)
+			return CAST(T, NULL);
+
+		Object* ClosestObject = NULL;
 		float CurrentDist = 0;
-        ObjectSet::const_iterator iter = pCell->Begin();
-		for(; iter != pCell->End(); ++iter)
+		ObjectSet::const_iterator iter;
+		for(iter = pCell->Begin(); iter != pCell->End(); ++iter)
 		{
 			CurrentDist = (*iter)->CalcDistance(x, y, (z != 0.0f ? z : (*iter)->GetPositionZ()));
 			if(CurrentDist < ClosestDist && (*iter)->GetTypeId() == TypeId)
@@ -62,32 +59,35 @@ public:
 		return CAST(T, ClosestObject);
 	}
 
-	ASCENT_INLINE GameObjectPointer GetGameObjectNearestCoords(float x, float y, float z = 0.0f, uint32 Entry = 0, float ClosestDistance = 999999.0f)
+	ASCENT_INLINE GameObject* GetGameObjectNearestCoords(float x, float y, float z = 0.0f, uint32 Entry = 0, float ClosestDistance = 999999.0f)
 	{
 		return GetObjectNearestCoords<GameObject, TYPEID_GAMEOBJECT>(Entry, x, y, z, ClosestDistance);
 	}
 
-	ASCENT_INLINE CreaturePointer GetCreatureNearestCoords(float x, float y, float z = 0.0f, uint32 Entry = 0, float ClosestDistance = 999999.0f)
+	ASCENT_INLINE Creature* GetCreatureNearestCoords(float x, float y, float z = 0.0f, uint32 Entry = 0, float ClosestDistance = 999999.0f)
 	{
 		return GetObjectNearestCoords<Creature, TYPEID_UNIT>(Entry, x, y, z, ClosestDistance);
 	}
 
-	ASCENT_INLINE PlayerPointer GetPlayerNearestCoords(float x, float y, float z = 0.0f, uint32 Entry = 0, float ClosestDistance = 999999.0f)
+	ASCENT_INLINE Player* GetPlayerNearestCoords(float x, float y, float z = 0.0f, uint32 Entry = 0, float ClosestDistance = 999999.0f)
 	{
+		// Don't bother checking empty maps.
+		if(!mapMgr->GetPlayerCount())
+			return NULL;
 		return GetObjectNearestCoords<Player, TYPEID_PLAYER>(Entry, x, y, z, ClosestDistance);
 	}
 
 	uint32 GetPlayerCountInRadius(float x, float y, float z = 0.0f, float radius = 5.0f);
 	
-	GameObjectPointer SpawnGameObject(uint32 Entry, float cX, float cY, float cZ, float cO, bool AddToWorld, uint32 Misc1, uint32 Misc2);
-	CreaturePointer SpawnCreature(uint32 Entry, float cX, float cY, float cZ, float cO, bool AddToWorld, bool tmplate, uint32 Misc1, uint32 Misc2);
+	GameObject* SpawnGameObject(uint32 Entry, float cX, float cY, float cZ, float cO, bool AddToWorld, uint32 Misc1, uint32 Misc2);
+	Creature* SpawnCreature(uint32 Entry, float cX, float cY, float cZ, float cO, bool AddToWorld, bool tmplate, uint32 Misc1, uint32 Misc2);
 	WayPoint * CreateWaypoint();
 
-	void DeleteGameObject(GameObjectPointer ptr);
-	void DeleteCreature(CreaturePointer ptr);
+	void DeleteGameObject(GameObject* ptr);
+	void DeleteCreature(Creature* ptr);
 
 private:
-	MapMgrPointer mapMgr;
+	MapMgr* mapMgr;
 };
 
 class SERVER_DECL StructFactory : public Singleton<StructFactory>

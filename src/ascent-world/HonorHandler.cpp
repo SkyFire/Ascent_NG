@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 
@@ -38,7 +33,7 @@ void WorldSession::HandleSetVisibleRankOpcode(WorldPacket& recv_data)
 	}
 }
 
-void HonorHandler::AddHonorPointsToPlayer(PlayerPointer pPlayer, uint32 uAmount)
+void HonorHandler::AddHonorPointsToPlayer(Player* pPlayer, uint32 uAmount)
 {
 	pPlayer->m_honorPoints += uAmount;
 	pPlayer->m_honorToday += uAmount;
@@ -51,47 +46,28 @@ void HonorHandler::AddHonorPointsToPlayer(PlayerPointer pPlayer, uint32 uAmount)
 	RecalculateHonorFields(pPlayer);
 }
 
-int32 HonorHandler::CalculateHonorPointsForKill( PlayerPointer pPlayer, UnitPointer pVictim )
+int32 HonorHandler::CalculateHonorPointsForKill( Player* pPlayer, Unit* pVictim )
 {
 	// this sucks.. ;p
-	if( pVictim == NULL )
-		return 0;
-
-	// Suicide lol
-	if( pVictim == pPlayer )
-		return 0;
-
-	if( pVictim->GetTypeId() != TYPEID_PLAYER )
+	if( pVictim == NULL || pVictim->GetTypeId() != TYPEID_PLAYER || pVictim == pPlayer )
 		return 0;
 
 	// How dishonorable, you fiend!
 	if( pVictim->HasActiveAura( PLAYER_HONORLESS_TARGET_SPELL ) )
 		return 0;
 
-	uint32 k_level = pPlayer->GetUInt32Value( UNIT_FIELD_LEVEL );
-	uint32 v_level = pVictim->GetUInt32Value( UNIT_FIELD_LEVEL );
-
-	// formula guessed
-	int32 honor_points = 6;
-	if(k_level != v_level)
-	{
-		int32 diff = v_level - k_level;
-		honor_points += diff;
-
-		if(honor_points <= 0)
-			return 0;
-
-		if(honor_points >= 8)
-			honor_points = 8;
-	}
-
-	honor_points = float2int32(float(honor_points) * World::getSingleton().getRate( RATE_HONOR ));
-	//honor_points *= World::getSingleton().getRate( RATE_HONOR );
-
-	return honor_points;
+	return CalculateHonorPointsFormula(pPlayer->GetUInt32Value( UNIT_FIELD_LEVEL ), pVictim->GetUInt32Value( UNIT_FIELD_LEVEL ));
 }
 
-void HonorHandler::OnPlayerKilledUnit( PlayerPointer pPlayer, UnitPointer pVictim )
+int32 HonorHandler::CalculateHonorPointsFormula(uint32 AttackerLevel,uint32 VictimLevel)
+{
+	float zd = 6.0f;
+	float j = AttackerLevel <= VictimLevel ? 1.0f + float((VictimLevel - AttackerLevel) / zd): 1.0f - float((AttackerLevel - VictimLevel) / zd);
+	j = j < 0 ? 0 : j > 2? 2 : j;
+	return float2int32(AttackerLevel * 0.33f * j * World::getSingleton().getRate( RATE_HONOR ));
+}
+
+void HonorHandler::OnPlayerKilledUnit( Player* pPlayer, Unit* pVictim )
 {
 	if( pVictim == NULL || pPlayer == NULL || !pVictim->IsPlayer() || !pPlayer->IsPlayer() )
 		return;
@@ -125,13 +101,13 @@ void HonorHandler::OnPlayerKilledUnit( PlayerPointer pPlayer, UnitPointer pVicti
 		if( pPlayer->m_bg )
 		{
 			// hackfix for battlegrounds (since the gorups there are disabled, we need to do this manually)
-			vector<PlayerPointer  > toadd;
+			vector<Player*  > toadd;
 			uint32 t = pPlayer->m_bgTeam;
 			toadd.reserve(15);		// shouldnt have more than this
 			pPlayer->m_bg->Lock();
-			set<PlayerPointer  > * s = &pPlayer->m_bg->m_players[t];
+			set<Player*  > * s = &pPlayer->m_bg->m_players[t];
 
-			for(set<PlayerPointer  >::iterator itr = s->begin(); itr != s->end(); ++itr)
+			for(set<Player*  >::iterator itr = s->begin(); itr != s->end(); ++itr)
 			{
 				if((*itr) == pPlayer || (*itr)->isInRange(pPlayer,40.0f))
 					toadd.push_back(*itr);
@@ -140,7 +116,7 @@ void HonorHandler::OnPlayerKilledUnit( PlayerPointer pPlayer, UnitPointer pVicti
 			if( toadd.size() > 0 )
 			{
 				uint32 pts = Points / (uint32)toadd.size();
-				for(vector<PlayerPointer  >::iterator vtr = toadd.begin(); vtr != toadd.end(); ++vtr)
+				for(vector<Player*  >::iterator vtr = toadd.begin(); vtr != toadd.end(); ++vtr)
 				{
 					AddHonorPointsToPlayer(*vtr, pts);
 
@@ -167,7 +143,7 @@ void HonorHandler::OnPlayerKilledUnit( PlayerPointer pPlayer, UnitPointer pVicti
 		else if(pPlayer->GetGroup())
         {
             Group *pGroup = pPlayer->GetGroup();
-            PlayerPointer gPlayer = NULLPLR;
+            Player* gPlayer = NULL;
             int32 GroupPoints;
 			pGroup->Lock();
             GroupPoints = (Points / (pGroup->MemberCount() ? pGroup->MemberCount() : 1));
@@ -253,7 +229,7 @@ void HonorHandler::OnPlayerKilledUnit( PlayerPointer pPlayer, UnitPointer pVicti
 	}
 }
 
-void HonorHandler::RecalculateHonorFields(PlayerPointer pPlayer)
+void HonorHandler::RecalculateHonorFields(Player* pPlayer)
 {
 	pPlayer->SetUInt32Value(PLAYER_FIELD_KILLS, uint16(pPlayer->m_killsToday) | ( pPlayer->m_killsYesterday << 16 ) );
 	pPlayer->SetUInt32Value(PLAYER_FIELD_TODAY_CONTRIBUTION, pPlayer->m_honorToday);
@@ -266,7 +242,7 @@ void HonorHandler::RecalculateHonorFields(PlayerPointer pPlayer)
 bool ChatHandler::HandleAddKillCommand(const char* args, WorldSession* m_session)
 {
 	uint32 KillAmount = args ? atol(args) : 1;
-	PlayerPointer plr = getSelectedChar(m_session, true);
+	Player* plr = getSelectedChar(m_session, true);
 	if(plr == 0)
 		return true;
 
@@ -274,7 +250,7 @@ bool ChatHandler::HandleAddKillCommand(const char* args, WorldSession* m_session
 	GreenSystemMessage(plr->GetSession(), "You have had %u honor kills added to your character.", KillAmount);
 
 	for(uint32 i = 0; i < KillAmount; ++i)
-		HonorHandler::OnPlayerKilledUnit(plr, NULLPLR);
+		HonorHandler::OnPlayerKilledUnit(plr, NULL);
 
 	return true;
 }
@@ -282,7 +258,7 @@ bool ChatHandler::HandleAddKillCommand(const char* args, WorldSession* m_session
 bool ChatHandler::HandleAddHonorCommand(const char* args, WorldSession* m_session)
 {
 	uint32 HonorAmount = args ? atol(args) : 1;
-	PlayerPointer plr = getSelectedChar(m_session, true);
+	Player* plr = getSelectedChar(m_session, true);
 	if(plr == 0)
 		return true;
 

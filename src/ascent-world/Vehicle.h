@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #ifndef _VEHICLE_H
 #define _VEHICLE_H
@@ -28,7 +23,7 @@ public:
 	virtual void Destructor();
 
 	void Init();
-	void InitSeats(uint32 vehicleEntry, PlayerPointer pRider = NULLPLR);
+	void InitSeats(uint32 vehicleEntry, Player* pRider = NULL);
 	virtual void Update(uint32 time);
 	bool Load(CreatureSpawn *spawn, uint32 mode, MapInfo *info);
 	void Load(CreatureProto * proto_, float x, float y, float z, float o = 0.0f);
@@ -36,10 +31,10 @@ public:
 	void DeleteMe();
 	void SafeDelete();
 	void MoveVehicle(float x, float y, float z, float o);
-	void AddPassenger(UnitPointer pPassenger);
-	void RemovePassenger(UnitPointer pPassenger);
-	bool HasPassenger(UnitPointer pPassenger);
-	void SendSpells(uint32 entry, PlayerPointer plr);
+	void AddPassenger(Unit* pPassenger);
+	void RemovePassenger(Unit* pPassenger);
+	bool HasPassenger(Unit* pPassenger);
+	void SendSpells(uint32 entry, Player* plr);
 	void setDeathState(DeathState s);
 	void SetSpeed(uint8 SpeedType, float value);
 
@@ -52,10 +47,10 @@ public:
 	uint32 GetVehicleEntry() { return m_vehicleEntry; }
 	void SetVehicleEntry(uint32 entry) { m_vehicleEntry = entry; }
 
-	UnitPointer GetControllingUnit() { return m_passengers[0]; }
-	void SetControllingUnit(UnitPointer pUnit) { m_controllingUnit = pUnit; }
+	Unit* GetControllingUnit() { return m_passengers[0]; }
+	void SetControllingUnit(Unit* pUnit) { m_controllingUnit = pUnit; }
 
-	uint8 GetPassengerSlot(UnitPointer pPassenger);
+	uint8 GetPassengerSlot(Unit* pPassenger);
 	//---------------------------------------
 	// End accessors
 	//---------------------------------------
@@ -68,12 +63,12 @@ public:
 	uint32 m_mountSpell;
 
 private:
-	void _AddToSlot(UnitPointer pPassenger, uint8 slot);
+	void _AddToSlot(Unit* pPassenger, uint8 slot);
 
 protected:
-	UnitPointer m_controllingUnit;
+	Unit* m_controllingUnit;
 
-	UnitPointer m_passengers[8];
+	Unit* m_passengers[8];
 
 	uint8 m_passengerCount;
 	uint8 m_maxPassengers;

@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #ifndef _GROUP_H_
 #define _GROUP_H_
@@ -63,7 +58,7 @@ struct PlayerInfo;
 typedef struct
 {
 	PlayerInfo * player_info;
-	PlayerPointer player;
+	Player* player;
 }GroupMember;
 
 class Group;
@@ -124,29 +119,29 @@ public:
 	void RemovePlayer(PlayerInfo * info);
 
 	// Leaders and Looting
-	void SetLeader(PlayerPointer pPlayer,bool silent);
-	void SetLooter(PlayerPointer pPlayer, uint8 method, uint16 threshold);
+	void SetLeader(Player* pPlayer,bool silent);
+	void SetLooter(Player* pPlayer, uint8 method, uint16 threshold);
 
 	// Transferring data to clients
 	void Update();
 
-	ASCENT_INLINE void SendPacketToAll(WorldPacket *packet) { SendPacketToAllButOne(packet, NULLPLR); }
-	void SendPacketToAllButOne(WorldPacket *packet, PlayerPointer pSkipTarget);
+	ASCENT_INLINE void SendPacketToAll(WorldPacket *packet) { SendPacketToAllButOne(packet, NULL); }
+	void SendPacketToAllButOne(WorldPacket *packet, Player* pSkipTarget);
 
-	ASCENT_INLINE void SendPacketToAll(StackPacket *packet) { SendPacketToAllButOne(packet, NULLPLR); }
-	void SendPacketToAllButOne(StackPacket *packet, PlayerPointer pSkipTarget);
+	ASCENT_INLINE void SendPacketToAll(StackPacket *packet) { SendPacketToAllButOne(packet, NULL); }
+	void SendPacketToAllButOne(StackPacket *packet, Player* pSkipTarget);
 
-	ASCENT_INLINE void OutPacketToAll(uint16 op, uint16 len, const void* data) { OutPacketToAllButOne(op, len, data, NULLPLR); }
-	void OutPacketToAllButOne(uint16 op, uint16 len, const void* data, PlayerPointer pSkipTarget);
+	ASCENT_INLINE void OutPacketToAll(uint16 op, uint16 len, const void* data) { OutPacketToAllButOne(op, len, data, NULL); }
+	void OutPacketToAllButOne(uint16 op, uint16 len, const void* data, Player* pSkipTarget);
 
-	void SendNullUpdate(PlayerPointer pPlayer);
+	void SendNullUpdate(Player* pPlayer);
 
 	// Group Combat
-	void SendPartyKillLog(ObjectPointer player, ObjectPointer Unit);
+	void SendPartyKillLog(Object* player, Object* Unit);
 
 	// Destroying/Converting
 	void Disband();
-	PlayerPointer FindFirstPlayer();
+	Player* FindFirstPlayer();
 	
 	// Accessing functions
 	ASCENT_INLINE SubGroup* GetSubGroup(uint32 Id)
@@ -166,7 +161,7 @@ public:
 
 	void MovePlayer(PlayerInfo* info, uint8 subgroup);
 
-	bool HasMember(PlayerPointer pPlayer);
+	bool HasMember(Player* pPlayer);
 	bool HasMember(PlayerInfo * info);
 	ASCENT_INLINE uint32 MemberCount(void) { return m_MemberCount; }
 	ASCENT_INLINE bool IsFull() { return ((m_GroupType == GROUP_TYPE_PARTY && m_MemberCount >= MAX_GROUP_SIZE_PARTY) || (m_GroupType == GROUP_TYPE_RAID && m_MemberCount >= MAX_GROUP_SIZE_RAID)); }
@@ -181,10 +176,10 @@ public:
 	ASCENT_INLINE uint8 GetGroupType() { return m_GroupType; }
 	ASCENT_INLINE uint32 GetID() { return m_Id; }
 
-	void UpdateOutOfRangePlayer(PlayerPointer pPlayer, uint32 Flags, bool Distribute, WorldPacket * Packet);
-	void UpdateAllOutOfRangePlayersFor(PlayerPointer pPlayer);
-	void HandleUpdateFieldChange(uint32 Index, PlayerPointer pPlayer);
-	void HandlePartialChange(uint32 Type, PlayerPointer pPlayer);
+	void UpdateOutOfRangePlayer(Player* pPlayer, uint32 Flags, bool Distribute, WorldPacket * Packet);
+	void UpdateAllOutOfRangePlayersFor(Player* pPlayer);
+	void HandleUpdateFieldChange(uint32 Index, Player* pPlayer);
+	void HandlePartialChange(uint32 Type, Player* pPlayer);
 
 	uint64 m_targetIcons[8];
 	ASCENT_INLINE Mutex& getLock() { return m_groupLock; }

@@ -1,25 +1,17 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
-//
-// MapCell.h
-//
 
 #ifndef __MAP_CELL_H
 #define __MAP_CELL_H
@@ -36,15 +28,15 @@ public:
 	MapCell();
 	~MapCell();
 
-	typedef unordered_set<ObjectPointer > ObjectSet;
+	typedef unordered_set<Object* > ObjectSet;
 
 	//Init
-	void Init(uint32 x, uint32 y, uint32 mapid, MapMgrPointer mapmgr);
+	void Init(uint32 x, uint32 y, uint32 mapid, MapMgr* mapmgr);
 
 	//Object Managing
-	void AddObject(ObjectPointer obj); 
-	void RemoveObject(ObjectPointer obj);
-	bool HasObject(ObjectPointer obj) { return (_objects.find(obj) != _objects.end()); }
+	void AddObject(Object* obj); 
+	void RemoveObject(Object* obj);
+	bool HasObject(Object* obj) { return (_objects.find(obj) != _objects.end()); }
 	bool HasPlayers() { return ((_playerCount > 0) ? true : false); }
 	ASCENT_INLINE size_t GetObjectCount() { return _objects.size(); }
 	void RemoveObjects();
@@ -60,6 +52,11 @@ public:
 	//Object Loading Managing
 	void LoadObjects(CellSpawns * sp);
 	ASCENT_INLINE uint32 GetPlayerCount() { return _playerCount; }
+
+	//ING Events
+	void RemoveEventIdObjects(uint8 eventToRemove);
+	void ModifyEventIdSetting(bool active, uint8 eventId);
+	void LoadEventIdObjects(CellSpawns * sp, uint8 eventId);
 
 	ASCENT_INLINE bool IsUnloadPending() { return _unloadpending; }
 	ASCENT_INLINE void SetUnloadPending(bool up) { _unloadpending = up; }
@@ -83,7 +80,7 @@ private:
 	bool _unloadpending;
 
 	uint16 _playerCount;
-	MapMgrPointer _mapmgr;
+	MapMgr* _mapmgr;
 };
 
 #endif

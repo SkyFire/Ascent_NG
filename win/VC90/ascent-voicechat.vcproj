@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="ascent-voicechat"
 	ProjectGUID="{C36E06CE-9CBF-4B13-AA03-DA3F886F6B59}"
 	RootNamespace="ascent-voicechat"
@@ -435,6 +435,10 @@
 				>
 			</File>
 		</Filter>
+		<File
+			RelativePath="..\..\src\ascent-voicechat\resources.rc"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

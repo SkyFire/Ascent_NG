@@ -525,6 +525,10 @@
 			RelativePath="..\..\src\ascent-logonserver\Main.h"
 			>
 		</File>
+		<File
+			RelativePath="..\..\src\ascent-logonserver\resources.rc"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

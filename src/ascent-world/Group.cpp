@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 
@@ -77,13 +72,13 @@ Group::Group(bool Assign)
 	m_groupFlags = 0;
 	memset(m_targetIcons, 0, sizeof(uint64) * 8);
 	m_isqueued=false;
-	m_difficulty=0;
+	m_difficulty = MODE_NORMAL;
 	m_assistantLeader=m_mainAssist=m_mainTank=NULL;
 #ifdef VOICE_CHAT
 	m_voiceChannelRequested = false;
 	m_voiceChannelId = 0;
 	m_voiceMemberCount = 0;
-	memset(m_voiceMembersList, 0, sizeof(PlayerPointer )*41);
+	memset(m_voiceMembersList, 0, sizeof(Player* )*41);
 #endif
 	m_prayerOfMendingCount = 0;
 	m_prayerOfMendingTarget = 0;
@@ -137,7 +132,7 @@ SubGroup * Group::FindFreeSubGroup()
 bool Group::AddMember(PlayerInfo * info, int32 subgroupid/* =-1 */)
 {
 	m_groupLock.Acquire();
-	PlayerPointer pPlayer = info->m_loggedInPlayer;
+	Player* pPlayer = info->m_loggedInPlayer;
 
 	if(m_isqueued)
 	{
@@ -192,7 +187,7 @@ bool Group::AddMember(PlayerInfo * info, int32 subgroupid/* =-1 */)
 	}
 }
 
-void Group::SetLeader(PlayerPointer pPlayer, bool silent)
+void Group::SetLeader(Player* pPlayer, bool silent)
 {
 	if( pPlayer != NULL )
 	{
@@ -213,7 +208,7 @@ void Group::Update()
 	if( m_updateblock )
 		return;
 
-	PlayerPointer pNewLeader = NULLPLR;
+	Player* pNewLeader = NULL;
 	PlayerInfo *plrinf;
 
 	WorldPacket data( 50 + ( m_MemberCount * 20 ) );
@@ -409,7 +404,6 @@ void Group::Disband()
 
 	m_groupLock.Release();
 	CharacterDatabase.Execute("DELETE FROM groups WHERE group_id = %u", m_Id);
-	sInstanceMgr.OnGroupDestruction(this);
 	delete this;	// destroy ourselves, the destructor removes from eventmgr and objectmgr.
 }
 
@@ -427,7 +421,7 @@ void SubGroup::Disband()
 		{
 			if( (*itr)->m_loggedInPlayer )
 			{
-				PlayerPointer plr = (*itr)->m_loggedInPlayer;
+				Player* plr = (*itr)->m_loggedInPlayer;
 				if( plr->GetSession() != NULL )
 				{
 					plr->GetSession()->SendPacket(&data);
@@ -457,7 +451,7 @@ void SubGroup::Disband()
 	delete this;
 }
 
-PlayerPointer Group::FindFirstPlayer()
+Player* Group::FindFirstPlayer()
 {
 	GroupMembersSet::iterator itr;
 	m_groupLock.Acquire();
@@ -481,24 +475,24 @@ PlayerPointer Group::FindFirstPlayer()
 	}
 
 	m_groupLock.Release();
-	return NULLPLR;
+	return NULL;
 }
 
 void Group::RemovePlayer(PlayerInfo * info)
 {
 	WorldPacket data(50);
-	PlayerPointer pPlayer = info->m_loggedInPlayer;
+	Player* pPlayer = info->m_loggedInPlayer;
 
-	if( pPlayer != NULL )
+	if( pPlayer != NULL && (pPlayer->m_bg != NULL && !pPlayer->m_bg->HasEnded()))
 		sInstanceMgr.PlayerLeftGroup( this, pPlayer );
 
-	m_groupLock.Acquire();
 	if(m_isqueued)
 	{
 		m_isqueued=false;
 		BattlegroundManager.RemoveGroupFromQueues(this);
 	}
 	
+	m_groupLock.Acquire();
 	SubGroup *sg=NULL;
 	if(info->subGroup >= 0 && info->subGroup <= 8)
 		sg = m_SubGroups[info->subGroup];
@@ -535,6 +529,8 @@ void Group::RemovePlayer(PlayerInfo * info)
 	sg->RemovePlayer(info);
 	--m_MemberCount;
 
+	m_groupLock.Release();
+
 	if( pPlayer != NULL )
 	{
 		if( pPlayer->GetSession() != NULL )
@@ -552,11 +548,11 @@ void Group::RemovePlayer(PlayerInfo * info)
 		//Remove some party auras.
 		for (uint32 i=0;i<MAX_POSITIVE_AURAS;i++)
 		{
-			if (pPlayer->m_auras[i] && 
+			if (pPlayer->m_auras[i] != NULL && 
 				pPlayer->m_auras[i]->m_areaAura && 
 				pPlayer->m_auras[i]->GetUnitCaster() &&
 				(!pPlayer->m_auras[i]->GetUnitCaster() ||(pPlayer->m_auras[i]->GetUnitCaster()->IsPlayer() && pPlayer!=pPlayer->m_auras[i]->GetUnitCaster())))
-				pPlayer->m_auras[i]->Remove();
+				pPlayer->RemoveAuraBySlot(i);
 		}
 	}
 
@@ -565,36 +561,26 @@ void Group::RemovePlayer(PlayerInfo * info)
 		// disband the group, except battleground groups. 
 		if(!(m_groupFlags & GROUP_FLAG_DONT_DISBAND_WITH_NO_MEMBERS))
 		{
-			m_groupLock.Release();
 			Disband();
 			return;
 		}
 	}
 
 	/* eek! ;P */
-	PlayerPointer newPlayer = NULLPLR;
+	Player* newPlayer = NULL;
 	if(m_Looter == info)
 	{
 		newPlayer = FindFirstPlayer();
 		if( newPlayer != NULL )
-            m_Looter = newPlayer->m_playerInfo;
+			m_Looter = newPlayer->m_playerInfo;
 		else
 			m_Looter = NULL;
 	}
 
 	if(m_Leader == info)
-	{
-		if( newPlayer==NULL )
-			newPlayer=FindFirstPlayer();
-
-		if( newPlayer != NULL )
-			SetLeader(newPlayer, false);
-		else
-			m_Leader = NULL;
-	}
+		m_Leader = NULL;//don't bother setting a new leader, it will be set during update()
 
 	Update();
-	m_groupLock.Release();
 }
 
 void Group::ExpandToRaid()
@@ -623,7 +609,7 @@ void Group::ExpandToRaid()
 	m_groupLock.Release();
 }
 
-void Group::SetLooter(PlayerPointer pPlayer, uint8 method, uint16 threshold)
+void Group::SetLooter(Player* pPlayer, uint8 method, uint16 threshold)
 { 
 	m_LootMethod = method;
 	m_Looter = pPlayer ? pPlayer->m_playerInfo : NULL;
@@ -633,7 +619,7 @@ void Group::SetLooter(PlayerPointer pPlayer, uint8 method, uint16 threshold)
 	Update();
 }
 
-void Group::SendPacketToAllButOne(WorldPacket *packet, PlayerPointer pSkipTarget)
+void Group::SendPacketToAllButOne(WorldPacket *packet, Player* pSkipTarget)
 {
 	GroupMembersSet::iterator itr;
 	uint32 i = 0;
@@ -650,7 +636,7 @@ void Group::SendPacketToAllButOne(WorldPacket *packet, PlayerPointer pSkipTarget
 	m_groupLock.Release();
 }
 
-void Group::SendPacketToAllButOne(StackPacket *packet, PlayerPointer pSkipTarget)
+void Group::SendPacketToAllButOne(StackPacket *packet, Player* pSkipTarget)
 {
 	GroupMembersSet::iterator itr;
 	uint32 i = 0;
@@ -667,7 +653,7 @@ void Group::SendPacketToAllButOne(StackPacket *packet, PlayerPointer pSkipTarget
 	m_groupLock.Release();
 }
 
-void Group::OutPacketToAllButOne(uint16 op, uint16 len, const void* data, PlayerPointer pSkipTarget)
+void Group::OutPacketToAllButOne(uint16 op, uint16 len, const void* data, Player* pSkipTarget)
 {
 	GroupMembersSet::iterator itr;
 	uint32 i = 0;
@@ -684,7 +670,7 @@ void Group::OutPacketToAllButOne(uint16 op, uint16 len, const void* data, Player
 	m_groupLock.Release();
 }
 
-bool Group::HasMember(PlayerPointer pPlayer)
+bool Group::HasMember(Player* pPlayer)
 {
 	if( !pPlayer )
 		return false;
@@ -730,18 +716,22 @@ bool Group::HasMember(PlayerInfo * info)
 
 void Group::MovePlayer(PlayerInfo *info, uint8 subgroup)
 {
-	if( subgroup >= m_SubGroupCount )
-		return;
-
-	if(m_SubGroups[subgroup]->IsFull())
+	if( subgroup >= m_SubGroupCount || m_SubGroupCount >8 )
 		return;
 
 	m_groupLock.Acquire();
-	SubGroup *sg=NULL;
 
-	if(info->subGroup > 0 && info->subGroup <= 8)
+	if(m_SubGroups[subgroup]->IsFull())
+	{
+		m_groupLock.Release();
+		return;
+	}
+
+	SubGroup *sg=NULL;
+	if(info->subGroup > 0)
 		sg = m_SubGroups[info->subGroup];
 
+	//first subgroup don't exists or player is not a member of it, search other subgroups
 	if(sg == NULL || sg->m_GroupMembers.find(info) == sg->m_GroupMembers.end())
 	{
 		for(uint32 i = 0; i < m_SubGroupCount; ++i)
@@ -750,6 +740,7 @@ void Group::MovePlayer(PlayerInfo *info, uint8 subgroup)
 			{
 				if(m_SubGroups[i]->m_GroupMembers.find(info) != m_SubGroups[i]->m_GroupMembers.end())
 				{
+					//we are in this subgroup
 					sg = m_SubGroups[i];
 					break;
 				}
@@ -757,14 +748,14 @@ void Group::MovePlayer(PlayerInfo *info, uint8 subgroup)
 		}
 	}
 
-	if(!sg)
+	if(sg == NULL)
 	{
 		m_groupLock.Release();
 		return;
 	}
 	
 	sg->RemovePlayer(info);
-    
+
 	// Grab the new group, and insert
 	sg = m_SubGroups[subgroup];
 	if(!sg->AddPlayer(info))
@@ -782,7 +773,7 @@ void Group::MovePlayer(PlayerInfo *info, uint8 subgroup)
 	m_groupLock.Release();
 }
 
-void Group::SendNullUpdate( PlayerPointer pPlayer )
+void Group::SendNullUpdate( Player* pPlayer )
 {
 	// this packet is 24 bytes long.		// AS OF 2.1.0
 	uint8 buffer[24];
@@ -791,7 +782,7 @@ void Group::SendNullUpdate( PlayerPointer pPlayer )
 }
 
 // player is object class becouse its called from unit class
-void Group::SendPartyKillLog( ObjectPointer player, ObjectPointer Unit )
+void Group::SendPartyKillLog( Object* player, Object* Unit )
 {
 	if( !player || !Unit || !HasMember( TO_PLAYER( player ) ) )
 		return;
@@ -901,7 +892,7 @@ void Group::SaveToDB()
 	CharacterDatabase.Execute(ss.str().c_str());
 }
 
-void Group::UpdateOutOfRangePlayer(PlayerPointer pPlayer, uint32 Flags, bool Distribute, WorldPacket * Packet)
+void Group::UpdateOutOfRangePlayer(Player* pPlayer, uint32 Flags, bool Distribute, WorldPacket * Packet)
 {
 	uint8 member_flags = 0x01;
 	WorldPacket * data = Packet;
@@ -967,7 +958,7 @@ void Group::UpdateOutOfRangePlayer(PlayerPointer pPlayer, uint32 Flags, bool Dis
 
 	if(Distribute&&pPlayer->IsInWorld())
 	{
-		PlayerPointer plr;
+		Player* plr;
 		float dist = pPlayer->GetMapMgr()->m_UpdateDistance;
 		m_groupLock.Acquire();
 		for(uint32 i = 0; i < m_SubGroupCount; ++i)
@@ -994,7 +985,7 @@ void Group::UpdateOutOfRangePlayer(PlayerPointer pPlayer, uint32 Flags, bool Dis
 		delete data;
 }
 
-void Group::UpdateAllOutOfRangePlayersFor(PlayerPointer pPlayer)
+void Group::UpdateAllOutOfRangePlayersFor(Player* pPlayer)
 {
 	WorldPacket data(150);
 	WorldPacket data2(150);
@@ -1006,7 +997,7 @@ void Group::UpdateAllOutOfRangePlayersFor(PlayerPointer pPlayer)
 	UpdateOutOfRangePlayer(pPlayer, GROUP_UPDATE_TYPE_FULL_CREATE, true, &data2);
 
 	/* tell us any other players we don't know about */
-	PlayerPointer plr;
+	Player* plr;
 
 	m_groupLock.Acquire();
 	for(uint32 i = 0; i < m_SubGroupCount; ++i)
@@ -1030,7 +1021,7 @@ void Group::UpdateAllOutOfRangePlayersFor(PlayerPointer pPlayer)
 	m_groupLock.Release();
 }
 
-void Group::HandleUpdateFieldChange(uint32 Index, PlayerPointer pPlayer)
+void Group::HandleUpdateFieldChange(uint32 Index, Player* pPlayer)
 {
 	uint32 Flags = 0;
 	if( m_dirty )//sth has corrupted this, workaround
@@ -1076,7 +1067,7 @@ void Group::HandleUpdateFieldChange(uint32 Index, PlayerPointer pPlayer)
 	m_groupLock.Release();
 }
 
-void Group::HandlePartialChange(uint32 Type, PlayerPointer pPlayer)
+void Group::HandlePartialChange(uint32 Type, Player* pPlayer)
 {
 	uint32 Flags = 0;
 	m_groupLock.Acquire();
@@ -1106,7 +1097,7 @@ void WorldSession::HandlePartyMemberStatsOpcode(WorldPacket & recv_data)
 	uint64 guid;
 	recv_data >> guid;
 
-	PlayerPointer plr = _player->GetMapMgr()->GetPlayer((uint32)guid);
+	Player* plr = _player->GetMapMgr()->GetPlayer((uint32)guid);
 
 	if(!_player->GetGroup() || !plr)
 		return;
@@ -1287,7 +1278,7 @@ void Group::SendVoiceUpdate()
 	uint8 counter = 1;
 	size_t pos;
 	uint32 i,j;
-	PlayerPointer pl;
+	Player* pl;
 
 	WorldPacket data(SMSG_VOICE_SESSION, 100);
 	data << uint32( 0x00000E9D );

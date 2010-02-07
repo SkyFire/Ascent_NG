@@ -1,19 +1,14 @@
 /*
  * Ascent MMORPG Server
- * Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
  *
  */
 
@@ -25,67 +20,34 @@ void Session::InitHandlers()
 	memset(Handlers, 0, sizeof(void*) * NUM_MSG_TYPES);
 	Handlers[CMSG_PLAYER_LOGIN] = &Session::HandlePlayerLogin;
 	Handlers[CMSG_CHAR_ENUM] = &Session::HandleCharacterEnum;
-	Handlers[CMSG_CHAR_CREATE] = &Session::HandleCharacterCreate;
 	Handlers[CMSG_ITEM_QUERY_SINGLE] = &Session::HandleItemQuerySingleOpcode;
+	Handlers[CMSG_REALM_SPLIT] = &Session::HandleRealmSplitQuery;
+	Handlers[CMSG_CREATURE_QUERY] = &Session::HandleCreatureQueryOpcode;
+	Handlers[CMSG_GAMEOBJECT_QUERY] = &Session::HandleGameObjectQueryOpcode;
+	Handlers[CMSG_ITEM_NAME_QUERY] = &Session::HandleItemNameQueryOpcode;
+	Handlers[CMSG_PAGE_TEXT_QUERY] = &Session::HandlePageTextQueryOpcode;
+	Handlers[CMSG_QUERY_TIME] = &Session::HandleQueryTimeOpcode;
 	Handlers[CMSG_NAME_QUERY] = &Session::HandleNameQueryOpcode;
-}
-
-void Session::HandleNameQueryOpcode(WorldPacket & pck)
-{
-}
-
-void Session::HandleCharacterCreate(WorldPacket & pck)
-{
-	if(pck.size() < 10)
-	{
-		sClientMgr.DestroySession(GetSessionId());
-		return;
-	}
-
-	std::string name;
-	uint8 race, class_;
-
-	pck >> name >> race >> class_;
-	pck.rpos(0);
-
-	if(!VerifyName(name.c_str(), name.length(), true))
-	{
-		GetSocket()->OutPacket(SMSG_CHAR_CREATE, 1, "\x32");
-		return;
-	}
-
-	if (sClientMgr.GetRPlayer(name) != NULL)
-	{
-		GetSocket()->OutPacket(SMSG_CHAR_CREATE, 1, "\x32");
-		return;
-	}
-
-	QueryResult * result = Database_Character->Query("SELECT COUNT(*) FROM banned_names WHERE name = '%s'", CharacterDatabase.EscapeString(name).c_str());
-	if(result)
-	{
-		if(result->Fetch()[0].GetUInt32() > 0)
-		{
-			// That name is banned!
-			GetSocket()->OutPacket(SMSG_CHAR_CREATE, 1, "\x51"); // You cannot use that name
-			delete result;
-			return;
-		}
-		delete result;
-	}
-
-	Instance* i = sClusterMgr.GetAnyInstance();
-
-	if (i == NULL)
-	{
-		GetSocket()->OutPacket(SMSG_CHAR_CREATE, 1, "\x32");
-		return;
-	}
-
-	WorldPacket data(ISMSG_CREATE_PLAYER, 4+6+pck.size());
-	data << GetAccountId() << pck.GetOpcode() << uint32(pck.size());
-	data.resize(10 + pck.size());
-	memcpy((void*)(data.contents() + 10), pck.contents(), pck.size());
-	i->Server->SendPacket(&data);
+	// Channels
+	Handlers[CMSG_JOIN_CHANNEL]	= &Session::HandleChannelJoin;
+	Handlers[CMSG_LEAVE_CHANNEL] = &Session::HandleChannelLeave;
+	Handlers[CMSG_CHANNEL_LIST]	= &Session::HandleChannelList;
+	Handlers[CMSG_CHANNEL_PASSWORD]	= &Session::HandleChannelPassword;
+	Handlers[CMSG_CHANNEL_SET_OWNER] = &Session::HandleChannelSetOwner;
+	Handlers[CMSG_CHANNEL_OWNER] = &Session::HandleChannelOwner;
+	Handlers[CMSG_CHANNEL_MODERATOR] = &Session::HandleChannelModerator;
+	Handlers[CMSG_CHANNEL_UNMODERATOR] = &Session::HandleChannelUnmoderator;
+	Handlers[CMSG_CHANNEL_MUTE]	= &Session::HandleChannelMute;
+	Handlers[CMSG_CHANNEL_UNMUTE] = &Session::HandleChannelUnmute;
+	Handlers[CMSG_CHANNEL_INVITE] = &Session::HandleChannelInvite;
+	Handlers[CMSG_CHANNEL_KICK]	= &Session::HandleChannelKick;
+	Handlers[CMSG_CHANNEL_BAN] = &Session::HandleChannelBan;
+	Handlers[CMSG_CHANNEL_UNBAN] = &Session::HandleChannelUnban;
+	Handlers[CMSG_CHANNEL_ANNOUNCEMENTS] = &Session::HandleChannelAnnounce;
+	Handlers[CMSG_CHANNEL_MODERATE]	= &Session::HandleChannelModerate;
+	Handlers[CMSG_GET_CHANNEL_MEMBER_COUNT]	= &Session::HandleChannelNumMembersQuery;
+	Handlers[CMSG_CHANNEL_DISPLAY_LIST]	= &Session::HandleChannelRosterQuery;
+	Handlers[CMSG_MESSAGECHAT] = &Session::HandleMessagechatOpcode;
 }
 
 Session::Session(uint32 id) : m_sessionId(id)
@@ -101,6 +63,10 @@ Session::Session(uint32 id) : m_sessionId(id)
 	m_nextServer = 0;
 }
 
+Session::~Session()
+{
+}
+
 void Session::Update()
 {
 	WorldPacket * pck;
@@ -110,7 +76,7 @@ void Session::Update()
 		opcode = pck->GetOpcode();
 
 		/* can we handle it ourselves? */
-		if(opcode < NUM_MSG_TYPES && Session::Handlers[opcode] != 0)
+		if(Session::Handlers[opcode] != 0)
 		{
 			(this->*Session::Handlers[opcode])(*pck);
 		}
@@ -119,25 +85,6 @@ void Session::Update()
 			/* no? pass it back to the worker server for handling. */
 			if(m_server) m_server->SendWoWPacket(this, pck);
 		}
-		delete pck;
-	}
-}
-
-Session::~Session()
-{
-	if (m_server != NULL)
-		m_server = NULL;
-
-	WorldPacket data(ISMSG_SESSION_REMOVED, 4);
-	data << m_sessionId;
-	sClusterMgr.DistributePacketToAll(&data);
-
-	if (m_socket != NULL)
-		m_socket->Delete();
-
-	WorldPacket * pck = NULL;
-	while((pck = m_readQueue.Pop()))
-	{
 		delete pck;
 	}
 }

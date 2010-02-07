@@ -1,21 +1,17 @@
 /*
  * Ascent MMORPG Server
- * Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
  *
  */
+
 
 #ifndef RLOGONCOMMHANDLER_H
 #define RLOGONCOMMHANDLER_H
@@ -35,18 +31,19 @@ typedef struct
 {
 	string Name;
 	string Address;
-	uint32 Colour;
-	uint32 Icon;
-	uint32 TimeZone;
+	uint8 Colour;
+	uint8 Icon;
+	uint8 WorldRegion;
 	float Population;
+	uint8 Lock;
 }Realm;
 
 enum RealmType
 {
-	REALMTYPE_NORMAL = 0,
-	REALMTYPE_PVP	= 3,
-	REALMTYPE_RP	 = 6,
-	REALMTYPE_RPPVP  = 8,
+	REALMTYPE_NORMAL	= 0,
+	REALMTYPE_PVP		= 1,
+	REALMTYPE_RP		= 6,
+	REALMTYPE_RPPVP		= 8,
 };
 
 class SocketLoadBalancer;
@@ -82,6 +79,12 @@ public:
 	void LogonDatabaseSQLExecute(const char* str, ...);
 	void LogonDatabaseReloadAccounts();
 
+	void Account_SetBanned(const char * account, uint32 banned, const char* reason);
+	void Account_SetGM(const char * account, const char * flags);
+	void Account_SetMute(const char * account, uint32 muted);
+	void IPBan_Add(const char * ip, uint32 duration);
+	void IPBan_Remove(const char * ip);
+
 	void LoadRealmConfiguration();
 	void AddServer(string Name, string Address, uint32 Port);
 
@@ -97,13 +100,13 @@ public:
 	void RemoveUnauthedSocket(uint32 id);
 	ASCENT_INLINE WorldSocket* GetSocketByRequest(uint32 id)
 	{
-		//pendingLock.Acquire();
+		pendingLock.Acquire();
 
 		WorldSocket * sock;
 		map<uint32, WorldSocket*>::iterator itr = pending_logons.find(id);
 		sock = (itr == pending_logons.end()) ? 0 : itr->second;
 
-		//pendingLock.Release();
+		pendingLock.Release();
 		return sock;
 	}
 	ASCENT_INLINE Mutex & GetPendingLock() { return pendingLock; }		

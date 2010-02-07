@@ -1,17 +1,14 @@
-/****************************************************************************
+/*
+ * Scripts for Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
- * SpellHandler Plugin
- * Copyright (c) 2007 Team Ascent
- *
- * This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 3.0
- * License. To view a copy of this license, visit
- * http://creativecommons.org/licenses/by-nc-sa/3.0/ or send a letter to Creative Commons,
- * 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
- *
- * EXCEPT TO THE EXTENT REQUIRED BY APPLICABLE LAW, IN NO EVENT WILL LICENSOR BE LIABLE TO YOU
- * ON ANY LEGAL THEORY FOR ANY SPECIAL, INCIDENTAL, CONSEQUENTIAL, PUNITIVE OR EXEMPLARY DAMAGES
- * ARISING OUT OF THIS LICENSE OR THE USE OF THE WORK, EVEN IF LICENSOR HAS BEEN ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGES.
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
  *
  */
 
@@ -33,12 +30,12 @@
 
 // *****************************************************************************
 
-bool SealOfRighteousness(uint32 i, AuraPointer pAura, bool apply)
+bool SealOfRighteousness(uint32 i, Aura* pAura, bool apply)
 {
 	if(i != 0) return false;
 
 	uint32 applyId = 20187;
-	UnitPointer u_caster = pAura->GetUnitCaster();
+	Unit* u_caster = pAura->GetUnitCaster();
 
 	if(u_caster == 0 || !u_caster->IsPlayer()) return false;
 
@@ -47,7 +44,7 @@ bool SealOfRighteousness(uint32 i, AuraPointer pAura, bool apply)
 	if(apply == true)
 	{
 		float MWS = 1.0f;
-		ItemPointer mainHand = TO_PLAYER(u_caster)->GetItemInterface()->GetInventoryItem(EQUIPMENT_SLOT_MAINHAND);
+		Item* mainHand = TO_PLAYER(u_caster)->GetItemInterface()->GetInventoryItem(EQUIPMENT_SLOT_MAINHAND);
 		if(mainHand && mainHand->GetProto())
 			MWS = mainHand->GetProto()->Delay / 1000.0f;
 
@@ -67,9 +64,9 @@ bool SealOfRighteousness(uint32 i, AuraPointer pAura, bool apply)
 
 // -----------------------------------------------------------------------------
 
-bool HolyShock(uint32 i, SpellPointer pSpell)
+bool HolyShock(uint32 i, Spell* pSpell)
 {
-	UnitPointer target = pSpell->GetUnitTarget();
+	Unit* target = pSpell->GetUnitTarget();
 	if(!pSpell->p_caster || !target) return true;
 
 	uint32 newspell = 0;

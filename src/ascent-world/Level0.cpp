@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 /////////////////////////////////////////////////
 //  Normal User Chat Commands
@@ -148,7 +143,7 @@ bool ChatHandler::HandleCommandsCommand(const char* args, WorldSession *m_sessio
 
 bool ChatHandler::HandleStartCommand(const char* args, WorldSession *m_session)
 {
-	PlayerPointer m_plyr = TO_PLAYER(getSelectedChar(m_session, false));
+	Player* m_plyr = TO_PLAYER(getSelectedChar(m_session, false));
 	if( m_plyr == NULL)
 		return false;
 
@@ -260,15 +255,15 @@ bool ChatHandler::HandleNYICommand(const char* args, WorldSession *m_session)
 
 bool ChatHandler::HandleDismountCommand(const char* args, WorldSession *m_session)
 {
-	UnitPointer m_target = NULLUNIT;
+	Unit* m_target = NULL;
 
-	PlayerPointer p_target = getSelectedChar(m_session, false);
+	Player* p_target = getSelectedChar(m_session, false);
 
 	if(p_target)
-		m_target = p_target;
+		m_target = TO_UNIT(p_target);
 	else
 	{
-		CreaturePointer m_crt = getSelectedCreature(m_session, false);
+		Creature* m_crt = getSelectedCreature(m_session, false);
 		if(m_crt)
 			m_target = m_crt;
 	}
@@ -288,7 +283,7 @@ bool ChatHandler::HandleDismountCommand(const char* args, WorldSession *m_sessio
 
 bool ChatHandler::HandleFullDismountCommand(const char * args, WorldSession *m_session)
 {
-	PlayerPointer p_target = getSelectedChar(m_session, false);
+	Player* p_target = getSelectedChar(m_session, false);
 	if(!p_target)
 	{
 		SystemMessage(m_session, "Select a player or yourself first.");
@@ -379,7 +374,7 @@ bool ChatHandler::HandleRangeCheckCommand( const char *args , WorldSession *m_se
 		return true;
 	}
 
-	UnitPointer unit = m_session->GetPlayer()->GetMapMgr()->GetUnit( guid );
+	Unit* unit = m_session->GetPlayer()->GetMapMgr()->GetUnit( guid );
 	if(!unit)
 	{
 		m_session->SystemMessage("Invalid selection imo.");
@@ -406,7 +401,7 @@ bool ChatHandler::HandleGmLogCommentCommand( const char *args , WorldSession *m_
 bool ChatHandler::HandleRatingsCommand( const char *args , WorldSession *m_session )
 {
 	m_session->SystemMessage("Ratings!!!");
-	PlayerPointer m_plyr = getSelectedChar(m_session, false);
+	Player* m_plyr = getSelectedChar(m_session, false);
 	for( uint32 i = 0; i < 24; i++ )
 	{
 		m_plyr->ModUnsigned32Value( PLAYER_FIELD_COMBAT_RATING_1 + i, i );

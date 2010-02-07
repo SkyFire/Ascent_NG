@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 
@@ -46,7 +41,7 @@ void WorldSession::HandleBattlefieldPortOpcode(WorldPacket &recv_data)
 					GetPlayer()->m_bg->RemovePlayer(GetPlayer(), true); // Send Logout = true so we can TP him now.
 				}
 
-				GetPlayer()->m_pendingBattleground[i]->PortPlayer(GetPlayer());
+				GetPlayer()->m_pendingBattleground[i]->PortPlayer(GetPlayer(),false);
 				return;
 			}
 		}
@@ -62,12 +57,12 @@ void WorldSession::HandleBattlefieldStatusOpcode(WorldPacket &recv_data)
 
 void WorldSession::HandleBattlefieldListOpcode(WorldPacket &recv_data)
 {
+	CHECK_INWORLD_RETURN;
+
 	uint32 battlegroundType;
 	uint8 requestType; // 0 = ShowBattlefieldList, 1 = RequestBattlegroundInstanceInfo
 
 	recv_data >> battlegroundType >> requestType;
-
-	CHECK_INWORLD_RETURN;
 
 	//if( GetPlayer()->HasBGQueueSlotOfType(type) == 4)
 	//	return;
@@ -76,66 +71,77 @@ void WorldSession::HandleBattlefieldListOpcode(WorldPacket &recv_data)
 }
 
 // Returns -1 if indeterminable.
-int32 GetBattlegroundTypeFromCreature(CreaturePointer pCreature)
+int32 GetBattlegroundTypeFromCreature(Creature* pCreature)
 {
-	if( pCreature->m_factionDBC->ID == 890 ) // Silverwing Sentinels
-		return BATTLEGROUND_WARSONG_GULCH;
+	switch (pCreature->m_factionDBC->ID)
+	{
+		case 509: // League of Arathor
+		case 510: // The Defilers
+		{
+			return BATTLEGROUND_ARATHI_BASIN;
+		}break;
 
-	if( pCreature->m_factionDBC->ID == 889 ) // Warsong Outriders
-		return BATTLEGROUND_WARSONG_GULCH;
+		case 729: // The Frostwolf
+		case 730: // Stormpike Guard
+		{
+			return BATTLEGROUND_ALTERAC_VALLEY;
+		}break;
 
-	if( pCreature->m_factionDBC->ID == 509 ) // League of Arathor
-		return BATTLEGROUND_ARATHI_BASIN;
+		case 889: // Warsong Outriders
+		case 890: // Silverwing Sentinels
+		{
+			return BATTLEGROUND_WARSONG_GULCH;
+		}break;
+	}
 
-	if( pCreature->m_factionDBC->ID == 510 ) // The Defilers
-		return BATTLEGROUND_ARATHI_BASIN;
-
-	if( pCreature->m_factionDBC->ID == 730 ) // Stormpike Guard
-		return BATTLEGROUND_ALTERAC_VALLEY;
-
-	if( pCreature->m_factionDBC->ID == 729 ) // The Frostwolf
-		return BATTLEGROUND_ALTERAC_VALLEY;
-
-	if( string(pCreature->GetCreatureInfo()->Name).find("Eye of the Storm") != string::npos )
-		return BATTLEGROUND_EYE_OF_THE_STORM;
-
-	if( string(pCreature->GetCreatureInfo()->SubName).find("Eye of the Storm") != string::npos )
-		return BATTLEGROUND_EYE_OF_THE_STORM;
-
-	if( string(pCreature->GetCreatureInfo()->Name).find("Warsong Gulch") != string::npos )
-		return BATTLEGROUND_WARSONG_GULCH;
-
+	// Arathi Basin
 	if( string(pCreature->GetCreatureInfo()->Name).find("Arathi Basin") != string::npos )
 		return BATTLEGROUND_ARATHI_BASIN;
-
-	if( string(pCreature->GetCreatureInfo()->Name).find("Alterac Valley") != string::npos )
-		return BATTLEGROUND_ALTERAC_VALLEY;
-
-	if( string(pCreature->GetCreatureInfo()->Name).find("Arena") != string::npos )
-		return BATTLEGROUND_ARENA_2V2;
-
-	if( string(pCreature->GetCreatureInfo()->SubName).find("Warsong Gulch") != string::npos )
-		return BATTLEGROUND_WARSONG_GULCH;
-
-	if( string(pCreature->GetCreatureInfo()->SubName).find("Arathi Basin") != string::npos )
+	else if( string(pCreature->GetCreatureInfo()->SubName).find("Arathi Basin") != string::npos )
 		return BATTLEGROUND_ARATHI_BASIN;
 
-	if( string(pCreature->GetCreatureInfo()->SubName).find("Alterac Valley") != string::npos )
-		return BATTLEGROUND_ALTERAC_VALLEY;
-
-	if( string(pCreature->GetCreatureInfo()->SubName).find("Arena") != string::npos )
+	//Arena
+	if( string(pCreature->GetCreatureInfo()->Name).find("Arena") != string::npos )
+		return BATTLEGROUND_ARENA_2V2;
+	else if( string(pCreature->GetCreatureInfo()->SubName).find("Arena") != string::npos )
 		return BATTLEGROUND_ARENA_2V2;
 
+	//Alterac Valley
+	if( string(pCreature->GetCreatureInfo()->Name).find("Alterac Valley") != string::npos )
+		return BATTLEGROUND_ALTERAC_VALLEY;
+	else if( string(pCreature->GetCreatureInfo()->SubName).find("Alterac Valley") != string::npos )
+		return BATTLEGROUND_ALTERAC_VALLEY;
+
+	//Eye of the Storm
+	if( string(pCreature->GetCreatureInfo()->Name).find("Eye of the Storm") != string::npos )
+		return BATTLEGROUND_EYE_OF_THE_STORM;
+	else if( string(pCreature->GetCreatureInfo()->SubName).find("Eye of the Storm") != string::npos )
+		return BATTLEGROUND_EYE_OF_THE_STORM;
+
+	//Isle os Conquest
+	if( string(pCreature->GetCreatureInfo()->Name).find("Isle of Conquest") != string::npos )
+		return BATTLEGROUND_ISLE_OF_CONQUEST;
+
+	else if( string(pCreature->GetCreatureInfo()->SubName).find("Isle of Conquest") != string::npos )
+		return BATTLEGROUND_ISLE_OF_CONQUEST;
+
+	//Strand of the Ancients
 	if( string(pCreature->GetCreatureInfo()->SubName).find("Strand of the Ancients") != string::npos )
 		return BATTLEGROUND_STRAND_OF_THE_ANCIENTS;
 
-	if( string(pCreature->GetCreatureInfo()->Name).find("Strand of the Ancients") != string::npos )
+	else if( string(pCreature->GetCreatureInfo()->Name).find("Strand of the Ancients") != string::npos )
 		return BATTLEGROUND_STRAND_OF_THE_ANCIENTS;
+
+	//Warsong Gulch
+	if( string(pCreature->GetCreatureInfo()->Name).find("Warsong Gulch") != string::npos )
+		return BATTLEGROUND_WARSONG_GULCH;
+	else if( string(pCreature->GetCreatureInfo()->SubName).find("Warsong Gulch") != string::npos )
+		return BATTLEGROUND_WARSONG_GULCH;
 
 	return -1;
 }
 
-void WorldSession::SendBattlegroundList(CreaturePointer pCreature, uint32 mapid)
+void WorldSession::SendBattlegroundList(Creature* pCreature, uint32 mapid)
 {
 	if(!pCreature)
 		return;
@@ -154,7 +160,7 @@ void WorldSession::HandleBattleMasterHelloOpcode(WorldPacket &recv_data)
 	recv_data >> guid;
 
 	CHECK_INWORLD_RETURN;
-	CreaturePointer pCreature = _player->GetMapMgr()->GetCreature( GET_LOWGUID_PART(guid) );
+	Creature* pCreature = _player->GetMapMgr()->GetCreature( GET_LOWGUID_PART(guid) );
 	if( pCreature == NULL )
 		return;
 
@@ -173,7 +179,7 @@ void WorldSession::HandleAreaSpiritHealerQueryOpcode(WorldPacket &recv_data)
 	uint64 guid;
 	recv_data >> guid;
 
-	CreaturePointer psg = _player->GetMapMgr()->GetCreature(GET_LOWGUID_PART(guid));
+	Creature* psg = _player->GetMapMgr()->GetCreature(GET_LOWGUID_PART(guid));
 	if(psg == NULL)
 		return;
 	
@@ -193,7 +199,7 @@ void WorldSession::HandleAreaSpiritHealerQueueOpcode(WorldPacket &recv_data)
 	if(!_player->IsInWorld() || !_player->m_bg) return;
 	uint64 guid;
 	recv_data >> guid;
-	CreaturePointer psg = _player->GetMapMgr()->GetCreature(GET_LOWGUID_PART(guid));
+	Creature* psg = _player->GetMapMgr()->GetCreature(GET_LOWGUID_PART(guid));
 	if(psg == NULL)
 		return;
 
@@ -203,7 +209,7 @@ void WorldSession::HandleAreaSpiritHealerQueueOpcode(WorldPacket &recv_data)
 void WorldSession::HandleBattlegroundPlayerPositionsOpcode(WorldPacket &recv_data)
 {
 	// empty opcode
-	BattlegroundPointer bg = _player->m_bg;
+	CBattleground* bg = _player->m_bg;
 	if(!_player->IsInWorld() || !bg)
 		return;
 
@@ -215,10 +221,10 @@ void WorldSession::HandleBattlegroundPlayerPositionsOpcode(WorldPacket &recv_dat
 		uint32 count1 = 0;
 		uint32 count2 = 0;
 
-		PlayerPointer ap = objmgr.GetPlayer((CAST(WarsongGulch, bg))->GetAllianceFlagHolderGUID());
+		Player* ap = objmgr.GetPlayer((CAST(WarsongGulch, bg))->GetAllianceFlagHolderGUID());
 		if(ap) ++count2;
 
-		PlayerPointer hp = objmgr.GetPlayer((CAST(WarsongGulch, bg))->GetHordeFlagHolderGUID());
+		Player* hp = objmgr.GetPlayer((CAST(WarsongGulch, bg))->GetHordeFlagHolderGUID());
 		if(hp) ++count2;
 
 		data << count1;
@@ -243,7 +249,7 @@ void WorldSession::HandleBattlegroundPlayerPositionsOpcode(WorldPacket &recv_dat
 		uint32 count1 = 0;
 		uint32 count2 = 0;
 
-		PlayerPointer ap = objmgr.GetPlayer((CAST(EyeOfTheStorm, bg))->GetFlagHolderGUID());
+		Player* ap = objmgr.GetPlayer((CAST(EyeOfTheStorm, bg))->GetFlagHolderGUID());
 		if(ap) ++count2;
 
 		data << count1;
@@ -322,7 +328,7 @@ void WorldSession::HandleInspectHonorStatsOpcode( WorldPacket &recv_data )
 	uint64 guid;
 	recv_data >> guid;
 
-	PlayerPointer player =  _player->GetMapMgr()->GetPlayer( (uint32)guid );
+	Player* player =  _player->GetMapMgr()->GetPlayer( (uint32)guid );
 	if( player == NULL )
 		return;
 	
@@ -346,7 +352,7 @@ void WorldSession::HandleInspectArenaStatsOpcode( WorldPacket & recv_data )
 	uint64 guid;
 	recv_data >> guid;
 
-	PlayerPointer player =  _player->GetMapMgr()->GetPlayer( (uint32)guid );
+	Player* player =  _player->GetMapMgr()->GetPlayer( (uint32)guid );
 	if( player == NULL )
 		return;
 

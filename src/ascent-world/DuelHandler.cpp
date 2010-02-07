@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 
@@ -66,12 +61,11 @@ void WorldSession::HandleDuelCancelled(WorldPacket & recv_data)
 	SendPacket( &data );
 	_player->DuelingWith->m_session->SendPacket( &data );
 
-	GameObjectPointer arbiter = _player->GetMapMgr() ? _player->GetMapMgr()->GetGameObject( GET_LOWGUID_PART(_player->GetUInt64Value( PLAYER_DUEL_ARBITER )) ) : NULLGOB;
+	GameObject* arbiter = _player->GetMapMgr() ? _player->GetMapMgr()->GetGameObject( GET_LOWGUID_PART(_player->GetUInt64Value( PLAYER_DUEL_ARBITER )) ) : NULL;
 	if( arbiter != NULL )
 	{
 		arbiter->RemoveFromWorld( true );
 		arbiter->Destructor();
-		arbiter = NULLGOB;
  	}
 
 	_player->DuelingWith->SetUInt64Value( PLAYER_DUEL_ARBITER, 0 );
@@ -86,7 +80,7 @@ void WorldSession::HandleDuelCancelled(WorldPacket & recv_data)
 	_player->DuelingWith->m_duelCountdownTimer = 0;
 	_player->m_duelCountdownTimer = 0;
 
-	_player->DuelingWith->DuelingWith = NULLPLR;
-	_player->DuelingWith = NULLPLR;
+	_player->DuelingWith->DuelingWith = NULL;
+	_player->DuelingWith = NULL;
 
 }

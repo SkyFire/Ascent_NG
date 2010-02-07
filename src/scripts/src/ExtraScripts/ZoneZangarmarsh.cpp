@@ -1,21 +1,18 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Scripts for Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
+
+
 
 #include "StdAfx.h"
 
@@ -58,9 +55,9 @@ static const uint32 g_hordeStateFields_UI[TOWER_COUNT]		= {	WORLDSTATE_ZANGARMAR
 static const uint32 g_allianceStateFields_UI[TOWER_COUNT]	= {	WORLDSTATE_ZANGARMARSH_EAST_ALLIANCE_UI,	WORLDSTATE_ZANGARMARSH_WEST_ALLIANCE_UI};
 static const uint32 g_neutralStateFields_UI[TOWER_COUNT]	= {	WORLDSTATE_ZANGARMARSH_EAST_NEUTRAL_UI,		WORLDSTATE_ZANGARMARSH_WEST_NEUTRAL_UI};
 
-void ZMSpawnBanners(shared_ptr<MapMgr> bmgr, int32 side);
+void ZMSpawnBanners(MapMgr* bmgr, int32 side);
 
-void SetGrave(shared_ptr<MapMgr> pmgr)
+void SetGrave(MapMgr* pmgr)
 {
 	if(!pmgr || pmgr->GetMapId() != 530)
 		return;
@@ -104,7 +101,7 @@ void SetGrave(shared_ptr<MapMgr> pmgr)
 	}
 }
 
-ASCENT_INLINE void UpdateTowerCountZM(shared_ptr<MapMgr> mgr)
+ASCENT_INLINE void UpdateTowerCountZM(MapMgr* mgr)
 {
 	if(!mgr)
 		return;
@@ -155,7 +152,7 @@ class ZangarmarshBannerAI : public GameObjectAIScript
 
 public:
 
-	ZangarmarshBannerAI(GameObjectPointer go) : GameObjectAIScript(go)
+	ZangarmarshBannerAI(GameObject* go) : GameObjectAIScript(go)
 	{
 		m_bannerStatus = BANNER_STATUS_NEUTRAL;
 		Status = 50;
@@ -187,13 +184,13 @@ public:
 		//   the value of the map is a timestamp of the last update, to avoid cpu time wasted
 		//   doing lookups of objects that have already been updated
 
-		unordered_set<PlayerPointer>::iterator itr = _gameobject->GetInRangePlayerSetBegin();		
-		unordered_set<PlayerPointer>::iterator itrend = _gameobject->GetInRangePlayerSetEnd();
+		unordered_set<Player*>::iterator itr = _gameobject->GetInRangePlayerSetBegin();		
+		unordered_set<Player*>::iterator itrend = _gameobject->GetInRangePlayerSetEnd();
 		map<uint32,uint32>::iterator it2, it3;
 		uint32 timeptr = (uint32)UNIXTIME;
 		bool in_range;
 		bool is_valid;
-		PlayerPointer plr;
+		Player* plr;
 		
 		for(; itr != itrend; ++itr)
 		{
@@ -202,7 +199,7 @@ public:
 			else
 				is_valid = true;
 
-			in_range = (_gameobject->GetDistanceSq((*itr)) <= BANNER_RANGE) ? true : false;
+			in_range = (_gameobject->GetDistance2dSq((*itr)) <= BANNER_RANGE) ? true : false;
 
 			it2 = StoredPlayers.find((*itr)->GetLowGUID());
 			if( it2 == StoredPlayers.end() )
@@ -459,7 +456,7 @@ public:
 class SCRIPT_DECL ZMScouts : public GossipScript
 {
 public:
-	void GossipHello(ObjectPointer pObject, PlayerPointer  plr, bool AutoSend)
+	void GossipHello(Object* pObject, Player*  plr, bool AutoSend)
 	{
 		uint32 Team = plr->GetTeam();
 		if(Team > 1) Team = 1;
@@ -476,13 +473,13 @@ public:
 			Menu->SendTo(plr);
     }
 
-    void GossipSelectOption(ObjectPointer pObject, PlayerPointer  plr, uint32 Id, uint32 IntId, const char * Code)
+    void GossipSelectOption(Object* pObject, Player*  plr, uint32 Id, uint32 IntId, const char * Code)
     {
 		if( !plr )
 			return;
 		
-		CreaturePointer  pCreature = NULLCREATURE;
-		pCreature = pObject->IsCreature() ? TO_CREATURE( pObject ) : NULLCREATURE;
+		Creature*  pCreature = NULL;
+		pCreature = pObject->IsCreature() ? TO_CREATURE( pObject ) : NULL;
 		if( !pCreature )
 			return;
 
@@ -503,10 +500,10 @@ public:
 class ZMCityBannerAI : public GameObjectAIScript
 {
 public:
-	ZMCityBannerAI(GameObjectPointer goinstance) : GameObjectAIScript(goinstance) {}
-	static GameObjectAIScript *Create(GameObjectPointer  GO) { return new ZMCityBannerAI(GO); }
+	ZMCityBannerAI(GameObject* goinstance) : GameObjectAIScript(goinstance) {}
+	static GameObjectAIScript *Create(GameObject*  GO) { return new ZMCityBannerAI(GO); }
 
-	void OnActivate(PlayerPointer  pPlayer)
+	void OnActivate(Player*  pPlayer)
 	{
 		if( !pPlayer )
 			return;
@@ -550,7 +547,7 @@ public:
 // Zone Hook
 //////////////////////////////////////////////////////////////////////////
 
-void ZMZoneHook(PlayerPointer plr, uint32 Zone, uint32 OldZone)
+void ZMZoneHook(Player* plr, uint32 Zone, uint32 OldZone)
 {
 	if(!plr)
 		return;
@@ -586,7 +583,7 @@ struct sgodata
 	uint32 is_banner;
 };
 
-void ZMSpawnBanners(shared_ptr<MapMgr> bmgr, int32 side)
+void ZMSpawnBanners(MapMgr* bmgr, int32 side)
 {
 	if(!bmgr)
 		return;
@@ -608,7 +605,7 @@ void ZMSpawnBanners(shared_ptr<MapMgr> bmgr, int32 side)
 	const sgodata *b;
 	b = &gobdata[i];
 
-	GameObjectPointer bGo = NULLGOB;
+	GameObject* bGo = NULL;
 	bGo = bmgr->GetInterface()->SpawnGameObject(b->entry, b->posx, b->posy, b->posz, b->facing, false, 0, 0);
 	if( !bGo )
 		return;
@@ -625,7 +622,7 @@ void ZMSpawnBanners(shared_ptr<MapMgr> bmgr, int32 side)
 	bGo->PushToWorld(bmgr);
 }
 
-void ZMSpawnObjects(shared_ptr<MapMgr> pmgr)
+void ZMSpawnObjects(MapMgr* pmgr)
 {
 	if(!pmgr || pmgr->GetMapId() != 530)
 		return;
@@ -644,7 +641,7 @@ void ZMSpawnObjects(shared_ptr<MapMgr> pmgr)
 	{
 		p = &godata[i];
 
-		GameObjectPointer pGo = NULLGOB;
+		GameObject* pGo = NULL;
 		pGo = pmgr->GetInterface()->SpawnGameObject(p->entry, p->posx, p->posy, p->posz, p->facing, false, 0, 0);
 		if( !pGo )
 			continue;
@@ -667,7 +664,7 @@ void ZMSpawnObjects(shared_ptr<MapMgr> pmgr)
 	}
 }
 
-void Tokens(PlayerPointer pPlayer, PlayerPointer pVictim)
+void Tokens(Player* pPlayer, Player* pVictim)
 {
 	if( !pPlayer || !pVictim )
 		return;

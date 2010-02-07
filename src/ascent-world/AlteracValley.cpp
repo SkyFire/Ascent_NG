@@ -1,21 +1,16 @@
 /*
-* Ascent MMORPG Server
-* Copyright (C) 2005-2009 Ascent Team <http://www.ascentemulator.net/>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Affero General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU Affero General Public License for more details.
-*
-* You should have received a copy of the GNU Affero General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * Ascent MMORPG Server
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ *
+ * This software is  under the terms of the EULA License
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
+ * and intellectual property rights in and to the content which may be accessed through
+ * use of the AscentNG is the property of the respective content owner and may be protected
+ * by applicable copyright or other intellectual property laws and treaties. This EULA grants
+ * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
+ *
+ */
 
 #include "StdAfx.h"
 
@@ -898,18 +893,18 @@ static const char *g_stateNames[AV_NODE_STATE_COUNT] = {
 	"AV_NODE_STATE_HORDE_CONTROLLED",
 };
 
-AVNode::AVNode( AlteracValleyPointer parent, AVNodeTemplate *tmpl, uint32 nodeid) : m_template(tmpl), m_nodeId(nodeid)
+AVNode::AVNode( AlteracValley* parent, AVNodeTemplate *tmpl, uint32 nodeid) : m_template(tmpl), m_nodeId(nodeid)
 {
 	m_bg = parent;
-	m_boss = NULLCREATURE;
-	m_flag = NULLGOB;
-	m_aura = NULLGOB;
-	m_glow = NULLGOB;
+	m_boss = NULL;
+	m_flag = NULL;
+	m_aura = NULL;
+	m_glow = NULL;
 	m_state = tmpl->m_defaultState;
 	m_lastState = tmpl->m_defaultState;
 	m_destroyed = false;
-	m_homeNPC = NULLCREATURE;
-	m_spiritGuide = NULLCREATURE;
+	m_homeNPC = NULL;
+	m_spiritGuide = NULL;
 
 	// set state
 	ChangeState(m_state);
@@ -921,14 +916,17 @@ AVNode::AVNode( AlteracValleyPointer parent, AVNodeTemplate *tmpl, uint32 nodeid
 		const AVSpawnLocation *spi = g_initalGuardLocations[nodeid];
 		CreatureInfo *ci = CreatureNameStorage.LookupEntry(m_template->m_initialSpawnId);
 		CreatureProto *cp = CreatureProtoStorage.LookupEntry(m_template->m_initialSpawnId);
-		CreaturePointer sp;
+		Creature* sp = NULL;
 		OUT_DEBUG("spawning guards at bunker %s of %s (%u)", m_template->m_name, ci->Name, ci->Id);
 
 		while(spi->x != 0.0f)
 		{
 			sp = m_bg->GetMapMgr()->CreateCreature(ci->Id);
-			sp->Load(cp, spi->x, spi->y, spi->z, spi->o);
-			sp->PushToWorld(m_bg->GetMapMgr());
+			if(sp != NULL)
+			{
+				sp->Load(cp, spi->x, spi->y, spi->z, spi->o);
+				sp->PushToWorld(m_bg->GetMapMgr());
+			}
 			++spi;
 		}
 	}
@@ -955,7 +953,7 @@ AVNode::~AVNode()
 
 }
 
-void AVNode::Assault(PlayerPointer plr)
+void AVNode::Assault(Player* plr)
 {
 	// player assaulted the control point.
 	// safety check
@@ -1022,7 +1020,7 @@ void AVNode::Spawn()
 		{
 			OUT_DEBUG("AVNode::Spawn(%s) : Despawning main flag", m_template->m_name);
 			m_flag->Despawn(0);
-			m_flag = NULLGOB;
+			m_flag = NULL;
 		}
 	}
 	else
@@ -1068,7 +1066,7 @@ void AVNode::Spawn()
 		{
 			OUT_DEBUG("AVNode::Spawn(%s) : Despawning secondary flag", m_template->m_name);
 			m_aura->Despawn(0);
-			m_aura = NULLGOB;
+			m_aura = NULL;
 		}
 	}
 	else
@@ -1115,7 +1113,7 @@ void AVNode::Spawn()
 		{
 			OUT_DEBUG("AVNode::Spawn(%s) : Despawning glow", m_template->m_name);
 			m_glow->Despawn(0);
-			m_glow = NULLGOB;
+			m_glow = NULL;
 		}
 	}
 	else
@@ -1177,7 +1175,7 @@ void AVNode::Spawn()
 	if( m_state == AV_NODE_STATE_ALLIANCE_CONTROLLED || m_state == AV_NODE_STATE_HORDE_CONTROLLED )
 	{
 		OUT_DEBUG("AVNode::Spawn(%s) : despawning guards", m_template->m_name);
-		for(vector<CreaturePointer>::iterator itr = m_guards.begin(); itr != m_guards.end(); ++itr)
+		for(vector<Creature*>::iterator itr = m_guards.begin(); itr != m_guards.end(); ++itr)
 			(*itr)->Despawn(0, 0);
 		
 		m_guards.clear();
@@ -1217,13 +1215,13 @@ void AVNode::Spawn()
 		{
 			OUT_DEBUG("AVNode::Spawn(%s) : despawning spirit guide", m_template->m_name);
 			// move everyone in the revive queue to a different node
-			map<CreaturePointer, set<uint32> >::iterator itr = m_bg->m_resurrectMap.find(m_spiritGuide);
+			map<Creature*, set<uint32> >::iterator itr = m_bg->m_resurrectMap.find(m_spiritGuide);
 			if( itr != m_bg->m_resurrectMap.end() )
 			{
 				for(set<uint32>::iterator it2 = itr->second.begin(); it2 != itr->second.end(); ++it2)
 				{
 					// repop him at a new GY
-					PlayerPointer plr_tmp = m_bg->GetMapMgr()->GetPlayer(*it2);
+					Player* plr_tmp = m_bg->GetMapMgr()->GetPlayer(*it2);
 					if( plr_tmp != NULL )
 					{
 						m_bg->HookHandleRepop(plr_tmp);
@@ -1234,7 +1232,7 @@ void AVNode::Spawn()
 			}
 			m_bg->RemoveSpiritGuide(m_spiritGuide);
 			m_spiritGuide->Despawn(0, 0);
-			m_spiritGuide = NULLCREATURE;
+			m_spiritGuide = NULL;
 		}
 
 		if( m_state == AV_NODE_STATE_ALLIANCE_CONTROLLED )
@@ -1299,7 +1297,7 @@ void AVNode::Capture()
 		{
 			// spawn fire!
 			const AVSpawnLocation *spi = g_fireLocations[m_nodeId];
-			GameObjectPointer go;
+			GameObject* go;
 
 			OUT_DEBUG("spawning fires at bunker %s", m_template->m_name);
 			while(spi->x != 0.0f)
@@ -1325,11 +1323,11 @@ void AVNode::Capture()
 
 			if( m_template->m_defaultState == AV_NODE_STATE_ALLIANCE_CONTROLLED )
 			{
-				m_bg->GiveHonorToTeam(1, AV_PER_KILL_HONOR * 3);
+				m_bg->GiveHonorToTeam(1, m_bg->GetBonusHonor() * 3);
 			}
 			else if( m_template->m_defaultState == AV_NODE_STATE_HORDE_CONTROLLED )
 			{
-				m_bg->GiveHonorToTeam(0, AV_PER_KILL_HONOR * 3);
+				m_bg->GiveHonorToTeam(0, m_bg->GetBonusHonor() * 3);
 			}
 
 			// the npc at our home has to change.
@@ -1371,11 +1369,14 @@ void AVNode::Capture()
 	}
 }
 
-AlteracValley::AlteracValley( MapMgrPointer mgr, uint32 id, uint32 lgroup, uint32 t) : CBattleground(mgr,id,lgroup,t)
+AlteracValley::AlteracValley( MapMgr* mgr, uint32 id, uint32 lgroup, uint32 t) : CBattleground(mgr,id,lgroup,t)
 {
 	m_playerCountPerTeam = 40;
 	m_reinforcements[0] = AV_NUM_REINFORCEMENTS;
 	m_reinforcements[1] = AV_NUM_REINFORCEMENTS;
+	m_LiveCaptain[0] = true;
+	m_LiveCaptain[1] = true;
+	m_bonusHonor = HonorHandler::CalculateHonorPointsFormula(lgroup*10,lgroup*10);
 
 	memset(m_nodes, 0, sizeof(m_nodes));
 }
@@ -1390,7 +1391,7 @@ AlteracValley::~AlteracValley()
 
 }
 
-bool AlteracValley::HookSlowLockOpen(GameObjectPointer pGo, PlayerPointer pPlayer, SpellPointer pSpell)
+bool AlteracValley::HookSlowLockOpen(GameObject* pGo, Player* pPlayer, Spell* pSpell)
 {
 	// burlex todo: find a cleaner way to do this that doesnt waste memory.
 	if(pGo->bannerslot >= 0 && pGo->bannerslot < AV_NUM_CONTROL_POINTS)
@@ -1405,27 +1406,27 @@ bool AlteracValley::HookSlowLockOpen(GameObjectPointer pGo, PlayerPointer pPlaye
 	return false;
 }
 
-void AlteracValley::HookFlagDrop(PlayerPointer plr, GameObjectPointer obj)
+void AlteracValley::HookFlagDrop(Player* plr, GameObject* obj)
 {
 
 }
 
-void AlteracValley::HookFlagStand(PlayerPointer plr, GameObjectPointer obj)
+void AlteracValley::HookFlagStand(Player* plr, GameObject* obj)
 {
 
 }
 
-void AlteracValley::HookOnMount(PlayerPointer plr)
+void AlteracValley::HookOnMount(Player* plr)
 {
 
 }
 
-void AlteracValley::HookOnAreaTrigger(PlayerPointer plr, uint32 id)
+void AlteracValley::HookOnAreaTrigger(Player* plr, uint32 id)
 {
 
 }
 
-bool AlteracValley::HookHandleRepop(PlayerPointer plr)
+bool AlteracValley::HookHandleRepop(Player* plr)
 {
 	uint32 x;
 	float dist = 999999.0f;
@@ -1464,13 +1465,13 @@ bool AlteracValley::HookHandleRepop(PlayerPointer plr)
 	return false;
 }
 
-void AlteracValley::HookOnHK(PlayerPointer plr)
+void AlteracValley::HookOnHK(Player* plr)
 {
 	plr->m_bgScore.HonorableKills++;
 	UpdatePvPData();
 }
 
-void AlteracValley::DropFlag(PlayerPointer plr)
+void AlteracValley::DropFlag(Player* plr)
 {
 
 }
@@ -1485,7 +1486,7 @@ void AlteracValley::OnCreate()
 	sm.CreateWorldState(WORLDSTATE_AV_HORDE_SCORE, 600);
 
 	// Alliance Gate
-	GameObjectPointer gate = SpawnGameObject(AV_GAMEOBJECT_GATE, 780.487f, -493.024f, 99.9553f, 3.0976f, 32, 114, 3.000000f);
+	GameObject* gate = SpawnGameObject(AV_GAMEOBJECT_GATE, 780.487f, -493.024f, 99.9553f, 3.0976f, 32, 114, 3.000000f);
 	gate->SetByte(GAMEOBJECT_BYTES_1,GAMEOBJECT_BYTES_ANIMPROGRESS, 100);
 	gate->PushToWorld(m_mapMgr);
 	m_gates.push_back(gate);
@@ -1506,7 +1507,7 @@ void AlteracValley::OnCreate()
 	}
 	
 	for(uint32 x = 0; x < AV_NUM_CONTROL_POINTS; ++x)
-		m_nodes[x] = new AVNode(TO_ALTERACVALLEY(shared_from_this()), &g_nodeTemplates[x], x);
+		m_nodes[x] = new AVNode(TO_ALTERACVALLEY(this), &g_nodeTemplates[x], x);
 
 	// generals/leaders!
 	SpawnCreature(AV_NPC_GENERAL_VANNDAR_STORMPIKE, 726.969604f, -9.716300f, 50.621391f, 3.377580f);
@@ -1524,13 +1525,13 @@ void AlteracValley::OnCreate()
 void AlteracValley::OnStart()
 {
 	for(uint32 i = 0; i < 2; ++i) {
-		for(set<PlayerPointer  >::iterator itr = m_players[i].begin(); itr != m_players[i].end(); ++itr) {
+		for(set<Player*  >::iterator itr = m_players[i].begin(); itr != m_players[i].end(); ++itr) {
 			(*itr)->RemoveAura(BG_PREPARATION);
 		}
 	}
 
 	// open gates
-	for(list< GameObjectPointer >::iterator itr = m_gates.begin(); itr != m_gates.end(); ++itr)
+	for(list< GameObject* >::iterator itr = m_gates.begin(); itr != m_gates.end(); ++itr)
 	{
 		(*itr)->SetUInt32Value(GAMEOBJECT_FLAGS, 64);
 		(*itr)->SetByte(GAMEOBJECT_BYTES_1,GAMEOBJECT_BYTES_STATE, 0);
@@ -1541,10 +1542,10 @@ void AlteracValley::OnStart()
 
 	m_started = true;
 
-	sEventMgr.AddEvent(TO_ALTERACVALLEY(shared_from_this()), &AlteracValley::EventUpdateResources, EVENT_BATTLEGROUND_RESOURCEUPDATE, AV_REINFORCEMENT_ADD_INTERVAL, 0, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+	sEventMgr.AddEvent(TO_ALTERACVALLEY(this), &AlteracValley::EventUpdateResources, EVENT_BATTLEGROUND_RESOURCEUPDATE, AV_REINFORCEMENT_ADD_INTERVAL, 0, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
 }
 
-void AlteracValley::OnAddPlayer(PlayerPointer plr)
+void AlteracValley::OnAddPlayer(Player* plr)
 {	
 	if(!m_started)
 		plr->CastSpell(plr, BG_PREPARATION, true);
@@ -1561,7 +1562,7 @@ void AlteracValley::OnAddPlayer(PlayerPointer plr)
 	}
 }
 
-void AlteracValley::OnRemovePlayer(PlayerPointer plr)
+void AlteracValley::OnRemovePlayer(Player* plr)
 {
 	plr->RemoveAura(BG_PREPARATION);
 }
@@ -1574,7 +1575,7 @@ LocationVector AlteracValley::GetStartingCoords(uint32 Team)
 		return LocationVector(876.434448f, -489.599579f, 96.517174f, 3.222486f);
 }
 
-void AlteracValley::HookOnPlayerDeath(PlayerPointer plr)
+void AlteracValley::HookOnPlayerDeath(Player* plr)
 {
 	RemoveReinforcements(plr->GetTeam(), AV_POINTS_ON_KILL);
 }
@@ -1607,7 +1608,7 @@ void AlteracValley::RemoveReinforcements(uint32 teamId, uint32 amt)
 	}
 }
 
-void AlteracValley::HookOnPlayerKill(PlayerPointer plr, UnitPointer pVictim)
+void AlteracValley::HookOnPlayerKill(Player* plr, Unit* pVictim)
 {
 	if(pVictim->IsPlayer())
 	{
@@ -1616,7 +1617,7 @@ void AlteracValley::HookOnPlayerKill(PlayerPointer plr, UnitPointer pVictim)
 	}
 }
 
-void AlteracValley::HookOnUnitKill(PlayerPointer plr, UnitPointer pVictim)
+void AlteracValley::HookOnUnitKill(Player* plr, Unit* pVictim)
 {
 	if(pVictim->IsPlayer())
 		return;
@@ -1627,51 +1628,26 @@ void AlteracValley::HookOnUnitKill(PlayerPointer plr, UnitPointer pVictim)
 	{
 		Herald("The Stormpike General is dead!");
 		RemoveReinforcements( 0, AV_NUM_REINFORCEMENTS );
-		GiveHonorToTeam(1, AV_PER_KILL_HONOR * 4);
+		GiveHonorToTeam(1, m_bonusHonor * 4);
 	}
 	else if(pVictim->GetEntry() == AV_NPC_GENERAL_DREK_THAR)
 	{
 		Herald("The Frostwolf General is dead!");
 		RemoveReinforcements( 1, AV_NUM_REINFORCEMENTS );
-		GiveHonorToTeam(0, AV_PER_KILL_HONOR * 4);
+		GiveHonorToTeam(0, m_bonusHonor * 4);
 	}
 	else if(pVictim->GetEntry() == AV_NPC_CAPTAIN_GALVANGAR)
 	{
 		RemoveReinforcements( 1, AV_POINTS_ON_KILL_CAPTAIN );
-		GiveHonorToTeam(0, AV_PER_KILL_HONOR * 3);
+		m_LiveCaptain[1] = false;
+		GiveHonorToTeam(0, m_bonusHonor * 3);
 	}
 	else if(pVictim->GetEntry() == AV_NPC_CAPTAIN_BALINDA_STONEHEARTH)
 	{
 		RemoveReinforcements( 0, AV_POINTS_ON_KILL_CAPTAIN );
-		GiveHonorToTeam(1, AV_PER_KILL_HONOR * 3);
+		m_LiveCaptain[0] = false;
+		GiveHonorToTeam(1, m_bonusHonor * 3);
 	}
-	/*else if(pVictim->GetEntry() == AV_NPC_TASKMASTER_SNIVVLE)
-	{
-		sm.UpdateWorldState(WORLDSTATE_AV_COLDTOOTH_MINE_KOBOLD_CONTROLLED, 0);
-		sm.UpdateWorldState(WORLDSTATE_AV_COLDTOOTH_MINE_ALLIANCE_CONTROLLED + plr->GetTeam(), 1);
-
-		Creature *toDespawn;
-		for(uint32 i = 0; i < AV_NUM_COLDTOOTH_UNITS; ++i)
-		{
-			if( m_coldToothUnits[i] != 0 && (toDespawn = m_mapMgr->GetCreature(m_coldToothUnits[i])) != NULL )
-				toDespawn->Despawn(0, 0);
-		}
-
-		m_mineControl[ plr->GetTeam() ]++;
-	}
-	else if(pVictim->GetEntry() == AV_NPC_MORLOCH)
-	{
-		sm.UpdateWorldState(WORLDSTATE_AV_IRONDEEP_MINE_TROGG_CONTROLLED, 0);
-		sm.UpdateWorldState(WORLDSTATE_AV_IRONDEEP_MINE_ALLIANCE_CONTROLLED + plr->GetTeam(), 1);
-
-		m_mineControl[ plr->GetTeam() ]++;
-		Creature *toDespawn;
-		for(uint32 i = 0; i < AV_NUM_IRONDEEP_UNITS; ++i)
-		{
-			if( m_ironDeepUnits[i] != 0 && (toDespawn = m_mapMgr->GetCreature(m_ironDeepUnits[i])) != NULL )
-				toDespawn->Despawn(0, 0);
-		}
-	}*/
 }
 
 void AlteracValley::Finish(uint32 losingTeam)
@@ -1680,19 +1656,19 @@ void AlteracValley::Finish(uint32 losingTeam)
 
 	m_ended = true;
 	m_losingteam = losingTeam;
-	sEventMgr.RemoveEvents(shared_from_this());
-	sEventMgr.AddEvent(TO_CBATTLEGROUND(shared_from_this()), &CBattleground::Close, EVENT_BATTLEGROUND_CLOSE, 120000, 1,0);
+	sEventMgr.RemoveEvents(this);
+	sEventMgr.AddEvent(TO_CBATTLEGROUND(this), &CBattleground::Close, EVENT_BATTLEGROUND_CLOSE, 120000, 1,0);
 
 	/* add the marks of honor to all players */
 	SpellEntry * winner_spell = dbcSpell.LookupEntry(24955);
 	SpellEntry * loser_spell = dbcSpell.LookupEntry(24954);
 	for(uint32 i = 0; i < 2; ++i)
 	{
-		for(set<PlayerPointer  >::iterator itr = m_players[i].begin(); itr != m_players[i].end(); ++itr)
+		for(set<Player*  >::iterator itr = m_players[i].begin(); itr != m_players[i].end(); ++itr)
 		{
 			(*itr)->Root();
 
-			if( (*itr)->HasFlag(PLAYER_FLAGS, 0x2) )
+			if( (*itr)->HasFlag(PLAYER_FLAGS, PLAYER_FLAG_AFK) )
 				continue;
 
 			if(i == losingTeam)
@@ -1701,14 +1677,30 @@ void AlteracValley::Finish(uint32 losingTeam)
 			{
 				(*itr)->CastSpell((*itr), winner_spell, true);
 				uint32 diff = abs((int32)(m_reinforcements[i] - m_reinforcements[i ? 0 : 1]));
-				(*itr)->GetAchievementInterface()->HandleAchievementCriteriaWinBattleground( m_mapMgr->GetMapId(), diff, ((uint32)UNIXTIME - m_startTime) / 1000, TO_CBATTLEGROUND(shared_from_this()));
+				(*itr)->GetAchievementInterface()->HandleAchievementCriteriaWinBattleground( m_mapMgr->GetMapId(), diff, ((uint32)UNIXTIME - m_startTime) / 1000, TO_CBATTLEGROUND(this));
 			}
 		}
-	}
 
-	if (m_isWeekend)
-	{
-		GiveHonorToTeam(m_losingteam ? 0 : 1, AV_PER_KILL_HONOR * 4);
+		if (m_LiveCaptain[i])
+		{
+			GiveHonorToTeam(i, m_bonusHonor * 2);
+		}
+
+		int towerSaved = 0;
+		for(int x = 0; x < AV_NUM_CONTROL_POINTS; ++x)
+		{
+			// skip non-graveyards
+			if( !m_nodes[x]->m_template->m_isGraveyard && !m_nodes[x]->m_destroyed &&
+				( (i == 0 && m_nodes[x]->m_template->m_defaultState == AV_NODE_STATE_ALLIANCE_CONTROLLED) ||
+				(i == 1 && m_nodes[x]->m_template->m_defaultState == AV_NODE_STATE_HORDE_CONTROLLED) ) )
+				towerSaved++;
+		}
+		if ( towerSaved > 0 )
+			GiveHonorToTeam(i, m_bonusHonor * 2 * towerSaved);
+		if (m_isWeekend)
+		{
+			GiveHonorToTeam(i, m_bonusHonor * 4);
+		}
 	}
 
 	UpdatePvPData();
@@ -1741,7 +1733,7 @@ const static AVLoot g_avLoot[] = {
 	{ 0, 0, 0},
 };
 
-void AlteracValley::HookGenerateLoot(PlayerPointer plr, CorpsePointer pCorpse)
+void AlteracValley::HookGenerateLoot(Player* plr, Corpse* pCorpse)
 {
 	const AVLoot *loot_ptr = &g_avLoot[0];
 	while(loot_ptr->ItemId != 0)
@@ -1765,7 +1757,7 @@ void AlteracValley::HookGenerateLoot(PlayerPointer plr, CorpsePointer pCorpse)
 					li.iRandomProperty = NULL;
 					li.iRandomSuffix = NULL;
 					li.passed = false;
-					li.roll = NULLROLL;
+					li.roll = NULL;
 
 					// push to vector
 					pCorpse->m_loot.items.push_back(li);
