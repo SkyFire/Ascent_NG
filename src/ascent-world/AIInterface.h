@@ -195,7 +195,7 @@ uint32 getGuardId(uint32 id);
 bool isTargetDummy(uint32 id);
 
 
-typedef std::tr1::unordered_map< Unit*, int32> TargetMap;
+typedef unordered_map< Unit*, int32> TargetMap;
 #ifdef TRHAX
 	namespace std
 	{

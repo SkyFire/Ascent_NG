@@ -24,6 +24,7 @@
 #include <fcntl.h>
 #include <string>
 #include <map>
+#include <set>
 #include <Windows.h>
 #include <mmsystem.h>
 using namespace std;
@@ -32,6 +33,8 @@ extern unsigned int iRes;
 bool ConvertADT(uint32 x, uint32 y, FILE * out_file, char* name);
 void reset();
 void CleanCache();
+typedef std::vector<MPQArchive*> ArchiveSet;
+extern ArchiveSet gOpenArchives;
 
 typedef struct{
 	char name[64];
@@ -103,7 +106,7 @@ void ExtractMapsFromMpq()
 	printf("\nProcessing %u maps...\n\n", MapCount);
 
     for(uint32 i = 0; i < MapCount; ++i)
-    {	
+    {
         map = &map_ids[i];
         printf("Converting maps for mapid %u [%s]...\n", map->id, map->name);
         // Create the container file
@@ -210,13 +213,29 @@ void ExtractMapsFromMpq()
 
 }
 
+bool ExtractFile( char const* mpq_name, std::string const& filename ) 
+{
+    FILE *output = fopen(filename.c_str(), "wb");
+    if(!output)
+    {
+        printf("Can't create the output file '%s'\n", filename.c_str());
+        return false;
+    }
+    MPQFile m(mpq_name);
+    if(!m.isEof())
+        fwrite(m.getPointer(), 1, m.getSize(), output);
+
+    fclose(output);
+    return true;
+}
+
 int main(int argc, char * arg[])
 {
-    printf("Ascent map extractor for versions 2.1.0 and above.. maybe :p\n");
-    printf("============================================================\n\n");
+	printf("Ascent map extractor for versions 3.2.2 \n");
+	printf("============================================================\n\n");
 
 	FILE * tf;
-	const char* localeNames[] = { "enUS", "enGB", "deDE", "frFR", "koKR", "zhCN", "zhTW", "esES", 0 };
+	const char* localeNames[] = { "enUS", "enGB", "deDE", "frFR", "koKR", "zhCN", "zhTW", "esES", "ruRU", 0 };
 	int maxPatches = 3;
 	int locale = -1;
 	char tmp[100];
@@ -308,6 +327,40 @@ int main(int argc, char * arg[])
 			}
 		}
 	}
+
+	printf("\nExtracting DBC Files: Identifying files...\n");
+
+	std::set<std::string> dbcFiles;
+	int itc = 0;
+	for(std::vector<MPQArchive*>::iterator it = gOpenArchives.begin(); it != gOpenArchives.end(); ++it)
+	{
+		std::vector<std::string> files;
+		files = (*it)->GetFileList();
+        for (vector<string>::iterator iter = files.begin(); iter != files.end(); ++iter)
+            if (iter->rfind(".dbc") == iter->length() - strlen(".dbc"))
+                    dbcFiles.insert(*iter);
+		SimpleProgressBar(++itc, gOpenArchives.size());
+	}
+	CleanCache();
+	ClearProgressBar();
+	printf("Extracting...\n");
+
+    CreateDirectory("DBC", NULL);
+
+    // extract DBCs
+    int count = 0;
+    for (set<string>::iterator iter = dbcFiles.begin(); iter != dbcFiles.end(); ++iter)
+    {
+        string filename = "DBC\\";
+        filename += (iter->c_str() + strlen("DBFilesClient\\"));
+
+        if(ExtractFile(iter->c_str(), filename))
+            ++count;
+		SimpleProgressBar(count, dbcFiles.size());
+    }
+	CleanCache();
+	ClearProgressBar();
+    printf("Extracted %u DBC files\n\n", count);
 
 	//map.dbc
 	DBCFile * dbc= new DBCFile("DBFilesClient\\Map.dbc");

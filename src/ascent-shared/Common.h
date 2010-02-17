@@ -262,7 +262,8 @@ enum MsTimeVariables
 #include <unordered_map>
 #include <unordered_set>
 #elif COMPILER == COMPILER_MICROSOFT && _MSC_VER >= 1500 && !_HAS_TR1
-#pragma message ("FATAL ERROR: Please install Service Pack 1 for Visual Studio 2008")
+#include <hash_map>
+#include <hash_set>
 #elif COMPILER == COMPILER_MICROSOFT && _MSC_VER < 1500
 #include <boost/tr1/memory.hpp>
 #include <boost/tr1/unordered_map.hpp>
@@ -304,12 +305,21 @@ namespace std
 		};
 	}
 }
-#elif COMPILER == COMPILER_MICROSOFT && (_MSC_VER < 1500 || !_HAS_TR1)
+#elif COMPILER == COMPILER_MICROSOFT
+#if _MSC_VER >= 1500 && _HAS_TR1
 using namespace std::tr1;
 using std::tr1::shared_ptr;
 #undef HM_NAMESPACE
 #define HM_NAMESPACE tr1
 #define hash_map unordered_map
+#else
+#undef HM_NAMESPACE
+#define HM_NAMESPACE stdext
+using namespace stdext;
+#define unordered_map hash_map
+#define unordered_set hash_set
+#define unordered_multimap hash_multimap
+#endif
 #define ENABLE_SHITTY_STL_HACKS 1
 
 // hacky stuff for vc++
@@ -365,6 +375,7 @@ namespace std
 }
 #endif
 
+#if (COMPILER == COMPILER_GNU && __GNUC__ >=4 && __GNUC_MINOR__ == 1 && __GNUC_PATCHLEVEL__ == 2) || (COMPILER == COMPILER_MICROSOFT && _MSC_VER >= 1500 && _HAS_TR1)
 namespace std
 {
 	namespace tr1
@@ -375,6 +386,7 @@ namespace std
 		};
 	}
 }
+#endif
 
 /* Use correct types for x64 platforms, too */
 #if COMPILER != COMPILER_GNU
