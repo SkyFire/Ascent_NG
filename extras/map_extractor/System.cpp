@@ -90,9 +90,49 @@ void SimpleProgressBar(int val, int max)
     for (; p <60; p++) putchar (' ');
 
     printf ("\xba %d%%\r", val * 100 / max);
-    fflush(stdout);
 }
 
+struct fileVer
+{
+    union{
+        uint32 fcc;
+        char   fcc_txt[4];
+    };
+    uint32 size;
+    uint32 ver;
+};
+
+struct wdt_MPHD{
+    union{
+        uint32 fcc;
+        char   fcc_txt[4];
+    };
+
+    uint32 size;
+
+    uint32 data1;
+    uint32 data2;
+    uint32 data3;
+    uint32 data4;
+    uint32 data5;
+    uint32 data6;
+    uint32 data7;
+    uint32 data8;
+};
+
+struct wdt_MAIN{
+    union{
+        uint32 fcc;
+        char   fcc_txt[4];
+    };
+
+    uint32 size;
+
+    struct adtData{
+        uint32 exist;
+        uint32 data1;
+    } adt_list[64][64];
+};
 
 void ExtractMapsFromMpq()
 {
@@ -118,37 +158,53 @@ void ExtractMapsFromMpq()
             printf("  Could not create output file!\n");
             return;
         }
+		TotalTiles = 0;
+		AvailableTiles = 0;
+		memset(Available_Maps, 0, sizeof(bool)*64*64);
         printf("  Checking which tiles are extractable...\n");
+        sprintf(mpq_filename, "World\\Maps\\%s\\%s.wdt", map->name, map->name);
+		MPQFile mf(mpq_filename);
+		if(!mf.isEof())
+		{
+			uint8 * data = new uint8[mf.getSize()];
+			mf.read(data, mf.getSize());
+			fileVer * version = (fileVer*)data;
+			if(version->fcc != 'MVER' || version->ver != 18)
+				continue;
+			wdt_MPHD * mphd = (wdt_MPHD*)((uint8*) version+version->size+8);
+			if(mphd->fcc != 'MPHD')
+				continue;
+			wdt_MAIN * main = (wdt_MAIN*)((uint8*) mphd+mphd->size+8);
+			if(main->fcc != 'MAIN')
+				continue;
 
-        // First, check the number of present tiles.
-        for(uint32 x = 0; x < 64; ++x)
-        {
-            for(uint32 y = 0; y < 64; ++y)
-            {
-                // set up the mpq filename
-                sprintf(mpq_filename, "World\\Maps\\%s\\%s_%u_%u.adt", map->name, map->name, y, x);
+			// First, check the number of present tiles.
+			for(uint32 x = 0; x < 64; ++x)
+			{
+				for(uint32 y = 0; y < 64; ++y)
+				{
+					// check if the file exists
+					if(!main->adt_list[y][x].exist)
+					{
+						// file does not exist
+						Available_Maps[x][y] = false;
+					}
+					else
+					{
+						// file does exist
+						Available_Maps[x][y] = true;
+						++AvailableTiles;
+					}
+					++TotalTiles;
 
-                // check if the file exists
-                if(!mpq_file_exists(mpq_filename))
-                {
-                    // file does not exist
-                    Available_Maps[x][y] = false;
-                }
-                else
-                {
-                    // file does exist
-                    Available_Maps[x][y] = true;
-                    ++AvailableTiles;
-                }
-                ++TotalTiles;
+					// Update Progress Bar
+					//SimpleProgressBar( (x * 64 + y), 64 * 64 );
+				}
+			}
 
-                // Update Progress Bar
-                SimpleProgressBar( (x * 64 + y), 64 * 64 );
-            }
-        }
-
-        // Clear progress bar.
-        ClearProgressBar();
+			// Clear progress bar.
+			//ClearProgressBar();
+		}
 
         // Calculate the estimated size.
         float Estimated_Size = 1048576.0f;
@@ -177,30 +233,35 @@ void ExtractMapsFromMpq()
         uint32 start_time = timeGetTime();
         reset();
 
-        // call the extraction function.
-        for(uint32 x = 0; x < 512; ++x)
-        {
-            for(uint32 y = 0; y < 512; ++y)
-            {
-                // Check if the map is available.
-                if(Available_Maps[x/8][y/8])
-                {
-                    uint32 Offset = ftell(out_file);
-                    if(ConvertADT(x, y, out_file, map->name))
-                        Offsets[x][y] = Offset;
+		if(TilesToExtract)
+		{
+			// call the extraction function.
+			for(uint32 x = 0; x < 512; ++x)
+			{
+				for(uint32 y = 0; y < 512; ++y)
+				{
+					// Check if the map is available.
+					if(Available_Maps[x/8][y/8])
+					{
+						uint32 Offset = ftell(out_file);
+						if(ConvertADT(x, y, out_file, map->name))
+							Offsets[x][y] = Offset;
 
-                    ++DoneTiles;
-                    SimpleProgressBar( DoneTiles, TilesToExtract );
-                }
-            }
+						++DoneTiles;
+					}
+				}
+				SimpleProgressBar( DoneTiles, TilesToExtract );
 
-            // Clean the cache every 8 cells.
-            if(!(x % 8))
-                CleanCache();
-        }
-        ClearProgressBar();
-        // clean any leftover cells
-        CleanCache();
+				// Clean the cache every 8 cells.
+				if(!(x % 8))
+					CleanCache();
+				if(DoneTiles >= TilesToExtract)
+					break;
+			}
+			ClearProgressBar();
+			// clean any leftover cells
+			CleanCache();
+		}
 
         printf("  Finished extracting in %ums. Appending header to start of file...\n", timeGetTime() - start_time);
         fseek(out_file, 0, SEEK_SET);
