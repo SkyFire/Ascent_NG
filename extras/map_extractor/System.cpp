@@ -28,6 +28,7 @@
 #include <Windows.h>
 #include <mmsystem.h>
 using namespace std;
+#include "filestruct.h"
 
 extern unsigned int iRes;
 bool ConvertADT(uint32 x, uint32 y, FILE * out_file, char* name);
@@ -92,48 +93,6 @@ void SimpleProgressBar(int val, int max)
     printf ("\xba %d%%\r", val * 100 / max);
 }
 
-struct fileVer
-{
-    union{
-        uint32 fcc;
-        char   fcc_txt[4];
-    };
-    uint32 size;
-    uint32 ver;
-};
-
-struct wdt_MPHD{
-    union{
-        uint32 fcc;
-        char   fcc_txt[4];
-    };
-
-    uint32 size;
-
-    uint32 data1;
-    uint32 data2;
-    uint32 data3;
-    uint32 data4;
-    uint32 data5;
-    uint32 data6;
-    uint32 data7;
-    uint32 data8;
-};
-
-struct wdt_MAIN{
-    union{
-        uint32 fcc;
-        char   fcc_txt[4];
-    };
-
-    uint32 size;
-
-    struct adtData{
-        uint32 exist;
-        uint32 data1;
-    } adt_list[64][64];
-};
-
 void ExtractMapsFromMpq()
 {
     bool Available_Maps[64][64];
@@ -170,13 +129,22 @@ void ExtractMapsFromMpq()
 			mf.read(data, mf.getSize());
 			fileVer * version = (fileVer*)data;
 			if(version->fcc != 'MVER' || version->ver != 18)
+			{
+				delete data;
 				continue;
+			}
 			wdt_MPHD * mphd = (wdt_MPHD*)((uint8*) version+version->size+8);
 			if(mphd->fcc != 'MPHD')
+			{
+				delete data;
 				continue;
+			}
 			wdt_MAIN * main = (wdt_MAIN*)((uint8*) mphd+mphd->size+8);
 			if(main->fcc != 'MAIN')
+			{
+				delete data;
 				continue;
+			}
 
 			// First, check the number of present tiles.
 			for(uint32 x = 0; x < 64; ++x)
@@ -184,7 +152,7 @@ void ExtractMapsFromMpq()
 				for(uint32 y = 0; y < 64; ++y)
 				{
 					// check if the file exists
-					if(!main->adt_list[y][x].exist)
+					if(!main->adt_list[x][y].exist)
 					{
 						// file does not exist
 						Available_Maps[x][y] = false;
@@ -196,15 +164,11 @@ void ExtractMapsFromMpq()
 						++AvailableTiles;
 					}
 					++TotalTiles;
-
-					// Update Progress Bar
-					//SimpleProgressBar( (x * 64 + y), 64 * 64 );
 				}
 			}
-
-			// Clear progress bar.
-			//ClearProgressBar();
+			delete data;
 		}
+		mf.close();
 
         // Calculate the estimated size.
         float Estimated_Size = 1048576.0f;
