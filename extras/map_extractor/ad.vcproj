@@ -75,11 +75,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="zlib.lib winmm.lib"
+				AdditionalDependencies="zlib_d.lib winmm.lib"
 				OutputFile="ad debug.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="./debug/;D:\Munka\Myserver\antrix\win\VC71\zlib___Win32_Debug"
+				AdditionalLibraryDirectories="./debug/"
 				IgnoreDefaultLibraryNames="LIBCD.lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="./ad debug.pdb"
@@ -294,6 +294,10 @@
 			</File>
 			<File
 				RelativePath=".\libmpq\explode.h"
+				>
+			</File>
+			<File
+				RelativePath=".\filestruct.h"
 				>
 			</File>
 			<File

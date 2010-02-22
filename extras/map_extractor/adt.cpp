@@ -27,6 +27,7 @@
 
 #include "adt.h"
 #include "mpq_libmpq.h"
+#include "filestruct.h"
 
 //#include <windows.h>
 unsigned int iRes=256;
@@ -119,288 +120,115 @@ void CleanCache()
 
 bool LoadADT(char* filename)
 {
-	size_t size;
 	MPQFile mf(filename);
 
-	if(mf.isEof ())
+	if(mf.isEof())
+		return false;
+
+	mcells = new mcell;
+
+	wmoc.x = 65*TILESIZE;
+	wmoc.z = 65*TILESIZE;
+
+	wmo_count = 0;
+	bool found = false;
+
+	uint8 * data = new uint8[mf.getSize()];
+	mf.read(data, mf.getSize());
+	mf.close ();
+
+	fileVer * ver = (fileVer*)data;
+	if(ver->fcc != 'MVER' || ver->ver != 18)
 	{
-		//printf("No such file.\n");	
+		delete data;
 		return false;
 	}
-	mcells=new mcell;
-
-	wmoc.x =65*TILESIZE;
-	wmoc.z =65*TILESIZE;
-
-	size_t mcnk_offsets[256], mcnk_sizes[256];
-
-	wmo_count=0;
-	bool found=false;
-	//uint32 fs=mf.getSize ()-3;
-	//while (mf.getPos ()<fs)
-	while (!mf.isEof  ())
+	adt_MHDR * mhdr = (adt_MHDR*)(data+8+ver->size);
+	if(mhdr->fcc != 'MHDR')
 	{
-		uint32 fourcc;		
-		mf.read(&fourcc,4);
-		mf.read(&size, 4);
-
-		size_t nextpos = mf.getPos () + size;
-		if(fourcc==0x4d43494e)
-		{
-		//	printf("Found chunks info\n");
-			// mapchunk offsets/sizes
-			for (int i=0; i<256; i++)
-			{
-				mf.read(&mcnk_offsets[i],4);
-				mf.read(&mcnk_sizes[i],4);
-				mf.seekRelative(8);
-			}
-		//break;
-		}
-		else 
-			if(fourcc==0x4d4f4446)
-			{
-			
-			/*	if(size)
-				{	
-					//printf("\nwmo count %d\n",size/64);
-					wmo_count =size/64;
-					for (int i=0; i<wmo_count; i++)
-					{
-						int id;
-						mf.read(&id, 4);
-						WMO *wmo = (WMO*)wmomanager.items[wmomanager.get(wmos[id])];
-						WMOInstance inst(wmo, mf);
-						wmois.push_back(inst);
-					}
-
-				}*/
-			
-			}else 
-			if(fourcc==0x4d574d4f)//mwmo
-			{
-				/*if (size)
-				{
-					char *buf = new char[size];
-					mf.read(buf, size);
-					char *p=buf;
-					while (p<buf+size)
-					{
-					std::string path(p);
-						p+=strlen(p)+1;
-						fixname(path);
-						
-						wmomanager.add(path);
-						wmos.push_back(path);
-					}
-					delete[] buf;
-			    }*/
-			}
-		//	else mf.seekRelative(-3);
-
-		mf.seek(nextpos);
+		delete data;
+		return false;
 	}
-		//printf("Loading chunks info\n");
-		// read individual map chunks
-		for (int j=0; j<16; j++) 
-			for (int i=0; i<16; i++) 
-			{
+	if(mhdr->size != sizeof(adt_MHDR)-8)
+	{
+		delete data;
+		return false;
+	}
+	if(!mhdr->offsMCIN)
+	{
+		delete data;
+		return false;
+	}
+	adt_MCIN * mcin = (adt_MCIN*)((uint8 *)&mhdr->pad + mhdr->offsMCIN);
+	if(mcin->fcc != 'MCIN')
+	{
+		delete data;
+		return false;
+	}
 
-				mf.seek((int)mcnk_offsets[j*16+i]);
-				LoadMapChunk (mf,&(mcells->ch [i][j]));
+	for (int j=0; j<16; j++) 
+		for (int i=0; i<16; i++) 
+		{
+			LoadMapChunk ((MapChunkHeader*) ((uint8*)mcin + mcin->cells[j][i].offsMCNK - 84) , &(mcells->ch [i][j]));
+		}
 
-			}
-
-		/*	for(uint32 t=0;t<wmo_count ;t++)
-			{
-				wmois[t].draw ();
-
-			}*/
-	mf.close ();
+	delete data;
 	return true;
 }
 
-
-
-struct MapChunkHeader {
-	uint32 flags;
-	uint32 ix;
-	uint32 iy;
-	uint32 nLayers;
-	uint32 nDoodadRefs;
-	uint32 ofsHeight;
-	uint32 ofsNormal;
-	uint32 ofsLayer;
-	uint32 ofsRefs;
-	uint32 ofsAlpha;
-	uint32 sizeAlpha;
-	uint32 ofsShadow;
-	uint32 sizeShadow;
-	uint32 areaid;
-	uint32 nMapObjRefs;
-	uint32 holes;
-	uint16 s1;
-	uint16 s2;
-	uint32 d1;
-	uint32 d2;
-	uint32 d3;
-	uint32 predTex;
-	uint32 nEffectDoodad;
-	uint32 ofsSndEmitters;
-	uint32 nSndEmitters;
-	uint32 ofsLiquid;
-	uint32 sizeLiquid;
-	float  zpos;
-	float  xpos;
-	float  ypos;
-	uint32 textureId;
-	uint32 props;
-	uint32 effectId;
-};
-
-
 inline
-void LoadMapChunk(MPQFile & mf, chunk*_chunk)
+void LoadMapChunk(MapChunkHeader * header, chunk*_chunk)
 {
-	
-	float h;
-	uint32 fourcc;
-	uint32 size;
-	MapChunkHeader header;
-	
-	mf.seekRelative(4);
-	mf.read(&size, 4);
+	if(header->fcc != 'MCNK')
+		return;
 
-	size_t lastpos = mf.getPos() + size;
-	mf.read(&header, 0x80);
-	_chunk->area_id =header.areaid ;
-	_chunk->flag =0;
+	_chunk->area_id = header->areaid ;
+	_chunk->flag = 0;
 
-	float xbase = header.xpos;
-	float ybase = header.ypos;
-	float zbase = header.zpos;
+	float xbase = header->xpos;
+	float ybase = header->ypos;
+	float zbase = header->zpos;
 	zbase = TILESIZE*32-zbase;
 	xbase = TILESIZE*32-xbase;
-	if(wmoc.x >xbase)wmoc.x =xbase;
-	if(wmoc.z >zbase)wmoc.z =zbase;
-	int chunkflags = header.flags;
-	float zmin=999999999.0f;
-	float zmax=-999999999.0f;
+	if(wmoc.x >xbase)wmoc.x = xbase;
+	if(wmoc.z >zbase)wmoc.z = zbase;
+	int chunkflags = header->flags;
+	float zmin = 999999999.0f;
+	float zmax = -999999999.0f;
 	//must be there, bl!zz uses some crazy format
-	int nTextures;
-	while (mf.getPos ()<lastpos)
+
+	// Get Map Height
+	if(header->ofsHeight)
 	{
-		mf.read(&fourcc,4);
-		mf.read(&size, 4);
-	//	if(size!=580)
-	//	printf("\n sz=%d",size);
-		size_t nextpos = mf.getPos()  + size;
-		if(fourcc==0x4d435654)
-		 {
+		adt_MCVT * mcvt = (adt_MCVT*) ((uint8*)header+header->ofsHeight);
+		if(mcvt->fcc == 'MCVT')
+		{
+			int x = 0;
 			for (int j=0; j<17; j++)
-			for (int i=0; i<((j%2)?8:9); i++) 
-				{
-					mf.read(&h,4);
-					float z=h+ybase;
-					if (j%2)
-						_chunk->v8[i][j/2] = z;
-					else
-						_chunk->v9[i][j/2] = z;
+				for (int i=0; i<((j%2)?8:9); i++) 
+					{
+						float z = mcvt->height_map[x++]+ybase;
+						if (j%2)
+							_chunk->v8[i][j/2] = z;
+						else
+							_chunk->v9[i][j/2] = z;
 
-					if(z>zmax)zmax=z;
-				//	if(z<zmin)zmin=z;
-				}
+						if(z > zmax) zmax = z;
+					}
 		}
-		 else
-			if(fourcc==0x4d434e52)
-			{
-			nextpos = mf.getPos() + 0x1C0; // size fix
-
-			}
-		else
-			/*if(fourcc==0x4d434c51)
-			{
-				// liquid / water level
-			//	bool haswater;
-				char fcc1[5];
-				mf.read(fcc1,4);
-				flipcc(fcc1);
-				fcc1[4]=0;
-
-				if (!strcmp(fcc1,"MCSE"))
-                {
-                    for(int i=0;i<9;i++)
-                        for(int j=0;j<9;j++)
-                            _chunk->waterlevel[i][j]=-999999; // no liquid/water
-                }
-                else
-				{
-                    float maxheight;
-                    mf.read(&maxheight, 4);
-					
-                    for(int j=0;j<9;j++)
-                        for(int i=0;i<9;i++)
-                        {
-                            mf.read(&h, 4);
-                            mf.read(&h, 4);
-                            if(h > maxheight)
-                                _chunk->waterlevel[i][j]=-999999;
-                            else
-                                _chunk->waterlevel[i][j]=h;
-                        }
-
-                    if(chunkflags & 4 || chunkflags & 8)
-						_chunk->flag |=1;
-					if(chunkflags & 16)
-						_chunk->flag |=2;
-
-
-
-				}
-				
-
-			break;*/
-            if(fourcc==0x4d434c51)
-            {
-                // liquid / water level
-                //	bool haswater;
-                char fcc1[5];
-                mf.read(fcc1,4);
-                flipcc(fcc1);
-                fcc1[4]=0;
-                if (strcmp(fcc1,"MCSE"))
-                {
-                    mf.read(&_chunk->waterlevel,4);
-
-
-                    /*if(chunkflags & 4 || chunkflags & 8)
-                        _chunk->flag |=1;
-                    if(chunkflags & 16)
-                        _chunk->flag |=2;*/
-                    if(!_chunk->flag)
-                        _chunk->flag = chunkflags;
-                    else
-                        printf("%02X", _chunk->flag);
-                }
-                break;
-			}else if (fourcc==0x4d434c59)
-			{
-			// texture info
-			nTextures = (int)size;
-			}else if (fourcc==0x4d43414c)
-			{
-			
-			if (nTextures<=0) 
-			continue;
-			}
-		
-
-
-		mf.seek(nextpos);
 	}
 	
-	
-	printf("");
+	// Water / Liquid
+	if(header->ofsLiquid)
+	{
+		adt_MCLQ * mclq = (adt_MCLQ*) ((uint8*)header+header->ofsLiquid);
+		if(mclq->fcc == 'MCLQ')
+		{
+			_chunk->waterlevel = mclq->height1;
+			if(!_chunk->flag)
+				_chunk->flag = chunkflags;
+		}
+	}
 }
 
 

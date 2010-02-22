@@ -66,7 +66,8 @@ typedef struct
 chunk ch[16][16];
 }mcell;
 class MPQFile;
-void LoadMapChunk(MPQFile &,chunk*);
+struct MapChunkHeader;
+void LoadMapChunk(MapChunkHeader *,chunk*);
 bool LoadWMO(char* filename);
 #endif
 
