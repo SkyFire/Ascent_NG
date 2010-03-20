@@ -1,1 +1,0 @@
-alter table creature_names add column mouseFlags int(30) not null default 0 after subname;

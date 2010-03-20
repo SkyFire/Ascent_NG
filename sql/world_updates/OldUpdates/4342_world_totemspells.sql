@@ -1,1 +1,0 @@
-UPDATE `totemspells` SET `castspell1`='8145' WHERE (`spell`='8143');

@@ -1,1 +1,0 @@
-alter table accounts add column forceLanguage varchar(5) not null default "enUS";

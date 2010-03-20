@@ -1,1 +1,0 @@
-ALTER TABLE `trainer_spells` ADD `learn_spell` INT( 11 ) UNSIGNED NOT NULL AFTER `cast_spell` ;

@@ -1,1 +1,0 @@
-alter table mailbox add column external_attached_item_guid bigint(20) not null default 0 after attached_item_guid;

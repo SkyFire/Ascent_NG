@@ -1,1 +1,0 @@
-ALTER TABLE `ipbans` CHANGE `expire` `expire` INT( 30 ) NOT NULL DEFAULT '0' COMMENT 'Expiry time (s)'

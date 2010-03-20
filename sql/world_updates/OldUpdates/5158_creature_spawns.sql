@@ -1,1 +1,0 @@
-alter table `creature_spawns` add column `bytes1` int(30) DEFAULT '0' NOT NULL after `bytes`;

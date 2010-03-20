@@ -1,1 +1,0 @@
-ALTER TABLE `accounts` CHANGE `banned` `banned` INT( 30 ) UNSIGNED NOT NULL DEFAULT '0' COMMENT 'Account Standing'

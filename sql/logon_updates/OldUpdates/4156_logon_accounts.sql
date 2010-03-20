@@ -1,1 +1,0 @@
-alter table accounts add column encrypted_password VARCHAR(42) NOT NULL DEFAULT '' AFTER Password;

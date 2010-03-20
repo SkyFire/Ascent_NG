@@ -1,1 +1,0 @@
-alter table items add column ArenaRankRequirement int(30) not null default 0 after ItemExtendedCost;

@@ -1,1 +1,0 @@
-alter table `worldmap_info` add column `collision` int(1) DEFAULT '0' NOT NULL after `required_checkpoint`;
