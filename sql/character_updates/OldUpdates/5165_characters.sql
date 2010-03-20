@@ -1,0 +1,1 @@
+alter table `characters` add column `glyphs` longtext NOT NULL after `pendingTalentReset`;

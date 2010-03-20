@@ -1,0 +1,31 @@
+///////////////warrior//////////////////
+intiminating shout - it also fears you not just the enemy
+
+
+
+////////////////////Mage/////////////////////////
+
+Enduring winter Somehow replenishment effect don't want to trigger I'm out of ideas, the other effect works
+
+Mirror image - Mirror image is working totaly wrong
+						
+
+////////////////////Paladin////////////////////////
+
+Guarded by the light - It doesen't refreshes divine plea
+seal of righteousness - only the judgement effect of the spell works
+
+///////////////////////Death Knight/////////////////////
+Corpse explosion - doesen'T work
+
+
+///////////////////////Rogue/////////////////////////////
+
+///////////////////////Druid////////////////////////////
+
+//////////////////////Shaman//////////////////////////////
+totems above level 70 doesen't work only the lower ranks
+
+/////////////////////////General/////////////////////////
+
+
