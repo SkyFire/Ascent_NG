@@ -31,13 +31,13 @@ libshared_a_SOURCES = \
     Threading/Mutex.cpp \
     Threading/ThreadPool.cpp \
     Storage.h \
-    hearthstone_getopt.h \
-    hearthstone_getopt.cpp \
+    ascent_getopt.h \
+    ascent_getopt.cpp \
     CrashHandler.h \
     CrashHandler.cpp \
     Auth/BigNumber.cpp \
     Auth/BigNumber.h \
-	Auth/HMAC.cpp \
+    Auth/HMAC.cpp \
     Auth/HMAC.h \
     Auth/MD5.cpp \
     Auth/MD5.h \
