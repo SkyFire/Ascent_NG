@@ -1,3 +1,4 @@
+/*
  * Ascent MMORPG Server
  * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
