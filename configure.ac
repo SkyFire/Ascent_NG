@@ -273,7 +273,7 @@ AC_DEFINE_UNQUOTED([CONFDIR], "${sysconfdir}", "configdir")
 AC_DEFINE_UNQUOTED([SVN_REVISION_DONE], `sh ./extract_svn_revision.sh`, [SVN revision generated])
 
 AC_CONFIG_FILES([
-   ./Makefile
+   Makefile
    src/Makefile
    src/ascent-shared/Makefile
    src/ascent-world/Makefile
@@ -287,6 +287,10 @@ AC_CONFIG_FILES([
    src/scripts/src/ServerStatusPlugin/Makefile
    src/scripts/src/SpellHandlers/Makefile
    src/scripts/src/ExtraScripts/Makefile
+   src/scripts/src/EventsScripts/Makefile
+   src/scripts/src/RaidsScripts/Makefile
+   src/scripts/src/MiscScripts/Makefile
+   src/scripts/src/QuestScripts/Makefile
 ])
 
 AC_OUTPUT
