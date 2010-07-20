@@ -1,0 +1,504 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Auth">
+      <UniqueIdentifier>{60018b46-ef89-4de3-bd11-a8c402b624c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Collison">
+      <UniqueIdentifier>{71ffacd6-8c3f-416f-a057-4db544ff6497}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Collison\vmap">
+      <UniqueIdentifier>{46b75fdf-dfa7-4f20-b70b-6f687818f419}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Collison\g3dlite">
+      <UniqueIdentifier>{01759a78-f820-4676-a755-07146adf7796}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Collison\g3dlite\G3D">
+      <UniqueIdentifier>{13b24ff4-4fe6-4d06-9be5-6d15b34d5b41}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Config">
+      <UniqueIdentifier>{afebb1b9-73fc-4eba-bc1b-1ddcb0292312}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Database">
+      <UniqueIdentifier>{b7d7f4ea-886b-4337-9fc8-f0787e641e14}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Database\Datastore">
+      <UniqueIdentifier>{8c08828e-fd90-4504-ab2f-4e7185dd39a3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network">
+      <UniqueIdentifier>{a8585e0e-84ae-488e-8dbc-49e6a1610cad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Threading">
+      <UniqueIdentifier>{e4ce019d-b06c-4389-8638-7dd06f739ebf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Threading\Threadpool">
+      <UniqueIdentifier>{1372168a-5824-4fa0-9dce-7e83d7f3dfc9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Util">
+      <UniqueIdentifier>{12e74943-fcb0-4441-b60b-29e39afa7c04}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Util\Log">
+      <UniqueIdentifier>{1b9512f2-8262-41b9-a7a6-7691eeddf186}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Console">
+      <UniqueIdentifier>{733eb9d9-9167-4672-92df-96de08b7a14b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\ascent-shared\Auth\BigNumber.cpp">
+      <Filter>Auth</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\crc32.cpp">
+      <Filter>Auth</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\hashmap.cpp">
+      <Filter>Auth</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Auth\HMAC.cpp">
+      <Filter>Auth</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Auth\MD5.cpp">
+      <Filter>Auth</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Auth\Sha1.cpp">
+      <Filter>Auth</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Auth\WowCrypt.cpp">
+      <Filter>Auth</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Collision\Interface.cpp">
+      <Filter>Collison</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Collision\vmap\BaseModel.cpp">
+      <Filter>Collison\vmap</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Collision\vmap\CoordModelMapping.cpp">
+      <Filter>Collison\vmap</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Collision\vmap\ManagedModelContainer.cpp">
+      <Filter>Collison\vmap</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Collision\vmap\ModelContainer.cpp">
+      <Filter>Collison\vmap</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Collision\vmap\SubModel.cpp">
+      <Filter>Collison\vmap</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Collision\vmap\TileAssembler.cpp">
+      <Filter>Collison\vmap</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Collision\vmap\TreeNode.cpp">
+      <Filter>Collison\vmap</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Collision\vmap\VMapManager.cpp">
+      <Filter>Collison\vmap</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Collision\g3dlite\AABox.cpp">
+      <Filter>Collison\g3dlite</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Collision\g3dlite\Box.cpp">
+      <Filter>Collison\g3dlite</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Collision\g3dlite\Crypto.cpp">
+      <Filter>Collison\g3dlite</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Collision\g3dlite\format.cpp">
+      <Filter>Collison\g3dlite</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Collision\g3dlite\Matrix3.cpp">
+      <Filter>Collison\g3dlite</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Collision\g3dlite\Plane.cpp">
+      <Filter>Collison\g3dlite</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Collision\g3dlite\System.cpp">
+      <Filter>Collison\g3dlite</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Collision\g3dlite\Triangle.cpp">
+      <Filter>Collison\g3dlite</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Collision\g3dlite\Vector3.cpp">
+      <Filter>Collison\g3dlite</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Collision\g3dlite\Vector4.cpp">
+      <Filter>Collison\g3dlite</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Config\Config.cpp">
+      <Filter>Config</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Database\Database.cpp">
+      <Filter>Database</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Database\DBC.cpp">
+      <Filter>Database\Datastore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Database\dbcfile.cpp">
+      <Filter>Database\Datastore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Database\DBCStores.cpp">
+      <Filter>Database\Datastore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Network\CircularBuffer.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Network\Socket.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Network\SocketMgrWin32.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Network\SocketOpsWin32.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Network\SocketWin32.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Threading\Mutex.cpp">
+      <Filter>Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Threading\ThreadPool.cpp">
+      <Filter>Threading\Threadpool</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\ascent_getopt.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\CallBack.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\CrashHandler.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\MemoryLeaks.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\MersenneTwister.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\StackWalker.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Util.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Log.cpp">
+      <Filter>Util\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Console\CConsole.cpp">
+      <Filter>Console</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\Console\ConsoleListener.cpp">
+      <Filter>Console</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-shared\BufferPool.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\ascent-shared\Auth\BigNumber.h">
+      <Filter>Auth</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\crc32.h">
+      <Filter>Auth</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\hashmap.h">
+      <Filter>Auth</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Auth\HMAC.h">
+      <Filter>Auth</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Auth\MD5.h">
+      <Filter>Auth</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Auth\Sha1.h">
+      <Filter>Auth</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Auth\WowCrypt.h">
+      <Filter>Auth</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\LocationVector.h">
+      <Filter>Collison</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\vmap\AABSPTree.h">
+      <Filter>Collison\vmap</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\vmap\BaseModel.h">
+      <Filter>Collison\vmap</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\vmap\CoordModelMapping.h">
+      <Filter>Collison\vmap</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\vmap\IVMapManager.h">
+      <Filter>Collison\vmap</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\vmap\ManagedModelContainer.h">
+      <Filter>Collison\vmap</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\vmap\ModelContainer.h">
+      <Filter>Collison\vmap</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\vmap\NodeValueAccess.h">
+      <Filter>Collison\vmap</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\vmap\RayIntersectionIterator.h">
+      <Filter>Collison\vmap</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\vmap\ShortBox.h">
+      <Filter>Collison\vmap</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\vmap\ShortVector.h">
+      <Filter>Collison\vmap</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\vmap\SubModel.h">
+      <Filter>Collison\vmap</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\vmap\TileAssembler.h">
+      <Filter>Collison\vmap</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\vmap\TreeNode.h">
+      <Filter>Collison\vmap</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\vmap\VMapManager.h">
+      <Filter>Collison\vmap</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\AABox.h">
+      <Filter>Collison\g3dlite\G3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Array.h">
+      <Filter>Collison\g3dlite\G3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Box.h">
+      <Filter>Collison\g3dlite\G3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\CollisionDetection.h">
+      <Filter>Collison\g3dlite\G3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\CoordinateFrame.h">
+      <Filter>Collison\g3dlite\G3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Crypto.h">
+      <Filter>Collison\g3dlite\G3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\debug.h">
+      <Filter>Collison\g3dlite\G3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\format.h">
+      <Filter>Collison\g3dlite\G3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\g3dmath.h">
+      <Filter>Collison\g3dlite\G3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\GCamera.h">
+      <Filter>Collison\g3dlite\G3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Line.h">
+      <Filter>Collison\g3dlite\G3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Matrix3.h">
+      <Filter>Collison\g3dlite\G3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Plane.h">
+      <Filter>Collison\g3dlite\G3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\platform.h">
+      <Filter>Collison\g3dlite\G3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Quat.h">
+      <Filter>Collison\g3dlite\G3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Ray.h">
+      <Filter>Collison\g3dlite\G3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\RegistryUtil.h">
+      <Filter>Collison\g3dlite\G3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Sphere.h">
+      <Filter>Collison\g3dlite\G3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\stringutils.h">
+      <Filter>Collison\g3dlite\G3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\System.h">
+      <Filter>Collison\g3dlite\G3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Table.h">
+      <Filter>Collison\g3dlite\G3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Triangle.h">
+      <Filter>Collison\g3dlite\G3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Vector2.h">
+      <Filter>Collison\g3dlite\G3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Vector2int16.h">
+      <Filter>Collison\g3dlite\G3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Vector3.h">
+      <Filter>Collison\g3dlite\G3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Vector3int16.h">
+      <Filter>Collison\g3dlite\G3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Vector4.h">
+      <Filter>Collison\g3dlite\G3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Config\Config.h">
+      <Filter>Config</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Config\ConfigEnv.h">
+      <Filter>Config</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Database\Database.h">
+      <Filter>Database</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Database\DatabaseEnv.h">
+      <Filter>Database</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Database\Field.h">
+      <Filter>Database</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Database\DataStore.h">
+      <Filter>Database\Datastore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Database\DBC.h">
+      <Filter>Database\Datastore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Database\dbcfile.h">
+      <Filter>Database\Datastore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Database\DBCStores.h">
+      <Filter>Database\Datastore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Network\CircularBuffer.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Network\ListenSocketWin32.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Network\Network.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Network\Socket.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Network\SocketDefines.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Network\SocketMgrWin32.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Network\SocketOps.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Threading\Condition.h">
+      <Filter>Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\CThreads.h">
+      <Filter>Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Threading\Guard.h">
+      <Filter>Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Threading\LockedQueue.h">
+      <Filter>Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Threading\Mutex.h">
+      <Filter>Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Threading\Queue.h">
+      <Filter>Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Threading\RWLock.h">
+      <Filter>Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Threading\Threading.h">
+      <Filter>Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Threading\ThreadStarter.h">
+      <Filter>Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Threading\ThreadPool.h">
+      <Filter>Threading\Threadpool</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\ascent_getopt.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\ByteBuffer.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\CallBack.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\CrashHandler.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Errors.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\LocationVector.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\MemoryLeaks.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\MersenneTwister.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-logonserver\PeriodicFunctionCall_Thread.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\PreallocatedQueue.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Singleton.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\StackBuffer.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\StackWalker.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Timer.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Util.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\WoWGuid.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Log.h">
+      <Filter>Util\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\NGLog.h">
+      <Filter>Util\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Console\BaseConsole.h">
+      <Filter>Console</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\Console\CConsole.h">
+      <Filter>Console</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-shared\AscentConfig.h" />
+    <ClInclude Include="..\..\src\ascent-shared\AuthCodes.h" />
+    <ClInclude Include="..\..\src\ascent-shared\BufferPool.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Common.h" />
+    <ClInclude Include="..\..\src\ascent-shared\FastQueue.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Storage.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\g3dmath.inl">
+      <Filter>Collison\g3dlite\G3D</Filter>
+    </None>
+    <None Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Quat.inl">
+      <Filter>Collison\g3dlite\G3D</Filter>
+    </None>
+    <None Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Vector2.inl">
+      <Filter>Collison\g3dlite\G3D</Filter>
+    </None>
+    <None Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Vector3.inl">
+      <Filter>Collison\g3dlite\G3D</Filter>
+    </None>
+    <None Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Vector4.inl">
+      <Filter>Collison\g3dlite\G3D</Filter>
+    </None>
+  </ItemGroup>
+</Project>

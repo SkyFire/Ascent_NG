@@ -1,0 +1,426 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{90297C34-F231-4DF4-848E-A74BCC0E40ED}</ProjectGuid>
+    <RootNamespace>shared</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\ascent-shared___Win32_Release\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\ascent-shared___Win32_Release\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\ascent-shared___Win32_Release_x64\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\ascent-shared___Win32_Release_x64\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\ascent-shared___Win32_Debug\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\ascent-shared___Win32_Debug\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\ascent-shared___Win32_Debug_x64\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\ascent-shared___Win32_Debug_x64\</IntDir>
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <PreBuildEvent>
+      <Message>Extracting SVN revision...</Message>
+      <Command>cd $(SolutionDir)\..\src\ascent-shared
+RevisionExtractor.exe
+</Command>
+    </PreBuildEvent>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>..\..\src\ascent-shared; ..\..\src\ascent-shared\g3dlite;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <PrecompiledHeaderOutputFile>.\shared___Win32_Release/shared.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CompileAs>Default</CompileAs>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Lib>
+      <OutputFile>.\ascent-shared___Win32_Debug\shared.lib</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Lib>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <PreBuildEvent>
+      <Message>Extracting SVN revision...</Message>
+      <Command>cd $(SolutionDir)\..\src\ascent-shared
+RevisionExtractor.exe
+</Command>
+    </PreBuildEvent>
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>..\..\src\ascent-shared;  ..\..\src\ascent-shared\g3dlite;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_HAS_ITERATOR_DEBUGGING=0;WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;X64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>true</MinimalRebuild>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Precise</FloatingPointModel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <PrecompiledHeaderOutputFile>.\shared___Win32_Release_x64/shared.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CompileAs>Default</CompileAs>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Lib>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+    </Lib>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <PreBuildEvent>
+      <Message>Extracting SVN revision...</Message>
+      <Command>cd $(SolutionDir)\..\src\ascent-shared
+RevisionExtractor.exe
+</Command>
+    </PreBuildEvent>
+    <ClCompile>
+      <AdditionalOptions>/Zm250 /MP %(AdditionalOptions)</AdditionalOptions>
+      <Optimization>Disabled</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <AdditionalIncludeDirectories>..\..\src\ascent-shared;  ..\..\src\ascent-shared\g3dlite;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>false</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <PrecompiledHeaderOutputFile>.\shared___Win32_Debug/shared.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CompileAs>Default</CompileAs>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Lib>
+      <OutputFile>$(IntDir)shared.lib</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Lib>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <PreBuildEvent>
+      <Message>Extracting SVN revision...</Message>
+      <Command>cd $(SolutionDir)\..\src\ascent-shared
+RevisionExtractor.exe
+</Command>
+    </PreBuildEvent>
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <AdditionalIncludeDirectories>..\..\src\ascent-shared;  ..\..\src\ascent-shared\g3dlite;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;X64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <PrecompiledHeaderOutputFile>.\shared___Win32_Debug_x64/shared.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CompileAs>Default</CompileAs>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Lib>
+      <OutputFile>$(IntDir)shared.lib</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Lib>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\ascent-shared\Auth\BigNumber.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\crc32.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\hashmap.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Auth\HMAC.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Auth\MD5.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Auth\Sha1.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Auth\WowCrypt.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Collision\Interface.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Collision\vmap\BaseModel.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Collision\vmap\CoordModelMapping.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Collision\vmap\ManagedModelContainer.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Collision\vmap\ModelContainer.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Collision\vmap\SubModel.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Collision\vmap\TileAssembler.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Collision\vmap\TreeNode.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Collision\vmap\VMapManager.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Collision\g3dlite\AABox.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Collision\g3dlite\Box.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Collision\g3dlite\Crypto.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Collision\g3dlite\format.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Collision\g3dlite\Matrix3.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Collision\g3dlite\Plane.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Collision\g3dlite\System.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Collision\g3dlite\Triangle.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Collision\g3dlite\Vector3.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Collision\g3dlite\Vector4.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Config\Config.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Database\Database.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Database\DBC.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Database\dbcfile.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Database\DBCStores.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Network\CircularBuffer.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Network\Socket.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Network\SocketMgrWin32.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Network\SocketOpsWin32.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Network\SocketWin32.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Threading\Mutex.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Threading\ThreadPool.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\ascent_getopt.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\CallBack.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\CrashHandler.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\MemoryLeaks.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\MersenneTwister.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\StackWalker.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Util.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Log.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Console\CConsole.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\Console\ConsoleListener.cpp" />
+    <ClCompile Include="..\..\src\ascent-shared\BufferPool.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\ascent-shared\Auth\BigNumber.h" />
+    <ClInclude Include="..\..\src\ascent-shared\crc32.h" />
+    <ClInclude Include="..\..\src\ascent-shared\hashmap.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Auth\HMAC.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Auth\MD5.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Auth\Sha1.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Auth\WowCrypt.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\LocationVector.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\vmap\AABSPTree.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\vmap\BaseModel.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\vmap\CoordModelMapping.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\vmap\IVMapManager.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\vmap\ManagedModelContainer.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\vmap\ModelContainer.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\vmap\NodeValueAccess.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\vmap\RayIntersectionIterator.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\vmap\ShortBox.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\vmap\ShortVector.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\vmap\SubModel.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\vmap\TileAssembler.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\vmap\TreeNode.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\vmap\VMapManager.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\AABox.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Array.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Box.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\CollisionDetection.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\CoordinateFrame.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Crypto.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\debug.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\format.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\g3dmath.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\GCamera.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Line.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Matrix3.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Plane.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\platform.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Quat.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Ray.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\RegistryUtil.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Sphere.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\stringutils.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\System.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Table.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Triangle.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Vector2.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Vector2int16.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Vector3.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Vector3int16.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Vector4.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Config\Config.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Config\ConfigEnv.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Database\Database.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Database\DatabaseEnv.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Database\Field.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Database\DataStore.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Database\DBC.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Database\dbcfile.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Database\DBCStores.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Network\CircularBuffer.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Network\ListenSocketWin32.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Network\Network.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Network\Socket.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Network\SocketDefines.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Network\SocketMgrWin32.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Network\SocketOps.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Threading\Condition.h" />
+    <ClInclude Include="..\..\src\ascent-shared\CThreads.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Threading\Guard.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Threading\LockedQueue.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Threading\Mutex.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Threading\Queue.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Threading\RWLock.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Threading\Threading.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Threading\ThreadStarter.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Threading\ThreadPool.h" />
+    <ClInclude Include="..\..\src\ascent-shared\ascent_getopt.h" />
+    <ClInclude Include="..\..\src\ascent-shared\ByteBuffer.h" />
+    <ClInclude Include="..\..\src\ascent-shared\CallBack.h" />
+    <ClInclude Include="..\..\src\ascent-shared\CrashHandler.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Errors.h" />
+    <ClInclude Include="..\..\src\ascent-shared\LocationVector.h" />
+    <ClInclude Include="..\..\src\ascent-shared\MemoryLeaks.h" />
+    <ClInclude Include="..\..\src\ascent-shared\MersenneTwister.h" />
+    <ClInclude Include="..\..\src\ascent-logonserver\PeriodicFunctionCall_Thread.h" />
+    <ClInclude Include="..\..\src\ascent-shared\PreallocatedQueue.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Singleton.h" />
+    <ClInclude Include="..\..\src\ascent-shared\StackBuffer.h" />
+    <ClInclude Include="..\..\src\ascent-shared\StackWalker.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Timer.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Util.h" />
+    <ClInclude Include="..\..\src\ascent-shared\WoWGuid.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Log.h" />
+    <ClInclude Include="..\..\src\ascent-shared\NGLog.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Console\BaseConsole.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Console\CConsole.h" />
+    <ClInclude Include="..\..\src\ascent-shared\AscentConfig.h" />
+    <ClInclude Include="..\..\src\ascent-shared\AuthCodes.h" />
+    <ClInclude Include="..\..\src\ascent-shared\BufferPool.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Common.h" />
+    <ClInclude Include="..\..\src\ascent-shared\FastQueue.h" />
+    <ClInclude Include="..\..\src\ascent-shared\Storage.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\g3dmath.inl" />
+    <None Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Quat.inl" />
+    <None Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Vector2.inl" />
+    <None Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Vector3.inl" />
+    <None Include="..\..\src\ascent-shared\Collision\g3dlite\G3D\Vector4.inl" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

@@ -1,0 +1,164 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Main Resources">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Main Resources\Base Class">
+      <UniqueIdentifier>{62772499-822d-4416-8dbb-1e0d204647de}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Main Resources\Setup">
+      <UniqueIdentifier>{70a6272a-fe7c-4d9a-930f-ef64ec772143}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Main Resources\Instance Base Class">
+      <UniqueIdentifier>{7881856a-1c73-4399-bca1-f834e6463dbd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scripts">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Scripts\Instances">
+      <UniqueIdentifier>{7b59dcf0-345e-4db7-bf88-72304ea6958e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\Common\Base.cpp">
+      <Filter>Main Resources\Base Class</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Setup.cpp">
+      <Filter>Main Resources\Setup</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Common\Instance_Base.cpp">
+      <Filter>Main Resources\Instance Base Class</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Battleground_AlteracValley.cpp">
+      <Filter>Scripts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_Arcatraz.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_AuchenaiCrypts.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_AzjolNerub.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_BlackfathomDeeps.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_BlackMorass.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_BlackrockDepths.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_BlackrockSpire.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_BloodFurnace.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_Botanica.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_CullingOfStratholme.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_Deadmines.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_DireMaul.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_DrakTharonKeep.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_HallsOfLightning.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_HallsOfStone.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_HellfireRamparts.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_MagistersTerrace.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_ManaTombs.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_Mauradon.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_Nexus.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_OldHillsbradFoothills.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_RagefireChasm.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_RazorfenDowns.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_ScarletMonastery.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_Scholomance.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_SethekkHalls.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_ShadowfangKeep.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_ShadowLabyrinth.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_TheMechanar.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_TheShatteredHalls.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_TheSlavePens.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_TheSteamvault.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_TheStockade.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_TheUnderbog.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_Uldaman.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_UtgardeKeep.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_WailingCaverns.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\InstanceScripts\Instance_ZulFarrak.cpp">
+      <Filter>Scripts\Instances</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\Common\Base.h">
+      <Filter>Main Resources\Base Class</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\InstanceScripts\Setup.h">
+      <Filter>Main Resources\Setup</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Common\Instance_Base.h">
+      <Filter>Main Resources\Instance Base Class</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,248 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Launcher">
+      <UniqueIdentifier>{281155ba-94a0-4294-b93d-2f68c04adc75}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Launcher\Console">
+      <UniqueIdentifier>{996c7ea9-77a8-4a31-9f8c-86c5cb50ef7a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\ascent-shared\CoreMemoryAllocator_Core.cpp">
+      <Filter>Launcher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-world\Main.cpp">
+      <Filter>Launcher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-world\Master.cpp">
+      <Filter>Launcher</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-world\CConsole.cpp">
+      <Filter>Launcher\Console</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-world\ConsoleCommands.cpp">
+      <Filter>Launcher\Console</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-world\ConsoleListener.cpp">
+      <Filter>Launcher\Console</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-world\AchievementInterface.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\AddonMgr.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\AIInterface.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\AlteracValley.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\ArathiBasin.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\AreaTrigger.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\Arenas.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\ArenaTeam.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\AuctionHouse.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\AuctionMgr.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\BattlegroundCommands.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\BattlegroundHandler.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\BattlegroundMgr.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\ChainAggroEntity.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\Channel.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\ChannelHandler.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\CharacterHandler.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\Chat.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\ChatHandler.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\ClusterInterface.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\CollideInterface.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\CombatHandler.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\Container.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\Corpse.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\Creature.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\DayWatcherThread.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\debugcmds.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\DuelHandler.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\DynamicObject.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\EventableObject.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\EventMgr.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\EyeOfTheStorm.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\faction.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\GameObject.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\GMTicket.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\Group.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\GroupHandler.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\Guild.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\GuildHandler.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\HonorHandler.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\INGEvents.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\Item.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\ItemHandler.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\ItemInterface.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\Level0.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\Level1.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\Level2.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\Level3.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\LfgHandler.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\LfgMgr.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\LogonCommClient.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\LogonCommHandler.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\LootMgr.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\MailSystem.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\Map.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\MapCell.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\MapMgr.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\MapScriptInterface.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\MiscHandler.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\MovementHandler.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\NPCHandler.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\Object.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\ObjectMgr.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\ObjectStorage.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\Opcodes.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\Pet.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\PetHandler.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\Player.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\PlayerPacketWrapper.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\QueryHandler.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\Quest.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\QuestCommands.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\QuestHandler.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\QuestMgr.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\RaidHandler.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\RecallCommands.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\ReputationHandler.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\ScriptMgr.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\SkillHandler.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\SocialHandler.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\Spell.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\SpellAuras.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\SpellEffects.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\SpellFixes.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\SpellHandler.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\SpellTarget.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\Stats.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\StdAfx.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\StrandOfTheAncients.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\TaxiHandler.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\TaxiMgr.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\TerrainMgr.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\TheIsleOfConquest.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\TradeHandler.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\TransporterHandler.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\Unit.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\Vehicle.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\VoiceChatClientSocket.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\VoiceChatHandler.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\WarsongGulch.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\WayPoints.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\WeatherMgr.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\WordFilter.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\WorkdSocketCluster.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\WorkerServerClient.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\World.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\WorldCreator.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\WorldRunnable.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\WorldSession.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\WorldSocket.cpp" />
+    <ClCompile Include="..\..\src\ascent-world\WorldStateManager.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\ascent-world\Master.h">
+      <Filter>Launcher</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-world\BaseConsole.h">
+      <Filter>Launcher\Console</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-world\CConsole.h">
+      <Filter>Launcher\Console</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-world\ConsoleCommands.h">
+      <Filter>Launcher\Console</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-world\AchievementInterface.h" />
+    <ClInclude Include="..\..\src\ascent-world\AddonMgr.h" />
+    <ClInclude Include="..\..\src\ascent-world\AIInterface.h" />
+    <ClInclude Include="..\..\src\ascent-world\AlteracValley.h" />
+    <ClInclude Include="..\..\src\ascent-world\ArathiBasin.h" />
+    <ClInclude Include="..\..\src\ascent-world\AreaTrigger.h" />
+    <ClInclude Include="..\..\src\ascent-world\Arenas.h" />
+    <ClInclude Include="..\..\src\ascent-world\ArenaTeam.h" />
+    <ClInclude Include="..\..\src\ascent-world\AuctionHouse.h" />
+    <ClInclude Include="..\..\src\ascent-world\AuctionMgr.h" />
+    <ClInclude Include="..\..\src\ascent-world\BattlegroundMgr.h" />
+    <ClInclude Include="..\..\src\ascent-world\CellHandler.h" />
+    <ClInclude Include="..\..\src\ascent-world\ChainAggroEntity.h" />
+    <ClInclude Include="..\..\src\ascent-world\Channel.h" />
+    <ClInclude Include="..\..\src\ascent-world\ChannelMgr.h" />
+    <ClInclude Include="..\..\src\ascent-world\Chat.h" />
+    <ClInclude Include="..\..\src\ascent-world\ClassSpells.h" />
+    <ClInclude Include="..\..\src\ascent-world\ClusterInterface.h" />
+    <ClInclude Include="..\..\src\ascent-world\CollideInterface.h" />
+    <ClInclude Include="..\..\src\ascent-world\Const.h" />
+    <ClInclude Include="..\..\src\ascent-world\Container.h" />
+    <ClInclude Include="..\..\src\ascent-world\Corpse.h" />
+    <ClInclude Include="..\..\src\ascent-world\Creature.h" />
+    <ClInclude Include="..\..\src\ascent-world\DayWatcherThread.h" />
+    <ClInclude Include="..\..\src\ascent-world\DynamicObject.h" />
+    <ClInclude Include="..\..\src\ascent-world\EventableObject.h" />
+    <ClInclude Include="..\..\src\ascent-world\EventMgr.h" />
+    <ClInclude Include="..\..\src\ascent-world\EyeOfTheStorm.h" />
+    <ClInclude Include="..\..\src\ascent-world\faction.h" />
+    <ClInclude Include="..\..\src\ascent-world\GameObject.h" />
+    <ClInclude Include="..\..\src\ascent-world\Group.h" />
+    <ClInclude Include="..\..\src\ascent-world\Guild.h" />
+    <ClInclude Include="..\..\src\ascent-world\HonorHandler.h" />
+    <ClInclude Include="..\..\src\ascent-world\Item.h" />
+    <ClInclude Include="..\..\src\ascent-world\ItemInterface.h" />
+    <ClInclude Include="..\..\src\ascent-world\ItemPrototype.h" />
+    <ClInclude Include="..\..\src\ascent-world\LfgMgr.h" />
+    <ClInclude Include="..\..\src\ascent-world\LogonCommClient.h" />
+    <ClInclude Include="..\..\src\ascent-world\LogonCommHandler.h" />
+    <ClInclude Include="..\..\src\ascent-world\LootMgr.h" />
+    <ClInclude Include="..\..\src\ascent-world\MailSystem.h" />
+    <ClInclude Include="..\..\src\ascent-world\MainServerDefines.h" />
+    <ClInclude Include="..\..\src\ascent-world\Map.h" />
+    <ClInclude Include="..\..\src\ascent-world\MapCell.h" />
+    <ClInclude Include="..\..\src\ascent-world\MapMgr.h" />
+    <ClInclude Include="..\..\src\ascent-world\MapScriptInterface.h" />
+    <ClInclude Include="..\..\src\ascent-world\MiscHandler.h" />
+    <ClInclude Include="..\..\src\ascent-world\NameTables.h" />
+    <ClInclude Include="..\..\src\ascent-world\NPCHandler.h" />
+    <ClInclude Include="..\..\src\ascent-world\Object.h" />
+    <ClInclude Include="..\..\src\ascent-world\ObjectMgr.h" />
+    <ClInclude Include="..\..\src\ascent-world\ObjectStorage.h" />
+    <ClInclude Include="..\..\src\ascent-world\Opcodes.h" />
+    <ClInclude Include="..\..\src\ascent-world\Packets.h" />
+    <ClInclude Include="..\..\src\ascent-world\Pet.h" />
+    <ClInclude Include="..\..\src\ascent-world\Player.h" />
+    <ClInclude Include="..\..\src\ascent-world\Quest.h" />
+    <ClInclude Include="..\..\src\ascent-world\QuestMgr.h" />
+    <ClInclude Include="..\..\src\ascent-world\ScriptMgr.h" />
+    <ClInclude Include="..\..\src\ascent-world\ScriptSetup.h" />
+    <ClInclude Include="..\..\src\ascent-world\SkillNameMgr.h" />
+    <ClInclude Include="..\..\src\ascent-world\Spell.h" />
+    <ClInclude Include="..\..\src\ascent-world\SpellAuras.h" />
+    <ClInclude Include="..\..\src\ascent-world\SpellFailure.h" />
+    <ClInclude Include="..\..\src\ascent-world\SpellNameHashes.h" />
+    <ClInclude Include="..\..\src\ascent-world\Stats.h" />
+    <ClInclude Include="..\..\src\ascent-world\StdAfx.h" />
+    <ClInclude Include="..\..\src\ascent-world\StrandOfTheAncients.h" />
+    <ClInclude Include="..\..\src\ascent-world\TaxiMgr.h" />
+    <ClInclude Include="..\..\src\ascent-world\TerrainMgr.h" />
+    <ClInclude Include="..\..\src\ascent-world\TheIsleOfConquest.h" />
+    <ClInclude Include="..\..\src\ascent-world\TransporterHandler.h" />
+    <ClInclude Include="..\..\src\ascent-world\Unit.h" />
+    <ClInclude Include="..\..\src\ascent-world\UpdateFields.h" />
+    <ClInclude Include="..\..\src\ascent-world\UpdateMask.h" />
+    <ClInclude Include="..\..\src\ascent-world\Vehicle.h" />
+    <ClInclude Include="..\..\src\ascent-world\VoiceChatClientSocket.h" />
+    <ClInclude Include="..\..\src\ascent-world\VoiceChatHandler.h" />
+    <ClInclude Include="..\..\src\ascent-world\WarsongGulch.h" />
+    <ClInclude Include="..\..\src\ascent-world\WeatherMgr.h" />
+    <ClInclude Include="..\..\src\ascent-world\WordFilter.h" />
+    <ClInclude Include="..\..\src\ascent-world\WorkerServerClient.h" />
+    <ClInclude Include="..\..\src\ascent-world\World.h" />
+    <ClInclude Include="..\..\src\ascent-world\WorldCreator.h" />
+    <ClInclude Include="..\..\src\ascent-world\WorldRunnable.h" />
+    <ClInclude Include="..\..\src\ascent-world\WorldSession.h" />
+    <ClInclude Include="..\..\src\ascent-world\WorldSocket.h" />
+    <ClInclude Include="..\..\src\ascent-world\WorldStateManager.h" />
+    <ClInclude Include="..\..\src\ascent-world\WorldStates.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\..\src\ascent-world\resources.rc" />
+  </ItemGroup>
+</Project>

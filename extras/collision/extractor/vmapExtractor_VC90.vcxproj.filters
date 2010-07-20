@@ -1,0 +1,215 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{30480a8c-ce82-41fa-9f6c-51df55c1f517}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="Source Files\pklib">
+      <UniqueIdentifier>{632740fd-9fe9-4bb7-943d-e1784303b5a5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\zlib">
+      <UniqueIdentifier>{66b94edc-aa41-48f6-aace-9e9243be1cea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\zlib\Zlib Headers">
+      <UniqueIdentifier>{1d2306f4-2111-473d-9518-3b2122535758}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\zlib\Zlib Sources">
+      <UniqueIdentifier>{4497f6fe-d954-4f3b-8cbd-1ad0797de1bc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\huffman">
+      <UniqueIdentifier>{274ec800-5603-45f1-8be5-b676691f4a91}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\wave">
+      <UniqueIdentifier>{b605a257-5e11-4d05-bffe-a27c2976b76e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\bzip2">
+      <UniqueIdentifier>{15f9de67-781c-40cf-8cc1-e632bca30aac}</UniqueIdentifier>
+      <Extensions>*.h;*.c</Extensions>
+    </Filter>
+    <Filter Include="Source Files\vmap">
+      <UniqueIdentifier>{5c31cca0-e5eb-4601-957a-e203df787895}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\stormlib">
+      <UniqueIdentifier>{f225d152-1b9b-43cf-adec-50c7e41c8211}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stormlib\pklib\crc32.c">
+      <Filter>Source Files\pklib</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\pklib\explode.c">
+      <Filter>Source Files\pklib</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\pklib\implode.c">
+      <Filter>Source Files\pklib</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\zlib\adler32.c">
+      <Filter>Source Files\zlib\Zlib Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\zlib\deflate.c">
+      <Filter>Source Files\zlib\Zlib Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\zlib\infblock.c">
+      <Filter>Source Files\zlib\Zlib Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\zlib\infcodes.c">
+      <Filter>Source Files\zlib\Zlib Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\zlib\inffast.c">
+      <Filter>Source Files\zlib\Zlib Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\zlib\inflate.c">
+      <Filter>Source Files\zlib\Zlib Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\zlib\inftrees.c">
+      <Filter>Source Files\zlib\Zlib Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\zlib\infutil.c">
+      <Filter>Source Files\zlib\Zlib Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\zlib\trees.c">
+      <Filter>Source Files\zlib\Zlib Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\zlib\zmemory.c">
+      <Filter>Source Files\zlib\Zlib Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\huffman\huff.cpp">
+      <Filter>Source Files\huffman</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\wave\wave.cpp">
+      <Filter>Source Files\wave</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\bzip2\blocksort.c">
+      <Filter>Source Files\bzip2</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\bzip2\bzlib.c">
+      <Filter>Source Files\bzip2</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\bzip2\compress.c">
+      <Filter>Source Files\bzip2</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\bzip2\crctable.c">
+      <Filter>Source Files\bzip2</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\bzip2\decompress.c">
+      <Filter>Source Files\bzip2</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\bzip2\huffman.c">
+      <Filter>Source Files\bzip2</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\bzip2\randtable.c">
+      <Filter>Source Files\bzip2</Filter>
+    </ClCompile>
+    <ClCompile Include="vmapextract\adtfile.cpp">
+      <Filter>Source Files\vmap</Filter>
+    </ClCompile>
+    <ClCompile Include="vmapextract\dbcfile.cpp">
+      <Filter>Source Files\vmap</Filter>
+    </ClCompile>
+    <ClCompile Include="vmapextract\model.cpp">
+      <Filter>Source Files\vmap</Filter>
+    </ClCompile>
+    <ClCompile Include="vmapextract\mpq.cpp">
+      <Filter>Source Files\vmap</Filter>
+    </ClCompile>
+    <ClCompile Include="vmapextract\vmapexport.cpp">
+      <Filter>Source Files\vmap</Filter>
+    </ClCompile>
+    <ClCompile Include="vmapextract\wdtfile.cpp">
+      <Filter>Source Files\vmap</Filter>
+    </ClCompile>
+    <ClCompile Include="vmapextract\wmo.cpp">
+      <Filter>Source Files\vmap</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\SCommon.cpp">
+      <Filter>Source Files\stormlib</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\SCompression.cpp">
+      <Filter>Source Files\stormlib</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\SFileCompactArchive.cpp">
+      <Filter>Source Files\stormlib</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\SFileCreateArchiveEx.cpp">
+      <Filter>Source Files\stormlib</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\SFileExtractFile.cpp">
+      <Filter>Source Files\stormlib</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\SFileFindFile.cpp">
+      <Filter>Source Files\stormlib</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\SFileOpenArchive.cpp">
+      <Filter>Source Files\stormlib</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\SFileOpenFileEx.cpp">
+      <Filter>Source Files\stormlib</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\SFileReadFile.cpp">
+      <Filter>Source Files\stormlib</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\SListFile.cpp">
+      <Filter>Source Files\stormlib</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\StormPortLinux.cpp">
+      <Filter>Source Files\stormlib</Filter>
+    </ClCompile>
+    <ClCompile Include="stormlib\StormPortMac.cpp">
+      <Filter>Source Files\stormlib</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stormlib\pklib\pklib.h">
+      <Filter>Source Files\pklib</Filter>
+    </ClInclude>
+    <ClInclude Include="stormlib\zlib\zconf.h">
+      <Filter>Source Files\zlib\Zlib Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="stormlib\zlib\zlib.h">
+      <Filter>Source Files\zlib\Zlib Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="stormlib\huffman\huff.h">
+      <Filter>Source Files\huffman</Filter>
+    </ClInclude>
+    <ClInclude Include="stormlib\wave\wave.h">
+      <Filter>Source Files\wave</Filter>
+    </ClInclude>
+    <ClInclude Include="vmapextract\adtfile.h">
+      <Filter>Source Files\vmap</Filter>
+    </ClInclude>
+    <ClInclude Include="vmapextract\dbcfile.h">
+      <Filter>Source Files\vmap</Filter>
+    </ClInclude>
+    <ClInclude Include="vmapextract\model.h">
+      <Filter>Source Files\vmap</Filter>
+    </ClInclude>
+    <ClInclude Include="vmapextract\modelheaders.h">
+      <Filter>Source Files\vmap</Filter>
+    </ClInclude>
+    <ClInclude Include="vmapextract\mpq.h">
+      <Filter>Source Files\vmap</Filter>
+    </ClInclude>
+    <ClInclude Include="vmapextract\vec3d.h">
+      <Filter>Source Files\vmap</Filter>
+    </ClInclude>
+    <ClInclude Include="vmapextract\wdtfile.h">
+      <Filter>Source Files\vmap</Filter>
+    </ClInclude>
+    <ClInclude Include="vmapextract\wmo.h">
+      <Filter>Source Files\vmap</Filter>
+    </ClInclude>
+    <ClInclude Include="stormlib\SCommon.h">
+      <Filter>Source Files\stormlib</Filter>
+    </ClInclude>
+    <ClInclude Include="stormlib\StormDll.h">
+      <Filter>Source Files\stormlib</Filter>
+    </ClInclude>
+    <ClInclude Include="stormlib\StormLib.h">
+      <Filter>Source Files\stormlib</Filter>
+    </ClInclude>
+    <ClInclude Include="stormlib\StormPort.h">
+      <Filter>Source Files\stormlib</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
