@@ -195,12 +195,7 @@ uint32 getGuardId(uint32 id);
 bool isTargetDummy(uint32 id);
 
 
-typedef unordered_map< Unit*, int32> TargetMap;
-#ifdef TRHAX
-	namespace std
-	{
-		namespace tr1
-		{
+typedef std::tr1::unordered_map< Unit*, int32> TargetMap;
 			template <>
 			class hash < Unit* > : public unary_function< Unit*, size_t>
 			{
@@ -210,9 +205,6 @@ typedef unordered_map< Unit*, int32> TargetMap;
 					return (size_t)__x;
 				}
 			};
-		};
-	};
-#endif
 
 typedef unordered_set< Unit* > AssistTargetSet;
 typedef std::map<uint32, AI_Spell*> SpellMap;

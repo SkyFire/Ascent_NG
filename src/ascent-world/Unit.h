@@ -18,7 +18,7 @@
 class AIInterface;
 
 #define MAX_AURAS 96 // 40 buff slots, 46 debuff slots.
-#define MAX_POSITIVE_AURAS 40 // ?
+#define MAX_POSITIVE_AURAS 40 // maximum numbers of buffs
 #define MAX_PASSIVE_AURAS 192   // grep: i mananged to break this.. :p seems we need more
 
 bool SERVER_DECL Rand(float);

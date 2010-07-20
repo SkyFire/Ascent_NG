@@ -14,10 +14,12 @@
 
 #include "StdAfx.h"
 
+#define NUM_TAXI_NODES 12
+
 void WorldSession::HandleTaxiNodeStatusQueryOpcode( WorldPacket & recv_data )
 {
-	CHECK_INWORLD_RETURN;
-	DEBUG_LOG( "WORLD"," Received CMSG_TAXINODE_STATUS_QUERY" );
+	if(!_player->IsInWorld()) return;
+	DEBUG_LOG( "WORLD: Received CMSG_TAXINODE_STATUS_QUERY" );
 
 	uint64 guid;
 	uint32 curloc;
@@ -46,17 +48,17 @@ void WorldSession::HandleTaxiNodeStatusQueryOpcode( WorldPacket & recv_data )
 	}	
 
 	SendPacket( &data );
-	DEBUG_LOG( "WORLD"," Sent SMSG_TAXINODE_STATUS" );
+	DEBUG_LOG( "WORLD: Sent SMSG_TAXINODE_STATUS" );
 }
 
 
 void WorldSession::HandleTaxiQueryAvaibleNodesOpcode( WorldPacket & recv_data )
 {
-	CHECK_INWORLD_RETURN;
-	DEBUG_LOG( "WORLD"," Received CMSG_TAXIQUERYAVAILABLENODES" );
+	if(!_player->IsInWorld()) return;
+	DEBUG_LOG( "WORLD: Received CMSG_TAXIQUERYAVAILABLENODES" );
 	uint64 guid;
 	recv_data >> guid;
-	Creature* pCreature = _player->GetMapMgr()->GetCreature(GET_LOWGUID_PART(guid));
+	Creature *pCreature = _player->GetMapMgr()->GetCreature(GET_LOWGUID_PART(guid));
 	if(!pCreature) return;
 
 	SendTaxiList(pCreature);
@@ -66,7 +68,7 @@ void WorldSession::SendTaxiList(Creature* pCreature)
 {
 	uint32 curloc;
 	uint8 field;
-	uint32 TaxiMask[12];
+	uint32 TaxiMask[NUM_TAXI_NODES];
 	uint32 submask;
 	uint64 guid = pCreature->GetGUID();
 
@@ -91,12 +93,15 @@ void WorldSession::SendTaxiList(Creature* pCreature)
 	}
 
 	//Set Mask
-	memset(TaxiMask, 0, sizeof(uint32)*12);
+	for(uint8 i = 0; i < NUM_TAXI_NODES; i++)
+	{
+		TaxiMask[i] = 0;
+	}
 	sTaxiMgr.GetGlobalTaxiNodeMask(curloc, TaxiMask);
 	TaxiMask[field] |= 1 << ((curloc-1)%32);
 
 	//Remove nodes unknown to player
-	for(int i = 0; i < 12; i++)
+	for(uint8 i = 0; i < NUM_TAXI_NODES; i++)
 	{
 		TaxiMask[i] &= GetPlayer( )->GetTaximask(i);
 	}
@@ -105,19 +110,19 @@ void WorldSession::SendTaxiList(Creature* pCreature)
 	data.Initialize( SMSG_SHOWTAXINODES );
 	data << uint32( 1 ) << guid;
 	data << uint32( curloc );
-	for(int i = 0; i < 12; i++)
+	for(int i = 0; i < NUM_TAXI_NODES; i++)
 	{
 		data << TaxiMask[i];
 	}
 	SendPacket( &data );
 
-	DEBUG_LOG( "WORLD"," Sent SMSG_SHOWTAXINODES" );
+	DEBUG_LOG( "WORLD: Sent SMSG_SHOWTAXINODES" );
 }
 
 void WorldSession::HandleActivateTaxiOpcode( WorldPacket & recv_data )
 {
-	CHECK_INWORLD_RETURN;
-	DEBUG_LOG( "WORLD"," Received CMSG_ACTIVATETAXI" );
+	if(!_player->IsInWorld()) return;
+	DEBUG_LOG( "WORLD: Received CMSG_ACTIVATETAXI" );
 
 	uint64 guid;
 	uint32 sourcenode, destinationnode;
@@ -211,7 +216,7 @@ void WorldSession::HandleActivateTaxiOpcode( WorldPacket & recv_data )
 	// 2.There is no direct path to that direction
 	// 3 Not enough Money
 	SendPacket( &data );
-	DEBUG_LOG( "WORLD"," Sent SMSG_ACTIVATETAXIREPLY" );
+	DEBUG_LOG( "WORLD: Sent SMSG_ACTIVATETAXIREPLY" );
 
 	// 0x001000 seems to make a mount visible
 	// 0x002000 seems to make you sit on the mount, and the mount move with you
@@ -236,10 +241,11 @@ void WorldSession::HandleActivateTaxiOpcode( WorldPacket & recv_data )
 
 void WorldSession::HandleMultipleActivateTaxiOpcode(WorldPacket & recvPacket)
 {
-	CHECK_INWORLD_RETURN;
-	DEBUG_LOG( "WORLD"," Received CMSG_ACTIVATETAXI" );
+	if(!_player->IsInWorld()) return;
+	DEBUG_LOG( "WORLD: Received CMSG_ACTIVATETAXI" );
 
 	uint64 guid;
+	uint32 moocost;
 	uint32 nodecount;
 	vector<uint32> pathes;
 	int32 newmoney;
@@ -248,13 +254,12 @@ void WorldSession::HandleMultipleActivateTaxiOpcode(WorldPacket & recvPacket)
 	uint32 submask;
 	WorldPacket data(SMSG_ACTIVATETAXIREPLY, 4);
 
-	recvPacket >> guid >> nodecount;
+	recvPacket >> guid >> moocost >> nodecount;
 	if(nodecount < 2)
 		return;
 
-	if(nodecount>12)
+	if(nodecount>NUM_TAXI_NODES)
 	{
-		DEBUG_LOG("WorldSession","CMSG_ACTIVATETAXI: Client disconnected, nodecount: %u", nodecount);
 		Disconnect();
 		return;
 	}
@@ -350,7 +355,7 @@ void WorldSession::HandleMultipleActivateTaxiOpcode(WorldPacket & recvPacket)
 	// 2.There is no direct path to that direction
 	// 3 Not enough Money
 	SendPacket( &data );
-	DEBUG_LOG( "WORLD"," Sent SMSG_ACTIVATETAXIREPLY" );
+	DEBUG_LOG( "WORLD: Sent SMSG_ACTIVATETAXIREPLY" );
 
 	// 0x001000 seems to make a mount visible
 	// 0x002000 seems to make you sit on the mount, and the mount move with you

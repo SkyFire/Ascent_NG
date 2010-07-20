@@ -698,8 +698,6 @@ struct SpellEntry
 	uint32 RequiredItemFlags;               //67
 	uint32 Effect[3];                       //68 - 70
 	uint32 EffectDieSides[3];               //71 - 73
-	uint32 EffectBaseDice[3];               //74 - 76
-	float  EffectDicePerLevel[3];           //77 - 79
 	float  EffectRealPointsPerLevel[3];     //80 - 82
 	int32  EffectBasePoints[3];             //83 - 85
 	int32  EffectMechanic[3];               //86 - 88       Related to SpellMechanic.dbc
@@ -1354,6 +1352,8 @@ struct VehicleSeatEntry
 	int32   m_uiSkin;                                       // 44
 	uint32  m_flagsB;                                       // 45
 															// 46-57 added in 3.1, floats mostly
+
+	bool IsUsable() const { return (m_flags & 0x2000000) != 0; }
 };
 
 #pragma pack(pop)

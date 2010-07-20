@@ -26,7 +26,7 @@ enum LFGTypes
 	LFG_DAILY_HEROIC_DUNGEON = 9,
 };
 
-#define MAX_DUNGEONS 280+1 // check max entries +1 on lfgdungeons.dbc
+#define MAX_DUNGEONS 294+1 // check max entries +1 on lfgdungeons.dbc
 #define MAX_LFG_QUEUE_ID 3
 #define LFG_MATCH_TIMEOUT 30		// in seconds
 

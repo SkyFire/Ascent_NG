@@ -220,7 +220,6 @@ void WorldSocket::InformationRetreiveCallback(WorldPacket & recvData, uint32 req
 	m_session->m_latency = _latency;
 	m_session->m_accountName = AccountName;
 	m_session->m_ClientBuild = mClientBuild;
-	m_session->language = sLocalizationMgr.GetLanguageId(lang);
 
 	Log.Notice("Auth", "%s from %s:%u [%ums]", AccountName.c_str(), GetRemoteIP().c_str(), GetRemotePort(), _latency);
 	Authenticate();

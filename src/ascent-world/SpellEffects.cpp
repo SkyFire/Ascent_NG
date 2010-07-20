@@ -433,6 +433,7 @@ void Spell::SpellEffectSchoolDMG(uint32 i) // dmg school
 						dmg += extra_dmg;
 					}
 				}break;
+			
 			case SPELL_HASH_GOUGE:	// Gouge: turns off your combat
 				{
 					if( p_caster != NULL )
@@ -3802,7 +3803,8 @@ void Spell::SpellEffectSendEvent(uint32 i) //Send Event
 			en->SendQuestComplete();
 		}break;
 
-	/*//Warlock: Summon Succubus Quest
+	//Warlock: Summon Succubus Quest
+		
 	case 8674:
 	case 9223:
 	case 9224:
@@ -3812,7 +3814,7 @@ void Spell::SpellEffectSendEvent(uint32 i) //Send Event
 			if( !ci || !cp )
 				return;
 
-			pCreature* pCreature = p_caster->GetMapMgr()->CreateCreature(cp->Id);
+			Creature* pCreature = p_caster->GetMapMgr()->CreateCreature(cp->Id);
 			pCreature->Load(cp, p_caster->GetPositionX(), p_caster->GetPositionY(), p_caster->GetPositionZ(), p_caster->GetOrientation());
 			pCreature->_setFaction();
 			pCreature->GetAIInterface()->Init(pCreature,AITYPE_AGRO,MOVEMENTTYPE_NONE);
@@ -3859,7 +3861,7 @@ void Spell::SpellEffectSendEvent(uint32 i) //Send Event
 		   pCreature->_setFaction();
 		   pCreature->PushToWorld(p_caster->GetMapMgr());
 		   sEventMgr.AddEvent(pCreature, &Creature::SafeDelete, EVENT_CREATURE_REMOVE_CORPSE,60000, 1, 0);
-		}break;*/
+		}break;
 	}
 }
 
@@ -4161,8 +4163,8 @@ void Spell::SummonGuardian(uint32 i) // Summon Guardian
 		veh = u_caster->GetMapMgr()->CreateVehicle( cr_entry );
 		if(veh == NULL)
 			return;
-		veh->setCreatedFromSpell( true );
-		veh->setMountSpell( m_spellInfo->EffectBasePoints[i] );
+		veh->m_CreatedFromSpell = true;
+		veh->m_mountSpell = m_spellInfo->EffectBasePoints[i];
 		veh->Load( cp, u_caster->GetPositionX(), u_caster->GetPositionY(), u_caster->GetPositionZ(), u_caster->GetOrientation());
 		veh->SetInstanceID( u_caster->GetInstanceID() );
 		veh->PushToWorld( u_caster->GetMapMgr() ); // we can do this safely since we're in the mapmgr's context
@@ -5940,12 +5942,25 @@ void Spell::SpellEffectActivateObject(uint32 i) // Activate Object
 
 void Spell::SpellEffectWMODamage(uint32 /*i*/)
 {
-	if(gameObjTarget->GetInfo()->Type == GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING)
+	if(gameObjTarget && gameObjTarget->GetInfo()->Type == GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING)
+	{
 		gameObjTarget->TakeDamage((uint32)damage);
+
+		WorldPacket data(SMSG_DESTRUCTIBLE_BUILDING_DAMAGE, 8+8+8+4+4);
+		data.append(gameObjTarget->GetGUID());
+		data.append(u_caster->GetGUID());
+		if (u_caster->IsPlayer() && TO_PLAYER(u_caster)->m_CurrentCharm)
+			data.append(u_caster->GetGUID());
+		else
+			data << uint8(0);
+		data << uint32(damage);
+		data << uint32(m_spellInfo->Id);
+		gameObjTarget->SendMessageToSet(&data, false);
+	}	
 }
 void Spell::SpellEffectWMORepair(uint32 /*i*/)
 {
-	if(gameObjTarget->GetInfo()->Type == GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING)
+	if(gameObjTarget && gameObjTarget->GetInfo()->Type == GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING)
 		gameObjTarget->Rebuild();
 }
 
@@ -6120,7 +6135,7 @@ void Spell::SummonTotem(uint32 i) // Summon Totem
 			pTotem->CastSpell(pTotem, dbcSpell.LookupEntry(30708), true);
 		else if( TotemSpell->NameHash == SPELL_HASH_FIRE_NOVA_TOTEM )
 		{
-			if( p_caster->HasDummyAura(SPELL_HASH_IMPROVED_FIRE_NOVA_TOTEM) && Rand(p_caster->GetDummyAura(SPELL_HASH_IMPROVED_FIRE_NOVA_TOTEM)->RankNumber * 50) )
+			if( p_caster->HasDummyAura(SPELL_HASH_FIRE_NOVA_TOTEM) && Rand(p_caster->GetDummyAura(SPELL_HASH_FIRE_NOVA_TOTEM)->RankNumber * 50) )
 				sEventMgr.AddEvent( TO_UNIT(pTotem), &Unit::EventCastSpell, TO_UNIT(pTotem), dbcSpell.LookupEntry(51880), EVENT_AURA_PERIODIC_TRIGGERSPELL, 4000, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT );
 		}	
 	}

@@ -84,9 +84,7 @@ void TaxiPath::SetPosForTime(float &x, float &y, float &z, uint32 time, uint32 *
 	std::map<uint32, TaxiPathNode*>::iterator itr;
 	itr = m_pathNodes.begin();
 
-	float nx;
-	float ny;
-	float nz;
+	float nx = 0.0f, ny = 0.0f, nz = 0.0f;
 	bool set = false;
 	uint32 nodecounter = 0;
 
@@ -145,7 +143,7 @@ TaxiPathNode* TaxiPath::GetPathNode(uint32 i)
 		return m_pathNodes.find(i)->second;
 }
 
-void TaxiPath::SendMoveForTime(Player* riding, Player* to, uint32 time)
+void TaxiPath::SendMoveForTime(Player *riding, Player *to, uint32 time)
 {
 	if (!time)
 		return;
@@ -167,9 +165,7 @@ void TaxiPath::SendMoveForTime(Player* riding, Player* to, uint32 time)
 	std::map<uint32, TaxiPathNode*>::iterator itr;
 	itr = m_pathNodes.begin();
 
-	float nx;
-	float ny;
-	float nz;
+	float nx = 0.0f, ny = 0.0f, nz = 0.0f;
 	bool set = false;
 	uint32 nodecounter = 1;
 
@@ -223,10 +219,10 @@ void TaxiPath::SendMoveForTime(Player* riding, Player* to, uint32 time)
 	*data << uint8(0);
 	*data << riding->GetPositionX( ) << riding->GetPositionY( ) << riding->GetPositionZ( );
 	*data << getMSTime();
-	*data << uint8( 0 );
+	*data << uint8( 0 );	//monster move type
 	*data << uint32( MONSTER_MOVE_FLAG_FLY );
 	*data << uint32( uint32((length * TAXI_TRAVEL_SPEED) - time));
-	*data << uint32( nodecounter );
+	*data << uint32( nodecounter );  //way point count
 	pos = data->wpos();
 	*data << nx << ny << nz;
 

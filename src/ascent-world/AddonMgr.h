@@ -18,7 +18,7 @@
 struct AddonEntry
 {
 	std::string name;
-	uint32 crc;
+	uint64 crc;
 	bool banned;
 	bool isNew;
 	bool showinlist;
@@ -40,9 +40,9 @@ private:
 	std::map<std::string, AddonEntry*> KnownAddons;
 	map<string, ByteBuffer> AddonData;
 
-	bool IsAddonBanned(uint32 crc, std::string name = "");
-	bool IsAddonBanned(std::string name, uint32 crc = 0);
-	bool ShouldShowInList(std::string name, uint32 crc);
+	bool IsAddonBanned(uint64 crc, std::string name = "");
+	bool IsAddonBanned(std::string name, uint64 crc = 0);
+	bool ShouldShowInList(std::string name);
 };
 
 #define sAddonMgr AddonMgr::getSingleton()

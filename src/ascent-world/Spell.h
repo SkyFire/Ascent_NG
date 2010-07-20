@@ -1578,7 +1578,8 @@ typedef enum SpellEffectTarget
    EFF_TARGET_SIMPLE_AOE								= 87, //just seems to be a simple aoe target, with a little circle
    EFF_TARGET_SMALL_AOE									= 88, //even smaller aoe circle
    EFF_TARGET_NONCOMBAT_PET								= 90, //target non-combat pet :P
-   TOTAL_SPELL_TARGET									= 101 // note: all spells with target type's > 101 are test spells
+   EFF_TARGET_IN_FRONT_OF_CASTER_30						= 104,
+   TOTAL_SPELL_TARGET									= 105 // note: all spells with target type's > 105 are test spells
 } SpellEffectTarget;
 
 ASCENT_INLINE bool IsFlyingSpell(SpellEntry *sp)

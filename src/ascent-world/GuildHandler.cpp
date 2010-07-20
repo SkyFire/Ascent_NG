@@ -539,7 +539,7 @@ void WorldSession::HandleCharterBuy(WorldPacket & recv_data)
 	if( arena_index >= NUM_CHARTER_TYPES )
 		return;
 
-	if( crt->IsArenaOrganizer() ) //All arena organizers should be allowed to create arena charter's
+	if(crt->GetEntry()==19861 || crt->GetEntry()==18897 || crt->GetEntry()==19856)		/* i am lazy! */
 	{
 		uint32 arena_type = arena_index - 1;
 		if(arena_type > 2)
@@ -617,6 +617,9 @@ void WorldSession::HandleCharterBuy(WorldPacket & recv_data)
 
 			c->SaveToDB();
 
+			/*WorldPacket data(45);
+			BuildItemPushResult(&data, _player->GetGUID(), ITEM_PUSH_TYPE_RECEIVE, 1, item_ids[arena_type], 0);
+			SendPacket(&data);*/
 			SendItemPushResult(i, false, true, false, true, _player->GetItemInterface()->LastSearchItemBagSlot(), _player->GetItemInterface()->LastSearchItemSlot(), 1);
 
 			if(!sWorld.free_arena_teams)
@@ -695,6 +698,10 @@ void WorldSession::HandleCharterBuy(WorldPacket & recv_data)
 
 			c->SaveToDB();
 
+			/*data.clear();
+			data.resize(45);
+			BuildItemPushResult(&data, _player->GetGUID(), ITEM_PUSH_TYPE_RECEIVE, 1, ITEM_ENTRY_GUILD_CHARTER, 0);
+			SendPacket(&data);*/
 			SendItemPushResult(i, false, true, false, true, _player->GetItemInterface()->LastSearchItemBagSlot(), _player->GetItemInterface()->LastSearchItemSlot(), 1);
 
 			_player->m_playerInfo->charterId[CHARTER_TYPE_GUILD] = c->GetID();

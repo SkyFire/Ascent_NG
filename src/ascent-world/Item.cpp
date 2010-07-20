@@ -152,7 +152,7 @@ void Item::LoadFromDB(Field* fields, Player* plr, bool light )
 	else if( random_suffix )
 		SetRandomSuffix( random_suffix );
 
-	SetUInt32Value( ITEM_FIELD_ITEM_TEXT_ID, fields[11].GetUInt32() );
+	SetUInt32Value( ITEM_FIELD_PAD, fields[11].GetUInt32() );
 
 	SetUInt32Value( ITEM_FIELD_MAXDURABILITY, m_itemProto->MaxDurability );
 	SetUInt32Value( ITEM_FIELD_DURABILITY, fields[12].GetUInt32() );
@@ -303,7 +303,7 @@ void Item::SaveToDB( int8 containerslot, int8 slot, bool firstsave, QueryBuffer*
 	ss << GetChargesLeft() << ",";
 	ss << GetUInt32Value(ITEM_FIELD_FLAGS) << ",";
 	ss << random_prop << ", " << random_suffix << ", ";
-	ss << GetUInt32Value(ITEM_FIELD_ITEM_TEXT_ID) << ",";
+	ss << GetUInt32Value(ITEM_FIELD_PAD) << ",";
 	ss << GetUInt32Value(ITEM_FIELD_DURABILITY) << ",";
 	ss << static_cast<int>(containerslot) << ",";
 	ss << static_cast<int>(slot) << ",'";

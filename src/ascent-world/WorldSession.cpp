@@ -1,5 +1,4 @@
-/*
- * Ascent MMORPG Server
+/* Ascent MMORPG Server
  * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
  * This software is  under the terms of the EULA License

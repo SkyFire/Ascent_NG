@@ -439,12 +439,12 @@ void Object::_BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2
 				Unit* pUnit = TO_UNIT(this);
 				Vehicle* vehicle = TO_UNIT(this)->m_CurrentVehicle;
 
-				if (pUnit->m_inVehicleSeatId != 0xFF  && vehicle->getVehicleSeat(pUnit->m_inVehicleSeatId) != NULL )
+				if (pUnit->m_inVehicleSeatId != 0xFF  && vehicle->GetVehicleSeatEntry(pUnit->m_inVehicleSeatId) != NULL )
 				{
 					*data << pUnit->m_CurrentVehicle->GetNewGUID();
-					*data << vehicle->getVehicleSeat(pUnit->m_inVehicleSeatId)->m_attachmentOffsetX;
-					*data << vehicle->getVehicleSeat(pUnit->m_inVehicleSeatId)->m_attachmentOffsetY;
-					*data << vehicle->getVehicleSeat(pUnit->m_inVehicleSeatId)->m_attachmentOffsetZ;
+					*data << vehicle->GetVehicleSeatEntry(pUnit->m_inVehicleSeatId)->m_attachmentOffsetX;
+					*data << vehicle->GetVehicleSeatEntry(pUnit->m_inVehicleSeatId)->m_attachmentOffsetY;
+					*data << vehicle->GetVehicleSeatEntry(pUnit->m_inVehicleSeatId)->m_attachmentOffsetZ;
 					*data << float(0.0f);
 					*data << uint32(0);
 					*data << pUnit->m_inVehicleSeatId;
@@ -578,7 +578,7 @@ void Object::_BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2
 
 	if (flags & 0x80) //if ((_BYTE)flags_ < 0)
 	{
-			*data << TO_VEHICLE(this)->getVehicleEntry() << float(0.0f);
+			*data << TO_VEHICLE(this)->GetVehicleEntry() << float(0.0f);
 	}
 
 	// 0x200

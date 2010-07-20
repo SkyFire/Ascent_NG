@@ -1,22 +1,22 @@
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "InstanceScripts", "projects\InstanceScripts2008.vcproj", "{EE39B48B-C598-4AAF-9EF0-199402933EE5}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "InstanceScripts", "projects\VC90\InstanceScripts2008.vcproj", "{EE39B48B-C598-4AAF-9EF0-199402933EE5}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SpellHandlers", "projects\SpellsHandlers2008.vcproj", "{58B5F00B-81D6-4A14-8142-D7B882BAD8DE}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SpellHandlers", "projects\VC90\SpellsHandlers2008.vcproj", "{58B5F00B-81D6-4A14-8142-D7B882BAD8DE}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GossipScripts", "projects\GossipScripts2008.vcproj", "{25B8B9AE-2401-4F71-B946-26F6D3237443}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GossipScripts", "projects\VC90\GossipScripts2008.vcproj", "{25B8B9AE-2401-4F71-B946-26F6D3237443}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ServerStatusPlugin", "projects\ServerStatusPlugin2008.vcproj", "{141DFBCF-91AE-4052-B916-60639C722EFA}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ServerStatusPlugin", "projects\VC90\ServerStatusPlugin2008.vcproj", "{141DFBCF-91AE-4052-B916-60639C722EFA}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ExtraScripts", "projects\ExtraScripts2008.vcproj", "{FF39B41C-C998-4AAF-9EF0-199402233EE5}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ExtraScripts", "projects\VC90\ExtraScripts2008.vcproj", "{FF39B41C-C998-4AAF-9EF0-199402233EE5}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MiscScripts", "projects\Misc2008.vcproj", "{495CDEBE-E216-485B-B2F1-2FC0BD9DAE7D}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MiscScripts", "projects\VC90\Misc2008.vcproj", "{495CDEBE-E216-485B-B2F1-2FC0BD9DAE7D}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QuestScripts", "projects\Quest2008.vcproj", "{1A080CA7-D19A-4129-972C-89E816E6DEC0}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QuestScripts", "projects\VC90\Quest2008.vcproj", "{1A080CA7-D19A-4129-972C-89E816E6DEC0}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EventsScripts", "projects\EventsScripts2008.vcproj", "{FAA6A79F-079F-428F-80CC-D8D2F8E841BE}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EventsScripts", "projects\VC90\EventsScripts2008.vcproj", "{FAA6A79F-079F-428F-80CC-D8D2F8E841BE}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RaidsScripts", "projects\RaidsScripts2008.vcproj", "{7134C1B1-BC76-4D48-8256-4FBCADAAE3EB}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RaidsScripts", "projects\VC90\RaidsScripts2008.vcproj", "{7134C1B1-BC76-4D48-8256-4FBCADAAE3EB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

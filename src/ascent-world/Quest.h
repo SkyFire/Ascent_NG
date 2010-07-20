@@ -43,6 +43,15 @@ enum QUEST_STATUS
 	//QUEST_ITEM_UPDATE				= 0x06	 // Yellow Question "?" Mark. //Unknown
 };
 
+enum QUEST_STATUS_RESPONSE
+{
+	QMGR_QUEST_0 = 0x00, // Yellow Exclamation mark.x
+	QMGR_QUEST_1 = 0x01, // Yellow Exclamation mark.x
+	QMGR_QUEST_2 = 0x02, // Yellow Exclamation mark.x
+	QMGR_QUEST_3 = 0x03, // Finished or HasQuest ? Yellow Questionmark : Blue Questionmark(Breaks client apparently).x
+	QMGR_QUEST_4 = 0x04, // Finished or HasQuest ? Yellow Questionmark : Blue Questionmark(Breaks client apparently).x
+};
+
 enum QUESTGIVER_QUEST_TYPE
 {
 	QUESTGIVER_QUEST_START  = 0x01,
@@ -160,7 +169,7 @@ struct Quest
 
 	uint32 reward_repfaction[5];
 	int32 reward_repvalue[5];
-	uint32 reward_replimit;
+	int32 reward_replimit/*[5]*/;
 
 	uint32 reward_title;
 
@@ -172,8 +181,8 @@ struct Quest
 	uint32 effect_on_player;
 	
 	uint32 point_mapid;
-	uint32 point_x;
-	uint32 point_y;
+	float point_x;
+	float point_y;
 	uint32 point_opt;
 
 	uint32 required_money;

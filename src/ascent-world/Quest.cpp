@@ -24,11 +24,11 @@ WorldPacket* WorldSession::BuildQuestQueryResponse(Quest *qst)
 
 	uint32 i = 0;
 
-	WorldPacket *data = new WorldPacket(SMSG_QUEST_QUERY_RESPONSE, 2048);
+	WorldPacket* data = new WorldPacket(SMSG_QUEST_QUERY_RESPONSE, 248);
 
 	*data << uint32(qst->id);						// Quest ID
 	*data << uint32(2);								// Unknown, always seems to be 2
-	*data << uint32(qst->max_level);				// Quest level
+	*data << int32(qst->max_level);					// Quest level
 	*data << uint32(qst->min_level);				// minlevel !!!
 
 	if(qst->quest_sort > 0)
@@ -40,23 +40,24 @@ WorldPacket* WorldSession::BuildQuestQueryResponse(Quest *qst)
 	*data << uint32(qst->suggested_players);			// suggested players
 	*data << uint32(qst->required_rep_faction);		// Faction ID
 	*data << uint32(qst->required_rep_value);		// Faction Amount
+	*data << uint32(0);								// 3.3.3 // Opposite Faction ID
+	*data << uint32(0);								// 3.3.3 // Opposite Faction Amount
 	*data << uint32(qst->next_quest_id);			// Next Quest ID
 	*data << uint32(0);								// 3.3.0
 
 	*data << uint32(sQuestMgr.GenerateRewardMoney(_player, qst));	// Copper reward
 	*data << uint32(qst->required_money);			// Required Money
-	*data << uint32(qst->effect_on_player);			// Spell casted on player upon completion
 	*data << uint32(qst->reward_spell);				// Spell added to spellbook upon completion
+	*data << uint32(qst->effect_on_player);			// Spell casted on player upon completion
 	*data << uint32(qst->reward_honor);				// 2.3.0 - bonus honor
-	*data << float(0);								// unknown
+	*data << float(0);								// Reward Honor Multiplier
 	*data << uint32(qst->srcitem);					// Item given at the start of a quest (srcitem)
 	*data << uint32(qst->quest_flags);				// Quest Flags
 	*data << uint32(qst->reward_title);				// Reward Title Id - Player is givn this title upon completion
-	*data << uint64(qst->required_kill_player);		// 3.0.2
-	*data << uint32(qst->reward_talents);			// 3.0.2
-	*data << uint32(0);								// bonus arena points
+	*data << uint32(qst->required_kill_player);		// Required Kill Player
+	*data << uint32(qst->reward_talents);			// Reward Talents
 	*data << uint32(0);								// Arena Points
-	*data << uint32(0);								// Arena Points Multiplicator.
+	*data << uint32(0);								// unk
 
 	// (loop 4 times)
 	for(uint32 i = 0; i < 4; ++i)
@@ -74,14 +75,13 @@ WorldPacket* WorldSession::BuildQuestQueryResponse(Quest *qst)
 
 	// 3.3 Faction Reward Stuff.
 	for(i = 0; i < 5; ++i)
-		*data << uint32(0);
+		*data << uint32(qst->reward_repfaction[i]);
 
 	for(i = 0; i < 5; ++i)
-		*data << uint32(0);
+		*data << int32(qst->reward_repvalue[i]);
 
 	for(i = 0; i < 5; ++i)
-		*data << uint32(0);
-
+		*data << int32(qst->reward_replimit);
 	//end
 
 	*data << qst->point_mapid;						// Unknown
@@ -93,7 +93,7 @@ WorldPacket* WorldSession::BuildQuestQueryResponse(Quest *qst)
 	*data << qst->details;							// Details
 	*data << qst->endtext;							// Subdescription
 
-	*data << uint8(0); //unk string
+	*data << uint8(0); // Displayed after finishing quest.
 
 	// (loop 4 times)
 	for(uint32 i = 0; i < 4; ++i)
@@ -113,6 +113,7 @@ WorldPacket* WorldSession::BuildQuestQueryResponse(Quest *qst)
 		*data << qst->objectivetexts[1];			// Objective 2 - Used as text if mob not set
 		*data << qst->objectivetexts[2];			// Objective 3 - Used as text if mob not set
 		*data << qst->objectivetexts[3];			// Objective 4 - Used as text if mob not set
+
 
 	return data;
 }

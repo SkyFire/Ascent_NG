@@ -6475,7 +6475,7 @@ void Player::RemoveQuestsFromLine(int skill_line)
 void Player::SendInitialLogonPackets()
 {
 	// Initial Packets... they seem to be re-sent on port.
-	m_session->OutPacket(SMSG_SET_REST_START_OBSOLETE, 4, &m_timeLogoff);
+	m_session->OutPacket(SMSG_QUEST_FORCE_REMOVE, 4, &m_timeLogoff);
 
     WorldPacket data(SMSG_BINDPOINTUPDATE, 32);
     data << m_bind_pos_x;

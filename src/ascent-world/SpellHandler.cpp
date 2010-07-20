@@ -375,7 +375,6 @@ void WorldSession::HandleAddDynamicTargetOpcode(WorldPacket & recvPacket)
 
 	DEBUG_LOG( "WORLD"," got CMSG_PET_CAST_SPELL." );
 	uint64 guid;
-	uint8 counter;
 	uint32 spellid;
 	uint8 flags;
 	Unit* caster;
@@ -384,7 +383,7 @@ void WorldSession::HandleAddDynamicTargetOpcode(WorldPacket & recvPacket)
 	Spell* pSpell;
 	list<AI_Spell*>::iterator itr;
 
-	recvPacket >> guid >> counter >> spellid >> flags;
+	recvPacket >> guid >> spellid >> flags;
 	sp = dbcSpell.LookupEntry(spellid);
 
 	// Summoned Elemental's Freeze
@@ -396,7 +395,10 @@ void WorldSession::HandleAddDynamicTargetOpcode(WorldPacket & recvPacket)
 	}
 	else
 	{
-		caster = _player->m_CurrentCharm;
+		if( _player->m_CurrentVehicle )
+			caster = _player->m_CurrentVehicle;
+		else
+			caster = _player->m_CurrentCharm;
 		if( caster != NULL )
 		{
 			for(itr = caster->GetAIInterface()->m_spells.begin(); itr != caster->GetAIInterface()->m_spells.end(); ++itr)

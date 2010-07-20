@@ -1,7 +1,7 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RevisionExtractor", "RevisionExtractor\RevisionExtractor.vcproj", "{6AFC5CD7-6C94-49EF-A158-4823F2E6E1F6}"
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RevisionExtractor", "RevisionExtractor\RevisionExtractor.vcxproj", "{6AFC5CD7-6C94-49EF-A158-4823F2E6E1F6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -54,7 +54,7 @@ public:
 	void ComputeLen();
 	void SetPosForTime(float &x, float &y, float &z, uint32 time, uint32* lastnode, uint32 mapid);
 	ASCENT_INLINE uint32 GetID() { return id; }
-	void SendMoveForTime(Player* riding, Player* to, uint32 time);
+	void SendMoveForTime(Player *riding, Player *to, uint32 time);
 	void AddPathNode(uint32 index, TaxiPathNode* pn) { m_pathNodes[index] = pn; }
 	ASCENT_INLINE size_t GetNodeCount() { return m_pathNodes.size(); }
 	TaxiPathNode* GetPathNode(uint32 i);

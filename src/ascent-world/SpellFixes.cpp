@@ -13,6 +13,11 @@
  */
 
 #include "StdAfx.h"
+//#define GENERATE_NAME_HASES_FILE 1
+#ifdef GENERATE_NAME_HASES_FILE
+#include <fstream>
+#include <iostream>
+#endif
 
 /// externals for spell system
 extern pSpellEffect SpellEffectsHandler[TOTAL_SPELL_EFFECTS];
@@ -225,54 +230,209 @@ uint32 fill( uint32* arr, ... ){
 	return i;
 }
 
+#ifdef GENERATE_NAME_HASES_FILE
 // Generates SpellNameHashes.h
 void GenerateNameHashesFile()
 {
+	Log.Notice("GenerateNameHashesFile", "Please wait this might take some time...");
 	const uint32 fieldSize = 81;
 	const char* prefix = "SPELL_HASH_";
-	uint32 prefixLen = uint32(strlen(prefix));
-	DBCFile dbc;
+	//I commented out the dynamic calculation
+	//of length since this is a constant
+	//uint32 prefixLen = strlen(prefix);
+	//This is the number of characters in "SPELL_HASH_" 
+	const uint32 prefixLen = 11;
 
+	//Create an instance of the DBCFile class
+	DBCFile dbc;
+	//Open the Spell.dbc file so that we can
+	//iterate over the values to grab the spell
+	//names
 	if( !dbc.open( "DBC/Spell.dbc" ) )
 	{
-		Log.Error("World", "Cannot find file ./DBC/Spell.dbc" );
+		Log.Error("GenerateNameHashesFile", "Cannot find file ./DBC/Spell.dbc" );
 		return;
 	}
+	//Get the number of records in the DBC file
+	//so that we know how many iterations to make
 	uint32 cnt = (uint32)dbc.getRecordCount();
+	//Set up a variable to store the namehash
+	//of the spell
 	uint32 namehash = 0;
-	FILE * f = fopen("SpellNameHashes.h", "w");
-	char spaces[fieldSize], namearray[fieldSize];
-	strcpy(namearray, prefix);
-	char* name = &namearray[prefixLen];
-	for(int i=0;i<fieldSize-1;i++)
-		spaces[i] = ' ';
-	spaces[fieldSize-1] = 0;
-	uint32 nameTextLen = 0, nameLen = 0;
+	//Use a vector to store the completed line
+	//of text once we have built it, which we
+	//will call a field, using a vector will
+	//allow us to use some fancy algorithms later :)
+	std::vector<std::string> fields;
+	fields.reserve(32*cnt);
+
+	//Calculate the period of time to
+	//report progress while building the
+	//fields and our counter
+	uint32 period = (cnt / 20) + 1;
+	uint32 counter = 0;
+
+	//Iterate over every record in the spell dbc file
+	sLog.outDebug("GenerateNameHashesFile: Iterating over Spell.dbc and building fields");
 	for(uint32 x=0; x < cnt; x++)
 	{
-		const char* nametext = dbc.getRecord(x).getString(139);
-		nameTextLen = (unsigned int)strlen(nametext);
-		strncpy(name, nametext, fieldSize-prefixLen-2);	// Cut it to fit in field size
-		name[fieldSize-prefixLen-2] = 0; // in case nametext is too long and strncpy didn't copy the null
-		nameLen = (unsigned int)strlen(name);
-		for(uint32 i = 0;i<nameLen;i++)
+		//Instantiate our stringstream
+		std::ostringstream ssField;
+		
+		//Write a tab before anything else
+		//is written for nice formatting
+		//in the resulting file
+		ssField << "\t";
+		//Write the SPELL_HASH_ prefix to the
+		//string stream
+		ssField << prefix;
+
+		//Store the full spell name for this entry in the
+		//DBC file.
+		//This will be used to calculate the namehash
+		std::string nametext = dbc.getRecord(x).getString(143-1);
+		//Store a trimmed spell name so that it fits
+		//neatly on the line in the resulting file
+		std::string name = nametext.substr(0, 69);
+
+		//Transform the trimmed spell name so that
+		//all characters are upper case
+		std::transform(name.begin(), name.end(), name.begin(), &toupper);
+
+		//Iterate over each character in the trimmed
+		//name and replace any non-standard characters
+		//with an underscore
+		for(uint16 i = 0; i < name.length(); i++)
 		{
-			if(name[i] >= 'a' && name[i] <= 'z')
-				name[i] = toupper(name[i]);
-			else if(!(name[i] >= '0' && name[i] <= '9') &&
-				!(name[i] >= 'A' && name[i] <= 'Z'))
+			if(!(name[i] >= '0' && name[i] <= '9') && !(name[i] >= 'A' && name[i] <= 'Z'))
 				name[i] = '_';
 		}
-		namehash = crc32((const unsigned char*)nametext, nameTextLen);
-		int32 numSpaces = fieldSize-prefixLen-nameLen-1;
-		if(numSpaces < 0)
-			fprintf(f, "WTF");
-		spaces[numSpaces] = 0;
-		fprintf(f, "#define %s%s0x%08X\n", namearray, spaces, namehash);
-		spaces[numSpaces] = ' ';
+		//now that the name has been prepared for use
+		//in the resulting file, write it to the
+		//string stream
+		ssField << name;
+
+		//Work out how many spaces we need to add after
+		//the string that we have just built and write
+		//them one by one to the stringstream less three
+		//so that we can add our equals sign later
+		int32 length = int32(ssField.str().length());
+		int32 spacesToAdd = (fieldSize - 3) - length;
+		do
+		{  	--spacesToAdd;
+			ssField << " ";
+		}while(spacesToAdd > 0);
+
+		//Write the equals sign and a space to the string
+		//stream
+		ssField << "= ";
+
+		//Set the stringstream format flags
+		//to use hexadecimal and show the 0x
+		//before the value!
+		ssField.setf(std::ios::showbase);
+		ssField.setf(std::ios_base::hex , std::ios_base::basefield);
+		
+		//Calculate a name hash using the spell name
+		namehash = crc32((const unsigned char*)nametext.c_str(), (unsigned int)nametext.length());
+		//Write the result to the string stream
+		ssField << std::uppercase << namehash << ",";
+
+		//Now that we have our mighty string add it
+		//to the vector.
+		fields.push_back(ssField.str());
+
+		//Clear the the stream ready for
+		//the next iteration
+		ssField.clear();
+
+		if( !((++counter) % period) )
+			Log.Notice("GenerateNameHashesFile", "Fields done: %u/%u, %u%% complete.", counter, cnt, float2int32( (float(counter) / float(cnt))*100.0f ));
 	}
-	fclose(f);
+
+	//Now we can sort all of the lines
+	//in the vector alphabetically!
+	sLog.outDebug("GenerateNameHashesFile: Sorting fields alphabetically");
+	sort(fields.begin(),fields.end());
+
+	//Now we want to remove any duplicates
+	//from the vector, since there can be
+	//multiple spells with the same name
+	//therefore they will have the same hash
+	sLog.outDebug("GenerateNameHashesFile: Searching for duplicates");
+	std::vector<std::string>::iterator new_end_pos;
+	new_end_pos = std::unique( fields.begin(), fields.end() );
+
+	//The elements between new_end_pos and
+	//fields.end() hold the old values,
+	//which were found to be duplicates
+	//we will now erase them!
+	sLog.outDebug("GenerateNameHashesFile: Removing duplicates!");
+	fields.erase( new_end_pos, fields.end() );
+
+
+	//Create the SpellNameHashes.h file and
+	//open it for writing. If it fails print
+	//an error and stop execution
+	ofstream out("SpellNameHashes.h"); 
+	if(!out)
+	{ 
+		Log.Error("GenerateNameHashesFile", "Cannot open output file SpellNameHashes.h!\n"); 
+		return; 
+	} 
+
+	//Write the license to beginning of the file
+	//also a message warning not to modify, header
+	//guards and the enum declaration
+	sLog.outDebug("GenerateNameHashesFile: Writing header to file");
+	out << "/*" << endl;
+	out << " * Ascent MMORPG Server" << endl;
+	out << " * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>" << endl;
+	out << " *" << endl;
+	out << " * This software is  under the terms of the EULA License" << endl;
+	out << " * All title, including but not limited to copyrights, in and to the AscentNG Software" << endl;
+	out << " * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title" << endl;
+	out << " * and intellectual property rights in and to the content which may be accessed through" << endl;
+	out << " * use of the AscentNG is the property of the respective content owner and may be protected" << endl;
+	out << " * by applicable copyright or other intellectual property laws and treaties. This EULA grants" << endl;
+	out << " * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC." << endl;
+	out << " *" << endl;
+	out << " */" << endl;
+	out << endl;
+	out << "/* This file has been automatically generated, please do not modify. */" << endl;
+	out << "// Last update: " << _VERSION << endl;
+	out << endl;
+	out << "#ifndef _SPELLHASHES_H" << endl;
+	out << "#define _SPELLHASHES_H" << endl;
+	out << endl;
+	out << "enum SpellNameHashes" << endl;
+	out << "{" << endl;
+
+	//iterate over the vector containing the fields
+	//that we built and write each line to the file
+	//and add a comment to the end to keep up the
+	//comment ratio, this is just for my vanity :)
+	sLog.outDebug("GenerateNameHashesFile: Writing fields to file");
+	counter = 0;
+	for (std::vector<std::string>::iterator it = fields.begin(); it != fields.end(); it++)
+	{
+		++counter;
+		out << *it << "\t//" << counter << endl;
+	}
+
+	//Close the enum
+	out << "};" << endl;
+
+	//Close the ifdef for the header guard
+	out << endl;
+	out << "#endif		// _SPELLHASHES_H" << endl;
+
+	//We have finished writing!
+	//Close the file
+	out.close();
+	sLog.outDebug("GenerateNameHashesFile: Done!");
 }
+#endif
 
 // Copies effect number 'fromEffect' in 'fromSpell' to effect number 'toEffect' in 'toSpell'
 void CopyEffect(SpellEntry *fromSpell, uint8 fromEffect, SpellEntry *toSpell, uint8 toEffect)
@@ -540,8 +700,6 @@ void ApplySingleSpellFixes(SpellEntry *sp)
 			case  27867:
 				sp->procChance = 2;
 				break;
-
-			//Vehicle: Scarlet cannon
 			
 			// Elemental Focus
 			case  16164:
@@ -747,7 +905,6 @@ void ApplySingleSpellFixes(SpellEntry *sp)
 			case 60893:
 				{
 					sp->Effect[1]	=	0;
-					sp->EffectBaseDice[1]	=	0;
 					sp->EffectBasePoints[1]	=	0;
 					sp->EffectImplicitTargetA[1]	=	0;
 					sp->EffectDieSides[1]	=	0;
@@ -2536,8 +2693,6 @@ void ApplySingleSpellFixes(SpellEntry *sp)
 					sp->Effect[1] = 108;
 					sp->EffectDieSides[0] = 1;
 					sp->EffectDieSides[1] = 1;
-					sp->EffectBaseDice[0] = 1;
-					sp->EffectBaseDice[1] = 1;
 					sp->EffectBasePoints[0] = 9;
 					sp->EffectBasePoints[1] = 9;
 					sp->EffectMiscValue[0] = 7;
@@ -2623,7 +2778,6 @@ void ApplySingleSpellFixes(SpellEntry *sp)
 							sp->EffectSpellClassMask[1][2] = sp2->EffectSpellClassMask[0][2];
 							sp->EffectBasePoints[1] = sp2->EffectBasePoints[0];
 							sp->EffectDieSides[1]= sp2->EffectDieSides[0];
-							sp->EffectBaseDice[1]= sp2->EffectBaseDice[0] ;
 						}
 				}break;
 		
@@ -2634,14 +2788,6 @@ void ApplySingleSpellFixes(SpellEntry *sp)
 				{
 					sp->Effect[1]	=	SPELL_EFFECT_ENERGIZE;
 					sp->EffectMiscValue[1] = 1;
-				}break;
-		
-			//warrior	-	Rampage
-			case  30030:
-			case 30033:
-				{
-						sp->procFlags	=	PROC_ON_MELEE_ATTACK | PROC_TARGET_SELF;
-						sp->EffectTriggerSpell[0]	=	sp->EffectTriggerSpell[1];
 				}break;
 
 			// warrior - overpower 
@@ -4015,7 +4161,6 @@ void ApplySingleSpellFixes(SpellEntry *sp)
 					sp->Effect[0] = 2;
 					sp->Effect[1] = 0;
 					sp->EffectDieSides[1] = 0;
-					sp->EffectBaseDice[1] = 0;
 					sp->EffectBasePoints[0] = sp->EffectBasePoints[1];
 					sp->EffectBasePoints[1] = 0;                  
 					sp->EffectImplicitTargetA[0] = 6;
@@ -5181,6 +5326,11 @@ void ApplySingleSpellFixes(SpellEntry *sp)
 				{
 						sp->Effect[0]	=	SPELL_EFFECT_DUMMY;
 				}break;
+				/*//Warrior Rampage
+			case 29801:
+				{
+					sp->maxstack == 0;
+				}break;*/
 				//Warrior Bloodsurge
 			case 46915:
 			case 46914:
@@ -5303,6 +5453,7 @@ void ApplySingleSpellFixes(SpellEntry *sp)
 					sp->Effect[0] = SPELL_EFFECT_APPLY_AURA;
 					sp->EffectApplyAuraName[0] = SPELL_AURA_PROC_TRIGGER_SPELL;
 					sp->EffectTriggerSpell[0] = 51460;
+					sp->procFlags = PROC_ON_MELEE_ATTACK;
 				}break;
 			//Desecration
 			case 55666:
@@ -5327,7 +5478,8 @@ void ApplySingleSpellFixes(SpellEntry *sp)
 			case 56817:
 			case 62036:
 				{
-						sp->Attributes |=	ATTRIBUTES_CANT_BE_DPB; //Note: This makes Rune strike undodge-parry-blockable
+					sp->procFlags = PROC_ON_DODGE_VICTIM;
+					sp->Attributes |=	ATTRIBUTES_CANT_BE_DPB; //Note: This makes Rune strike undodge-parry-blockable
 				}break;
 					
 			//Chilblains
@@ -5349,6 +5501,89 @@ void ApplySingleSpellFixes(SpellEntry *sp)
 				{
 					sp->procFlags	=	PROC_ON_CAST_SPELL;
 					sp->procChance = 100;
+				}break;
+
+			//Desolation
+			case 66799: //rank 1
+				{
+					sp->Effect[0] = SPELL_EFFECT_APPLY_AURA;
+					sp->EffectApplyAuraName[0] = SPELL_AURA_PROC_TRIGGER_SPELL;
+					sp->EffectTriggerSpell[0] = 63583;
+					sp->procFlags = PROC_ON_CAST_SPELL;
+				}break;
+			case 66814: //rank 2
+				{
+					sp->Effect[0] = SPELL_EFFECT_APPLY_AURA;
+					sp->EffectApplyAuraName[0] = SPELL_AURA_PROC_TRIGGER_SPELL;
+					sp->EffectTriggerSpell[0] = 66800;
+					sp->procFlags = PROC_ON_CAST_SPELL;
+				}break;
+			case 66815: // rank 3
+				{
+					sp->Effect[0] = SPELL_EFFECT_APPLY_AURA;
+					sp->EffectApplyAuraName[0] = SPELL_AURA_PROC_TRIGGER_SPELL;
+					sp->EffectTriggerSpell[0] = 66801;
+					sp->procFlags = PROC_ON_CAST_SPELL;
+				}break;
+			case 66816: // rank 4
+				{
+					sp->Effect[0] = SPELL_EFFECT_APPLY_AURA;
+					sp->EffectApplyAuraName[0] = SPELL_AURA_PROC_TRIGGER_SPELL;
+					sp->EffectTriggerSpell[0] = 66802;
+					sp->procFlags = PROC_ON_CAST_SPELL;
+				}break;
+			case 66817: // rank 5
+				{
+					sp->EffectApplyAuraName[0] = SPELL_AURA_PROC_TRIGGER_SPELL;
+					sp->EffectTriggerSpell[0] = 66803;
+					sp->procFlags = PROC_ON_CAST_SPELL;
+				}break;
+
+			//crypt fever
+			case 49032: //rank 1
+				{
+					sp->EffectApplyAuraName[0] = 109;
+					sp->EffectTriggerSpell[0] = 50508;
+					sp->procFlags = PROC_ON_CAST_SPELL;
+				}break;
+			case 49631: //rank 2
+				{
+					sp->EffectApplyAuraName[0] = 109;
+					sp->EffectTriggerSpell[0] = 50509;
+					sp->procFlags = PROC_ON_CAST_SPELL;
+				}break;
+			case 49632: //rank 3
+				{
+					sp->EffectApplyAuraName[0] = 109;
+					sp->EffectTriggerSpell[0] = 50510;
+					sp->procFlags = PROC_ON_CAST_SPELL;
+				}break;
+
+			// Impurity
+			case 49220:
+			case 49633:
+			case 49635:
+			case 49636:
+			case 49638:
+				{
+					sp->Effect[0] = SPELL_EFFECT_DUMMY;
+				}break;
+
+			//Blood-caked blade
+			case 49219:
+				{
+					sp->procFlags = PROC_ON_MELEE_ATTACK;
+					sp->procChance = 10;
+				}break;
+			case 49627:
+				{
+					sp->procFlags = PROC_ON_MELEE_ATTACK;
+					sp->procChance = 20;
+				}break;
+			case 49628:
+				{
+					sp->procFlags = PROC_ON_MELEE_ATTACK;
+					sp->procChance = 30;
 				}break;
 
 			// Killing Machine
@@ -5553,6 +5788,27 @@ void ApplySingleSpellFixes(SpellEntry *sp)
 				{
 					sp->procFlags = PROC_ON_SPELL_HIT_VICTIM;
 				}break;
+
+//***************Siege Vehicles SpellFixes********************//
+
+			// Scarlet Cannon
+			case 52436:
+				{
+					sp->EffectImplicitTargetA[0] = 89;
+					sp->EffectImplicitTargetA[1] = 89;
+				}break;
+			// Wintergrasp Demolisher
+			case 50999:
+				{
+					sp->EffectImplicitTargetA[0] = 89;
+					sp->EffectImplicitTargetA[1] = 89;
+				}break;
+			// Wintergrasp Catapult
+			case 50026:
+				{
+					sp->EffectImplicitTargetA[0] = 89;
+					sp->EffectImplicitTargetA[1] = 89;
+				}break;
 		}
 
 		//////////////////////////////////////////////////////////////////
@@ -5679,6 +5935,9 @@ void ApplyNormalFixes()
 				talentSpells.insert(make_pair(tal->RankID[j], tal->TalentTree));
 	}
 
+#ifdef GENERATE_NAME_HASES_FILE
+	GenerateNameHashesFile();
+#endif
 
 	for(uint32 x=0; x < cnt; x++)
 	{
@@ -5771,8 +6030,6 @@ void ApplyNormalFixes()
 					float ftemp;
 					temp = sp->Effect[col1_swap];			sp->Effect[col1_swap] = sp->Effect[col2_swap] ;						sp->Effect[col2_swap] = temp;
 					temp = sp->EffectDieSides[col1_swap];	sp->EffectDieSides[col1_swap] = sp->EffectDieSides[col2_swap] ;		sp->EffectDieSides[col2_swap] = temp;
-					temp = sp->EffectBaseDice[col1_swap];	sp->EffectBaseDice[col1_swap] = sp->EffectBaseDice[col2_swap] ;		sp->EffectBaseDice[col2_swap] = temp;
-					ftemp = sp->EffectDicePerLevel[col1_swap];			sp->EffectDicePerLevel[col1_swap] = sp->EffectDicePerLevel[col2_swap] ;				sp->EffectDicePerLevel[col2_swap] = ftemp;
 					ftemp = sp->EffectRealPointsPerLevel[col1_swap];	sp->EffectRealPointsPerLevel[col1_swap] = sp->EffectRealPointsPerLevel[col2_swap] ;	sp->EffectRealPointsPerLevel[col2_swap] = ftemp;
 					temp = sp->EffectBasePoints[col1_swap];	sp->EffectBasePoints[col1_swap] = sp->EffectBasePoints[col2_swap] ;	sp->EffectBasePoints[col2_swap] = temp;
 					temp = sp->EffectMechanic[col1_swap];	sp->EffectMechanic[col1_swap] = sp->EffectMechanic[col2_swap] ;	sp->EffectMechanic[col2_swap] = temp;

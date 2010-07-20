@@ -1908,6 +1908,7 @@ uint32 Unit::HandleProc( uint32 flag, Unit* victim, SpellEntry* CastingSpell, ui
 									CastingSpell->NameHash != SPELL_HASH_CORRUPTION)
 									continue;
 							}break;
+						
 						case 48108: // [Mage] Hot Streak
 							{
 								if (!CastingSpell )
@@ -1952,6 +1953,30 @@ uint32 Unit::HandleProc( uint32 flag, Unit* victim, SpellEntry* CastingSpell, ui
 								if(!CastingSpell || CastingSpell->NameHash != SPELL_HASH_REND)
 									continue;
 							}break;
+
+
+						case 50508: // crypt fever
+						case 50509:
+						case 50510:
+							{
+								if( CastingSpell == NULL )
+									continue;
+								if( CastingSpell->NameHash != SPELL_HASH_ICY_TOUCH && CastingSpell->NameHash != SPELL_HASH_PLAGUE_STRIKE)
+									continue;
+							}break;
+
+						case 63583:// Desolation
+						case 66800:
+						case 66801:
+						case 66802:
+						case 66803:
+							{
+								if( CastingSpell == NULL )
+									continue;
+								if( CastingSpell->NameHash != SPELL_HASH_BLOOD_STRIKE )
+									continue;
+							}break;
+
 						case 46989: //improved blink
 						case 47000:
 							{
@@ -1970,6 +1995,7 @@ uint32 Unit::HandleProc( uint32 flag, Unit* victim, SpellEntry* CastingSpell, ui
 									continue;
 								dmg_overwrite = dmg * (ospinfo->EffectBasePoints[0] + 1) / 100;
 							}break;
+							
 						case 54748: //Burning Determination
 							{
 								if( !CastingSpell || !(Spell::HasMechanic(CastingSpell, MECHANIC_SILENCED) || 
@@ -1985,11 +2011,12 @@ uint32 Unit::HandleProc( uint32 flag, Unit* victim, SpellEntry* CastingSpell, ui
 									Heal( TO_UNIT(this), 50475, toheal );
 								}
 							}break;
+
 						case 51460: // Necrosis - shadow damage
 							{
 								if ( dmg )
 								{
-									dmg_overwrite = dmg * (ospinfo->EffectBasePoints[0] + 1) / 100;
+									dmg_overwrite = dmg * (ospinfo->EffectBasePoints[0] + 1) / 200;
 								}
 							}break;
 						case 25742: // Seal of righteousness - Holy damage
@@ -2598,23 +2625,6 @@ void Unit::RegeneratePower(bool isinterrupted)
 				}
 			}break;
 		}
-
-		/*
-
-		There is a problem here for druids.
-		Druids when shapeshifted into bear have 2 power with different regen timers
-		a) Mana (which regenerates while shapeshifted
-		b) Rage
-
-		Mana has a regen timer of 2 seconds
-		Rage has a regen timer of 3 seconds
-
-		I think the only viable way of fixing this is to have 2 different timers
-		to check each individual power.
-
-		Atm, mana is being regen at 3 seconds while shapeshifted...
-
-		*/
 
 
 		// druids regen mana when shapeshifted
@@ -3307,10 +3317,6 @@ else
 					sEventMgr.AddEvent( plr, &Player::NullComboPoints, (uint32)EVENT_COMBO_POINT_CLEAR_FOR_TARGET, (uint32)5000, (uint32)1, (uint32)0 );
 				else
 					sEventMgr.ModifyEventTimeLeft( plr, EVENT_COMBO_POINT_CLEAR_FOR_TARGET, 5000 ,0 );
-			}
-			else if( plr->getClass() == DEATHKNIGHT )
-			{
-				CastSpell(GetGUID(), 56815, true);	// client side aura enabling Rune Strike
 			}
 		}
 		if( pVictim->IsPlayer() )
@@ -5441,9 +5447,9 @@ void Unit::UpdateSpeed()
 		m_runSpeed = m_maxSpeed;
 	}
 
-	if(IsVehicle() && TO_VEHICLE(this)->getControllingUnit())
+	if(IsVehicle() && TO_VEHICLE(this)->GetControllingUnit())
 	{
-		Unit* pUnit = TO_VEHICLE(this)->getControllingUnit();
+		Unit* pUnit = TO_VEHICLE(this)->GetControllingUnit();
 		pUnit->m_runSpeed = m_runSpeed;
 		pUnit->m_flySpeed = m_flySpeed;
 		TO_VEHICLE(this)->SetSpeed(RUN, m_runSpeed);
@@ -7271,7 +7277,7 @@ void Unit::RemoveFFAPvPFlag()
 
 void Unit::OnPositionChange()
 {
-	if (m_CurrentVehicle != NULL && m_CurrentVehicle->getControllingUnit() == TO_UNIT(this) && (m_position != m_CurrentVehicle->GetPosition() || GetOrientation() != m_CurrentVehicle->GetOrientation())) //check orientation too since == operator of locationvector doesnt
+	if (m_CurrentVehicle != NULL && m_CurrentVehicle->GetControllingUnit() == TO_UNIT(this) && (m_position != m_CurrentVehicle->GetPosition() || GetOrientation() != m_CurrentVehicle->GetOrientation())) //check orientation too since == operator of locationvector doesnt
 	{
 		m_CurrentVehicle->MoveVehicle(GetPositionX(), GetPositionY(), GetPositionZ(), GetOrientation());
 	}

@@ -65,7 +65,7 @@ void SpellCastTargets::read( WorldPacket & data,uint64 caster )
 
 	if( m_targetMask & TARGET_FLAG_SOURCE_LOCATION )
 	{
-		data >> m_srcX >> m_srcY >> m_srcZ;
+		data >> guid >> m_srcX >> m_srcY >> m_srcZ;
 
 		if( !( m_targetMask & TARGET_FLAG_DEST_LOCATION ) )
 		{
@@ -4216,7 +4216,6 @@ int32 Spell::CalculateEffect(uint32 i,Unit* target)
 	int32 value = 0;
 
 	float basePointsPerLevel    = m_spellInfo->EffectRealPointsPerLevel[i];
-	float randomPointsPerLevel  = m_spellInfo->EffectDicePerLevel[i];
 	int32 basePoints = m_spellInfo->EffectBasePoints[i] + 1;
 	int32 randomPoints = m_spellInfo->EffectDieSides[i];
 
@@ -4263,7 +4262,6 @@ exit:*/
 			diff +=m_spellInfo->maxLevel;
 		else
 			diff +=u_caster->getLevel();
-		randomPoints += float2int32(diff * randomPointsPerLevel);
 		basePoints += float2int32(diff * basePointsPerLevel );
 	}
 

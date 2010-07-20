@@ -183,8 +183,8 @@ WorldPacket * Mailbox::MailboxListingPacket()
 		}
 
 		if(AddMessageToListingPacket(*data, &itr->second))
-			++count;
 		{
+			++count;
 			++realcount;
 		}
 	}
@@ -217,15 +217,15 @@ bool Mailbox::AddMessageToListingPacket(WorldPacket& data,MailMessage *msg)
 	else
 		data << msg->sender_guid;
 
-	data << msg->cod;			// cod
-	data << msg->message_id;		// itempageid
+	data << msg->cod;
 	data << uint32(0);
 	data << msg->stationary;
-	data << msg->money;		// money
-	data << uint32(0x10);
-	data << float(float(msg->expire_time - (uint32)UNIXTIME) / 86400.0f);
+	data << msg->money; // money
 	data << uint32(0);
+	data << uint32(0x10);
+	data << uint32((msg->expire_time - uint32(UNIXTIME)) / 86400.0f);
 	data << msg->subject;
+	data << msg->body; // subjectbody
 	pos = data.wpos();
 	data << uint8(0);		// item count
 
@@ -241,16 +241,16 @@ bool Mailbox::AddMessageToListingPacket(WorldPacket& data,MailMessage *msg)
 			data << pItem->GetUInt32Value(OBJECT_FIELD_GUID);
 			data << pItem->GetEntry();
 
-			for( j = 0; j < 6; ++j )
+			for( j = 0; j < 7; ++j )
 			{
 				data << pItem->GetUInt32Value( ITEM_FIELD_ENCHANTMENT_1_1 + ( j * 3 ) );
-				data << pItem->GetUInt32Value( ITEM_FIELD_ENCHANTMENT_2_1 + ( j * 3 ) );
-				data << pItem->GetUInt32Value( ITEM_FIELD_ENCHANTMENT_3_1 + ( j * 3 ) );
+				data << pItem->GetUInt32Value( (ITEM_FIELD_ENCHANTMENT_1_1 + 1) + ( j * 3 ) );
+				data << pItem->GetUInt32Value( ITEM_FIELD_ENCHANTMENT_1_3 + ( j * 3 ) );
 			}
 
 			data << pItem->GetUInt32Value( ITEM_FIELD_RANDOM_PROPERTIES_ID );
 			if( ( (int32)pItem->GetUInt32Value( ITEM_FIELD_RANDOM_PROPERTIES_ID ) ) < 0 )
-                data << pItem->GetItemRandomSuffixFactor();
+				data << pItem->GetItemRandomSuffixFactor();
 			else
 				data << uint32( 0 );
 
@@ -258,11 +258,8 @@ bool Mailbox::AddMessageToListingPacket(WorldPacket& data,MailMessage *msg)
 			data << uint32( pItem->GetChargesLeft() );
 			data << pItem->GetUInt32Value( ITEM_FIELD_MAXDURABILITY );
 			data << pItem->GetUInt32Value( ITEM_FIELD_DURABILITY );
-			data << uint32( 0 );
-			data << uint32( 0 );
-			data << uint32( 0 );
-			data << uint32( 0 );
-			pItem->Destructor();
+			data << uint32(0);
+			delete pItem;
 		}
 		data.put< uint8 >( pos, i );
 	}
@@ -632,7 +629,7 @@ void WorldSession::HandleSendMail(WorldPacket & recv_data )
 				sGMLog.writefromsession(this, "sent mail with item entry %u to %s, with gold %u.", pItem->GetEntry(), player->name, msg.money);
 			}
 
-			pItem->Destructor();
+			delete pItem;
 		}
 	}
 
@@ -666,7 +663,8 @@ void WorldSession::HandleMailDelete(WorldPacket & recv_data )
 {
 	uint64 mailbox;
 	uint32 message_id;
-	recv_data >> mailbox >> message_id;
+	uint32 mailtemplet;
+	recv_data >> mailbox >> message_id >> mailtemplet;
 
 	WorldPacket data(SMSG_SEND_MAIL_RESULT, 12);
 	data << message_id << uint32(MAIL_RES_DELETED);
@@ -750,7 +748,7 @@ void WorldSession::HandleTakeItem(WorldPacket & recv_data )
 		data << uint32(MAIL_ERR_BAG_FULL);
 		SendPacket(&data);
 
-		item->Destructor();
+		delete item;
 		return;
 	}
 
@@ -763,7 +761,7 @@ void WorldSession::HandleTakeItem(WorldPacket & recv_data )
 			// no free slots left!
 			data << uint32(MAIL_ERR_BAG_FULL);
 			SendPacket(&data);
-			item->Destructor();
+			delete item;
 			return;
 		}
 	}
@@ -853,7 +851,8 @@ void WorldSession::HandleReturnToSender(WorldPacket & recv_data )
 {
 	uint64 mailbox;
 	uint32 message_id;
-	recv_data >> mailbox >> message_id;
+	uint64 returntoguid;
+	recv_data >> mailbox >> message_id >> returntoguid;
 
 	WorldPacket data(SMSG_SEND_MAIL_RESULT, 12);
 	data << message_id << uint32(MAIL_RES_RETURNED_TO_SENDER);
@@ -910,7 +909,7 @@ void WorldSession::HandleMailCreateTextItem(WorldPacket & recv_data )
 	}
 
 	Item* pItem = objmgr.CreateItem(8383, _player);
-	pItem->SetUInt32Value(ITEM_FIELD_ITEM_TEXT_ID, message_id);
+	pItem->SetUInt32Value(ITEM_FIELD_PAD, message_id);
 	if( _player->GetItemInterface()->AddItemToFreeSlot(pItem) )
 	{
 		// mail now has an item after it
@@ -923,23 +922,26 @@ void WorldSession::HandleMailCreateTextItem(WorldPacket & recv_data )
 	}
 	else
 	{
-		pItem->Destructor();
+		delete pItem;
 	}
 }
 
 void WorldSession::HandleItemTextQuery(WorldPacket & recv_data)
 {
-	uint32 message_id;
-	recv_data >> message_id;
+	uint64 itemGuid;
+	recv_data >> itemGuid;
 
 	string body = "Internal Error";
 
-	MailMessage * msg = _player->m_mailBox->GetMessage(message_id);
-	if(msg)
-		body = msg->body;
-
-	WorldPacket data(SMSG_ITEM_TEXT_QUERY_RESPONSE, body.length() + 5);
-	data << message_id << body;
+	Item* item = _player->GetItemInterface()->GetItemByGUID(itemGuid);
+	WorldPacket data(SMSG_ITEM_TEXT_QUERY_RESPONSE, body.length() + 9);
+	if(!item)
+		data << uint8(1);
+	else
+	{
+//		item->gett
+		data << uint8(0) << itemGuid << body;
+	}
 	SendPacket(&data);
 }
 
@@ -965,4 +967,3 @@ void WorldSession::HandleGetMail(WorldPacket & recv_data )
 	SendPacket(data);
 	delete data;
 }
-

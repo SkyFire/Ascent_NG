@@ -308,62 +308,54 @@ void WorldSession::HandleCharterShowListOpcode( WorldPacket & recv_data )
 void WorldSession::SendCharterRequest(Creature* pCreature)
 {
 	CHECK_INWORLD_RETURN;
-	uint8 count = 1;
-	if( pCreature->IsArenaOrganizer() )
-		count = 3;
-
-	WorldPacket data(SMSG_PETITION_SHOWLIST, 81);
-	data << pCreature->GetGUID();
-	data << count;
-
-	if( !pCreature->IsArenaOrganizer() )
+	if(pCreature && pCreature->GetEntry()==19861 ||
+		pCreature->GetEntry()==18897 || pCreature->GetEntry()==19856)
 	{
-		data << uint32(1);
-		data << uint32(ITEM_ENTRY_GUILD_CHARTER);		// Guild charter ItemId
-		data << uint32(16161);							// Guild charter DisplayId
-
-		if( sWorld.free_guild_charters )
-			data << uint32(0);
+		WorldPacket data(SMSG_PETITION_SHOWLIST, 81);
+		uint8 tdata[73];
+		if(sWorld.free_arena_teams)
+		{
+			static const uint8 temp[73] = { 0x03, 0x01, 0x00, 0x00, 0x00, 0x08, 0x5C, 0x00, 0x00, 0x21, 0x3F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x09, 0x5C, 0x00, 0x00, 0x21, 0x3F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x0A, 0x5C, 0x00, 0x00, 0x21, 0x3F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00 };
+			memcpy(tdata, temp, sizeof(temp));
+		}
 		else
-			data << uint32(1000);						// Guild charter cost (10s)
-		data << uint32(0);								// unknown
-		data << uint32(9);								// Required Signs
+		{
+			static const uint8 temp[73] = { 0x03, 0x01, 0x00, 0x00, 0x00, 0x08, 0x5C, 0x00, 0x00, 0x21, 0x3F, 0x00, 0x00, 0x00, 0x35, 0x0C, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x09, 0x5C, 0x00, 0x00, 0x21, 0x3F, 0x00, 0x00, 0x80, 0x4F, 0x12, 0x00, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x0A, 0x5C, 0x00, 0x00, 0x21, 0x3F, 0x00, 0x00, 0x80, 0x84, 0x1E, 0x00, 0x01, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00 };
+			memcpy(tdata, temp, sizeof(temp));
+		}
+		data << pCreature->GetGUID();
+		data.append(tdata,73);
+		SendPacket(&data);
 	}
 	else
 	{
-        // 2v2
-        data << uint32(1);								// index
-        data << uint32(ARENA_TEAM_CHARTER_2v2);			// charter entry
-        data << uint32(16161);							// charter display id
-		if(sWorld.free_arena_teams)
-			data << uint32(0);
+		WorldPacket data(29);
+		data.Initialize( SMSG_PETITION_SHOWLIST );
+		data << pCreature->GetGUID();
+		data << uint8(1);		   // BOOL SHOW_COST = 1
+		data << uint32(1);		  // unknown
+		if(pCreature && pCreature->GetEntry()==19861 ||
+			pCreature->GetEntry()==18897 || pCreature->GetEntry()==19856)
+		{
+			data << uint16(ARENA_TEAM_CHARTER_2v2);	 // ItemId of the guild charter
+		}
 		else
-			data << uint32(ARENA_TEAM_CHARTER_2v2_COST);	// charter cost (80g)
-        data << uint32(2);
-        data << uint32(2);								// required signs
-        // 3v3
-        data << uint32(2);								// index
-        data << uint32(ARENA_TEAM_CHARTER_3v3);			// charter entry
-        data << uint32(16161);							// charter display id
-		if(sWorld.free_arena_teams)
-			data << uint32(0);
-		else
-			data << uint32(ARENA_TEAM_CHARTER_3v3_COST);	// charter cost (120g)
-        data << uint32(3);
-        data << uint32(3);								// required signs
-        // 5v5
-        data << uint32(3);								// index
-        data << uint32(ARENA_TEAM_CHARTER_5v5);			// charter entry
-        data << uint32(16161);							// charter display id
-		if(sWorld.free_arena_teams)
-			data << uint32(0);
-		else
-			data << uint32(ARENA_TEAM_CHARTER_5v5_COST);	// charter cost
-        data << uint32(5);
-        data << uint32(5);								// required signs
-	}
+		{
+			data << uint16(0x16E7);	 // ItemId of the guild charter
+		}
+		
+		data << float(0.62890625);  // strange floating point
+		data << uint16(0);		  // unknown
+	//	data << uint32(0x3F21);	 // unknown
 
-	SendPacket(&data);
+		if(sWorld.free_guild_charters)
+			data << uint32(0);
+		else
+			data << uint32(1000);	   // charter prise
+		data << uint32(0);		  // unknown, maybe charter type
+		data << uint32(9);		  // amount of unique players needed to sign the charter
+		SendPacket( &data );
+	}
 }
 
 //////////////////////////////////////////////////////////////
@@ -393,6 +385,7 @@ void WorldSession::SendAuctionList(Creature* auctioneer)
 	WorldPacket data(MSG_AUCTION_HELLO, 12);
 	data << auctioneer->GetGUID();
 	data << uint32(AH->GetID());
+	data << uint8(1);
 
 	SendPacket( &data );
 }

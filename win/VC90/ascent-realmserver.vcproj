@@ -454,14 +454,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\ascent-realmserver\LocalizationMgr.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\ascent-realmserver\LocalizationMgr.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\src\ascent-realmserver\QueryHandler.cpp"
 				>
 			</File>

@@ -47,24 +47,11 @@ void Session::HandleCreatureQueryOpcode( WorldPacket & recv_data )
 		if(ci == NULL)
 			return;
 
-		LocalizedCreatureName * lcn = (language>0) ? sLocalizationMgr.GetLocalizedCreatureName(entry, language) : NULL;
-
-		if(lcn == NULL)
-		{
-			DEBUG_LOG("WORLD","HandleCreatureQueryOpcode CMSG_CREATURE_QUERY '%s'", ci->Name);
-			data << (uint32)entry;
-			data << ci->Name;
-			data << uint8(0) << uint8(0) << uint8(0);
-			data << ci->SubName;
-		}
-		else
-				{
-					DEBUG_LOG("WORLD","HandleCreatureQueryOpcode CMSG_CREATURE_QUERY '%s' (localized to %s)", ci->Name, lcn->Name);
-					data << (uint32)entry;
-					data << lcn->Name;
-					data << uint8(0) << uint8(0) << uint8(0);
-					data << lcn->SubName;
-				}
+		DEBUG_LOG("WORLD","HandleCreatureQueryOpcode CMSG_CREATURE_QUERY '%s'", ci->Name);
+		data << (uint32)entry;
+		data << ci->Name;
+		data << uint8(0) << uint8(0) << uint8(0);
+		data << ci->SubName;
 		
 		data << ci->info_str; //!!! this is a string in 2.3.0 Example: stormwind guard has : "Direction"
 		data << ci->Flags1;  
@@ -114,16 +101,10 @@ void Session::HandleGameObjectQueryOpcode( WorldPacket & recv_data )
 	if(goinfo == NULL)
 		return;
 
-	LocalizedGameObjectName * lgn = (language>0) ? sLocalizationMgr.GetLocalizedGameObjectName(entryID, language) : NULL;
-
 	data << entryID;
 	data << goinfo->Type;
 	data << goinfo->DisplayID;
-	if(lgn)
-		data << lgn->Name;
-	else
-		data << goinfo->Name;
-
+	data << goinfo->Name;
 	data << uint8(0) << uint8(0) << uint8(0) << uint8(0) << uint8(0) << uint8(0);   // new string in 1.12
 	data << goinfo->SpellFocus;
 	data << goinfo->sound1;
@@ -171,18 +152,11 @@ void Session::HandleItemQuerySingleOpcode( WorldPacket & recv_data )
 	uint8 databuffer[50000];
 	StackPacket data(SMSG_ITEM_QUERY_SINGLE_RESPONSE, databuffer, 50000);
 
-	LocalizedItem* li = (language>0) ? sLocalizationMgr.GetLocalizedItem(itemid, language) : NULL;
-
 	data << itemProto->ItemId;
 	data << itemProto->Class;
 	data << itemProto->SubClass;
 	data << itemProto->unknown_bc;
-
-	if(li)
-		data << li->Name;
-	else
-		data << itemProto->Name1;
-
+	data << itemProto->Name1;
 	data << uint8(0) << uint8(0) << uint8(0); // name 2,3,4
 	data << itemProto->DisplayInfoID;
 	data << itemProto->Quality;
@@ -240,10 +214,7 @@ void Session::HandleItemQuerySingleOpcode( WorldPacket & recv_data )
 	}
 	data << itemProto->Bonding;
 
-	if(li)
-		data << li->Description;
-	else
-		data << itemProto->Description;
+	data << itemProto->Description;
 
 	data << itemProto->PageId;
 	data << itemProto->PageLanguage;
@@ -296,11 +267,7 @@ void Session::HandleItemNameQueryOpcode( WorldPacket & recv_data )
 		reply << "Unknown Item";
 	else
 	{
-		LocalizedItem* li = (language>0) ? sLocalizationMgr.GetLocalizedItem(itemid, language) : NULL;
-		if(li)
-			reply << li->Name;
-		else
-			reply << proto->Name1;
+		reply << proto->Name1;
 	}
 	SendPacket(&reply);	
 }
@@ -322,13 +289,9 @@ void Session::HandlePageTextQueryOpcode( WorldPacket & recv_data )
 		if(page == NULL)
 			return;
 
-		LocalizedItemPage * lpi = (language>0) ? sLocalizationMgr.GetLocalizedItemPage(pageid,language):NULL;
 		data.Clear();
 		data << pageid;
-		if(lpi)
-			data.Write((uint8*)lpi->Text, strlen(lpi->Text) + 1);
-		else
-			data.Write((uint8*)page->text, strlen(page->text) + 1);
+		data.Write((uint8*)page->text, strlen(page->text) + 1);
 
 		data << page->next_page;
 		pageid = page->next_page;

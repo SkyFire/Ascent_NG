@@ -4694,22 +4694,8 @@ void Aura::SpellAuraModShapeshift(bool apply)
 		}break;
 	case FORM_DEMON:
 		{
-			spellId = 59673;
+			spellId = 59672;
 			modelId = 25277;
-			if (apply)
-			{
-				//m_target->m_modlanguage = LANG_DEMONIC;
-				m_target->CastSpell(m_target, 54817, true);
-				m_target->CastSpell(m_target, 54879, true);
-				m_target->CastSpell(m_target, 61610, true);
-			}
-			else
-			{
-				//m_target->m_modlanguage = -1;
-				m_target->RemoveAura(54817);
-				m_target->RemoveAura(54879);
-				m_target->RemoveAura(61610);
-			}
 		}break;
 	case FORM_GHOUL:
 		{

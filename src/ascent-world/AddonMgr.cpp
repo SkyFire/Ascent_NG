@@ -36,12 +36,12 @@ AddonMgr::~AddonMgr()
 	KnownAddons.clear();
 }
 
-bool AddonMgr::IsAddonBanned(uint32 crc, std::string name)
+bool AddonMgr::IsAddonBanned(uint64 crc, std::string name)
 {
 	return false;	// bleh needs work
 }
 
-bool AddonMgr::IsAddonBanned(std::string name, uint32 crc)
+bool AddonMgr::IsAddonBanned(std::string name, uint64 crc)
 {
 	std::map<std::string,AddonEntry*>::iterator i = KnownAddons.find(name);
 	if(i != KnownAddons.end())
@@ -60,7 +60,7 @@ bool AddonMgr::IsAddonBanned(std::string name, uint32 crc)
 		ent->crc = crc;
 		ent->banned = false;	// by default.. we can change this I guess..
 		ent->isNew = true;
-		ent->showinlist = (crc == 0x4C1C776D ? false : true);
+		ent->showinlist = true;
 
 		OUT_DEBUG("Discovered new addon %s sent by client.", name.c_str());
 
@@ -70,7 +70,7 @@ bool AddonMgr::IsAddonBanned(std::string name, uint32 crc)
 	return false;
 }
 
-bool AddonMgr::ShouldShowInList(std::string name, uint32 crc)
+bool AddonMgr::ShouldShowInList(std::string name)
 {
 	std::map<std::string,AddonEntry*>::iterator i = KnownAddons.find(name);
 	if(i != KnownAddons.end())
@@ -85,12 +85,12 @@ bool AddonMgr::ShouldShowInList(std::string name, uint32 crc)
 		// New addon. It'll be saved to db at server shutdown.		
 		AddonEntry *ent = new AddonEntry;
 		ent->name = name;
-		ent->crc = crc;
+		ent->crc = 0;
 		ent->banned = false;	// by default.. we can change this I guess..
 		ent->isNew = true;
-		ent->showinlist = (crc == 0x4C1C776D ? false : true);
+		ent->showinlist = true;
 
-		DEBUG_LOG("AddonMgr","Discovered new addon %s sent by client.", name.c_str());
+		OUT_DEBUG("Discovered new addon %s sent by client.", name.c_str());
 
 		KnownAddons[ent->name] = ent;
 	}
@@ -111,7 +111,7 @@ void AddonMgr::SendAddonInfoPacket(WorldPacket *source, uint32 pos, WorldSession
 	}
 	catch (ByteBuffer::error &)
 	{
-		DEBUG_LOG("AddonMgr","Warning, Incomplete auth session sent.");
+		OUT_DEBUG("Warning: Incomplete auth session sent.");
 		return;
 	}	
 	rsize = realsize;
@@ -123,7 +123,7 @@ void AddonMgr::SendAddonInfoPacket(WorldPacket *source, uint32 pos, WorldSession
 	if((source->size() - position) < 4 || realsize == 0)
 	{
 		// we shouldnt get here.. but just in case this will stop any crash here.
-		DEBUG_LOG("AddonMgr","Warning, Incomplete auth session sent.");
+		OUT_DEBUG("Warning: Incomplete auth session sent.");
 		return;
 	}
 	int32 result;
@@ -131,19 +131,19 @@ void AddonMgr::SendAddonInfoPacket(WorldPacket *source, uint32 pos, WorldSession
 
 	if(result != Z_OK)
 	{
-		DEBUG_LOG("AddonMgr","Decompression of addon section of CMSG_AUTH_SESSION failed.");
+		OUT_DEBUG("Decompression of addon section of CMSG_AUTH_SESSION failed.");
 		return;
 	}
 
-	DEBUG_LOG("AddonMgr","Decompression of addon section of CMSG_AUTH_SESSION succeeded.");
-
-
-	uint32 addons; // Added in 3.0.8
+	OUT_DEBUG("Decompression of addon section of CMSG_AUTH_SESSION succeeded.");
+	
+	uint32 addons;
 	uint8 Enable; // based on the parsed files from retool
 	uint32 crc;
 	uint32 unknown;
 
 	unpacked >> addons;
+
 	size_t p = unpacked.rpos(); 
 	if( p + (addons*10) > unpacked.size() - p - 4) 
 	{ 
@@ -152,28 +152,50 @@ void AddonMgr::SendAddonInfoPacket(WorldPacket *source, uint32 pos, WorldSession
 		return; 
 	}
 
+
 	std::string name;
-	for (uint32 i = 0; i < addons; ++i)
+	//size_t p = unpacked.rpos();
 	{
-		unpacked >> name;
-		unpacked >> Enable;
-		unpacked >> crc;
-		unpacked >> unknown;
+		uint8 unk;
+		uint8 unk1;
+		uint8 unk2;
+		uint32 unk3;
+		for(uint32 i = 0; i < addons; ++i)
+		{
+			unpacked >> name;
+			unpacked >> Enable;
+			unpacked >> crc;
+			unpacked >> unknown;
 
-		// Hacky fix, Yea I know its a hacky fix I will make a proper handler one's I got the crc crap
-		if (crc != 0x4C1C776D) // CRC of public key version 2.0.1
-			returnpacket.append(PublicKey,264); // part of the hacky fix
-		else
-			returnpacket << uint8(0x02) << uint8(0x01) << uint8(0x00) << uint32(0) << uint8(0);
-		/*if(!AppendPublicKey(returnpacket, name, crc))
-		returnpacket << uint8(1) << uint8(0) << uint8(0);*/
+			unk = (Enable ? 2 : 1);
+			returnpacket << unk;
+			unk1 = (Enable ? 1 : 0);
+			returnpacket << unk1;
+			if (unk1)
+			{
+				if(crc != 0x4C1C776D)
+				{
+					returnpacket << uint8(1);
+					returnpacket.append(PublicKey,264);
+				}
+				else
+					returnpacket << uint8(0);
 
+				returnpacket << uint32(0);
+			}
+
+			unk2 = (Enable ? 0 : 1);
+			returnpacket << unk2;
+			if (unk2)
+				returnpacket << uint8(0);
+
+			//p = unpacked.rpos();
+		}
+
+		unpacked >> unk3; //Added in 3.0.8
 	}
-
-	uint32 unk308;
-
-	unpacked >> unk308;
 	m_session->SendPacket(&returnpacket);
+
 }
 
 bool AddonMgr::AppendPublicKey(WorldPacket& data, string AddonName, uint32 CRC)
@@ -246,7 +268,7 @@ void AddonMgr::LoadFromDB()
 
 void AddonMgr::SaveToDB()
 {
-	DEBUG_LOG("AddonMgr","Saving any new addons discovered in this session to database.");
+	sLog.outString("AddonMgr: Saving any new addons discovered in this session to database.");
 	for(std::map<std::string, AddonEntry*>::iterator itr = KnownAddons.begin();itr!=KnownAddons.end();++itr)
 	{
 		if(itr->second->isNew)

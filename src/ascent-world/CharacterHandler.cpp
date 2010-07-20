@@ -198,15 +198,13 @@ void WorldSession::CharacterEnumProc(QueryResult * result)
 								items[slot].invtype = proto->InventoryType;
 								if( slot == EQUIPMENT_SLOT_MAINHAND || slot == EQUIPMENT_SLOT_OFFHAND )
 								{
-									// get enchant visual ID
-									const char * enchant_field = res->Fetch()[3].GetString();
+									// get enchant id
+									const char * enchant_field = res->Fetch()[3].GetString();	
 									if( sscanf( enchant_field , "%u,0,0;" , (unsigned int *)&enchantid ) == 1 && enchantid > 0 )
 									{
 										enc = dbcEnchant.LookupEntry( enchantid );
 										if( enc != NULL )
 											items[slot].enchantment = enc->visual;
-										else
-											items[slot].enchantment = 0;;
 									}
 								}
 							}
@@ -217,7 +215,15 @@ void WorldSession::CharacterEnumProc(QueryResult * result)
 			}
 
 			for( i = 0; i < 20; ++i )
-				data << items[i].displayid << items[i].invtype << uint32(items[i].enchantment);
+			{
+				data << items[i].displayid << items[i].invtype << items[i].enchantment;
+			}
+
+			if(GetClientBuild() > 11572)
+			{
+				for( i = 0; i < 3; i++)
+					data << uint32(0) << uint8(0) << uint32(0);
+			}
 
 			num++;
 		}
@@ -1029,7 +1035,7 @@ void WorldSession::HandleCharacterCustomization( WorldPacket & recv_data )
 
 	if(strcmp(pInfo->name, name.c_str()) && objmgr.GetPlayerInfoByName(name.c_str()) != 0)
 	{
-		uint8 err = CHAR_CREATE_NAME_IN_USE;
+		uint8 err = CHAR_CREATE_IN_USE;
 		OutPacket(SMSG_CHAR_CUSTOMIZE, 1, &err);
 		return;
 	}
@@ -1040,7 +1046,7 @@ void WorldSession::HandleCharacterCustomization( WorldPacket & recv_data )
 		if(result->Fetch()[0].GetUInt32() > 0)
 		{
 			// That name is banned!
-			uint8 err = CHAR_CREATE_NAME_IN_USE;
+			uint8 err = CHAR_CREATE_IN_USE;
 			OutPacket(SMSG_CHAR_CUSTOMIZE, 1, &err); // You cannot use that name
 			delete result;
 			return;

@@ -320,7 +320,8 @@ void _HandleBreathing(MovementInfo &movement_info, Player* _player, WorldSession
 
 void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
 {
-	if(!_player->IsInWorld() || _player->m_uint32Values[UNIT_FIELD_CHARMEDBY] || _player->GetPlayerStatus() == TRANSFER_PENDING || _player->GetTaxiState())
+	if(!_player->IsInWorld() || _player->m_uint32Values[UNIT_FIELD_CHARMEDBY] || 
+		(_player->GetPlayerStatus() == TRANSFER_PENDING && _player->m_CurrentVehicle == NULL) || _player->GetTaxiState())
 		return;
 
 	// spell cancel on movement, for now only fishing is added
@@ -525,7 +526,7 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
 				if( _player->m_CurrentVehicle )
 					toDamage = _player->m_CurrentVehicle;
 
-				if( _player->m_CurrentVehicle && _player->m_CurrentVehicle->getControllingUnit() != _player )
+				if( _player->m_CurrentVehicle && _player->m_CurrentVehicle->GetControllingUnit() != _player )
 					return; // don't allow any player but the 'driver' to send for fall damage, or we could get duplicate fall dmg
 
 				uint32 health_loss = float2int32( float( toDamage->GetUInt32Value( UNIT_FIELD_MAXHEALTH ) * ( ( falldistance - 12 ) * 0.017 ) ) );
@@ -574,7 +575,10 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
 		}
 		else if(movement_info.transGuid.GetOldGuid())
 		{
-			if(!_player->m_TransporterGUID)
+			if( _player->m_CurrentVehicle &&
+				_player->m_CurrentVehicle->GetGUID() == movement_info.transGuid.GetOldGuid() )
+				_player->m_sentTeleportPosition.ChangeCoords(movement_info.x, movement_info.y, movement_info.z);
+			else if(!_player->m_TransporterGUID)
 			{
 				/* just walked into a transport */
 				if(_player->IsMounted())
@@ -637,6 +641,8 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
 	/************************************************************************/
 	if( _player->m_CurrentCharm )
 		_player->m_CurrentCharm->SetPosition(movement_info.x, movement_info.y, movement_info.z, movement_info.orientation);
+	else if ( _player->m_CurrentVehicle )
+		_player->m_CurrentVehicle->MoveVehicle(movement_info.x, movement_info.y, movement_info.z, movement_info.orientation);
 	else
 	{
 		if(!_player->m_CurrentTransporter) 

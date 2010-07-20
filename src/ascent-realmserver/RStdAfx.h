@@ -66,7 +66,6 @@
 #include "LogonCommHandler.h"
 #include "../ascent-shared/Storage.h"
 #include "ObjectStorage.h"
-#include "LocalizationMgr.h"
 #include "Chat.h"
 #include "Channel.h"
 #include "ChannelMgr.h"

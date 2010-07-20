@@ -20,9 +20,7 @@ class SERVER_DECL Vehicle : public Creature
 public:
 	Vehicle(uint64 guid);
 	~Vehicle();
-	virtual void Destructor();
 
-	void Init();
 	void InitSeats(uint32 vehicleEntry, Player* pRider = NULL);
 	virtual void Update(uint32 time);
 	bool Load(CreatureSpawn *spawn, uint32 mode, MapInfo *info);
@@ -33,60 +31,51 @@ public:
 	void MoveVehicle(float x, float y, float z, float o);
 	void AddPassenger(Unit* pPassenger);
 	void RemovePassenger(Unit* pPassenger);
+	void RemoveAllPassengers();
 	bool HasPassenger(Unit* pPassenger);
 	void SendSpells(uint32 entry, Player* plr);
 	void setDeathState(DeathState s);
-	void SetSpeed(uint8 SpeedType, float value);
+	void SetSpeed(PlayerSpeedType SpeedType, float value);
 
 	//---------------------------------------
 	// Accessors
 	//---------------------------------------
-	uint32 getMaxPassengerCount() { return maxPassengers; }
-	uint32 getPassengerCount() { return passengerCount; }
+	uint32 GetMaxPassengerCount() { return m_maxPassengers; }
+	uint32 GetPassengerCount() { return m_passengerCount; }
 
-	void setPassengerCount(uint32 newCount) { passengerCount = newCount; };
-	void setMaxPassengers(uint32 newMax) { maxPassengers = newMax; };
+	uint32 GetVehicleEntry() { return m_vehicleEntry; }
+	void SetVehicleEntry(uint32 entry) { m_vehicleEntry = entry; }
+	VehicleSeatEntry* GetVehicleSeatEntry(uint8 slot) { return m_vehicleSeats[slot]; } 
 
-	uint32 getVehicleEntry() { return vehicleEntry; }
-	void setVehicleEntry(uint32 entry) { vehicleEntry = entry; }
+	Unit* GetControllingUnit() { return m_passengers[0]; }
+	void SetControllingUnit(Unit* pUnit) { m_controllingUnit = pUnit; }
 
-	Unit* getControllingUnit() { return controllingUnit; }
-	void setControllingUnit(Unit* pUnit) { controllingUnit = pUnit; }
-
-	uint8 getPassengerSlot(Unit* pPassenger);
-	
-	VehicleSeatEntry* getVehicleSeat(uint8 slotId);
-
-	uint32 getMountSpell() { return mountSpell; }; 
-	void setMountSpell(uint32 newSpell) { mountSpell = newSpell; };
-
-	void setInitializedStatus(bool newStatus) { Initialised = newStatus; };
-	void setCreatedFromSpell(bool newStatus) { createdFromSpell = newStatus; };
-
-	bool isFull() { return passengerCount == maxPassengers; }
-	bool isInitialized() { return Initialised; };
-	bool isCreatedFromSpell() { return createdFromSpell; };
+	uint8 GetPassengerSlot(Unit* pPassenger);
 	//---------------------------------------
 	// End accessors
 	//---------------------------------------
 
-private:
-	void AddToSlot(Unit* pPassenger, uint8 slot);
+	bool IsFull() { return m_passengerCount == m_maxPassengers; }
+
 	
 	bool Initialised;
-	bool createdFromSpell;
-
-	Unit* controllingUnit;
-
-	vector<VehicleSeatEntry*> vehicleSeats;
-	vector<Unit*> passengers;
-
-	uint8 passengerCount;
-	uint8 maxPassengers;
-	uint32 vehicleEntry;
-
-	uint32 mountSpell;
+	bool m_CreatedFromSpell;
+	uint32 m_mountSpell;
 	
+
+protected:
+	void _BuildMovementUpdate( ByteBuffer *data, Player* target );
+	void _AddToSlot(Unit* pPassenger, uint8 slot);
+
+	void SendMsgMoveTeleportAck( WorldPacket &data, Player* plr );
+	void SendMonsterMoveTransport( Unit* pPassenger, uint8 slot );
+	Unit* m_controllingUnit;
+
+	Unit* m_passengers[8];
+	uint8 m_passengerCount;
+	uint8 m_maxPassengers;
+	uint32 m_vehicleEntry;
+	VehicleSeatEntry * m_vehicleSeats[8];
 };
 
 #endif

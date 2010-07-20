@@ -268,9 +268,6 @@ bool Master::Run(int argc, char ** argv)
 	Log.Success("Storage", "DBC Files Loaded...");
 	Storage_Load();
 
-	sLocalizationMgr.Reload(true);
-	Log.Success("Locale", "Localization Manager Loaded...");
-
 	Log.Line();
 
 	new SocketMgr;
@@ -414,9 +411,6 @@ bool Master::Run(int argc, char ** argv)
 
 	Log.Notice("~Network", "Closing Server Port...");
 	delete isl;
-
-	//sLocalizationMgr.Shutdown();
-	Log.Success("~Locale", "Localization Manager shut down.");
 
 	Storage_Cleanup();
 	Log.Success("~Storage", "DBC Files Unloaded...");

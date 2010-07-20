@@ -22,7 +22,7 @@
 #include "MainServerDefines.h"
 
 #ifndef _VERSION
-# define _VERSION "3.3.x"
+# define _VERSION "3.3.3a(build 11723)"
 #endif
 
 #if PLATFORM == PLATFORM_WIN32
