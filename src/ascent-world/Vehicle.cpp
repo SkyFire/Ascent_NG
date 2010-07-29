@@ -121,8 +121,6 @@ void Vehicle::SendSpells(uint32 entry, Player* plr)
 	data << uint64(GetGUID());
 	data << uint32(GetCreatureInfo()->Family);
 	data << uint32(0x00000000);//unk
-	data << uint8(0x00);		//action
-	data << uint8(0x00);		//state
 	data << uint16(0x0101);	//unk2
 
 	//iterate over the temporary list

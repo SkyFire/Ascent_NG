@@ -346,8 +346,8 @@ void WorldSession::HandleCharCreateOpcode( WorldPacket & recv_data )
 		return;
 	}
 
-	//Same Faction limitation only applies to PVP and RPPVP realms :)
-	uint32 realmType = sLogonCommHandler.GetRealmType();
+	//Same Faction limitation only applies to PVP and RPPVP realms, after 3.1.0 the Blizzard is disable this function, so actually we are disable this.
+	/*uint32 realmType = sLogonCommHandler.GetRealmType();
 	if(!HasGMPermissions() && (realmType == REALMTYPE_PVP || realmType == REALMTYPE_RPPVP) && _side >= 0)
 	{
 		if( ((pNewChar->GetTeam() == 0) && (_side == 1)) || ((pNewChar->GetTeam() == 1) && (_side == 0)) )
@@ -360,7 +360,7 @@ void WorldSession::HandleCharCreateOpcode( WorldPacket & recv_data )
 			SendPacket( &data );
 			return;
 		}
-	}
+	}*/
 	pNewChar->UnSetBanned();
 	pNewChar->addSpell(22027);	  // Remove Insignia
 
