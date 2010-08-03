@@ -1035,7 +1035,7 @@ void WorldSession::HandleCharacterCustomization( WorldPacket & recv_data )
 
 	if(strcmp(pInfo->name, name.c_str()) && objmgr.GetPlayerInfoByName(name.c_str()) != 0)
 	{
-		uint8 err = CHAR_CREATE_IN_USE;
+		uint8 err = CHAR_CREATE_NAME_IN_USE;
 		OutPacket(SMSG_CHAR_CUSTOMIZE, 1, &err);
 		return;
 	}
@@ -1046,7 +1046,7 @@ void WorldSession::HandleCharacterCustomization( WorldPacket & recv_data )
 		if(result->Fetch()[0].GetUInt32() > 0)
 		{
 			// That name is banned!
-			uint8 err = CHAR_CREATE_IN_USE;
+			uint8 err = CHAR_CREATE_NAME_IN_USE;
 			OutPacket(SMSG_CHAR_CUSTOMIZE, 1, &err); // You cannot use that name
 			delete result;
 			return;
