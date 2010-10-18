@@ -1,0 +1,1 @@
+ALTER TABLE `characters` ADD COLUMN `spells` LONGTEXT NOT NULL AFTER `transporter_zdiff`;
