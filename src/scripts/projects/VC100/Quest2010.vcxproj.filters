@@ -1,0 +1,188 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Main Resources">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Main Resources\Base Class">
+      <UniqueIdentifier>{8892374d-7fcb-4318-ab1b-47fca137ab56}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scripts">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Scripts\Class">
+      <UniqueIdentifier>{01e442ca-1cc9-4c2b-82dd-157c2964a0c7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scripts\Profession">
+      <UniqueIdentifier>{b60cf005-8356-4525-bf51-2a7e1e544c8a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scripts\Zone">
+      <UniqueIdentifier>{fdab189f-e21d-499f-9967-bc2aaf23810a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\QuestScripts\Setup.cpp">
+      <Filter>Main Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Common\Base.cpp">
+      <Filter>Main Resources\Base Class</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\QuestGossip.cpp">
+      <Filter>Scripts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\QuestHooks.cpp">
+      <Filter>Scripts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\Unsorted.cpp">
+      <Filter>Scripts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\DeathKnight.cpp">
+      <Filter>Scripts\Class</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\Druid.cpp">
+      <Filter>Scripts\Class</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\Mage.cpp">
+      <Filter>Scripts\Class</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\Paladin.cpp">
+      <Filter>Scripts\Class</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\Warrior.cpp">
+      <Filter>Scripts\Class</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\FirstAid.cpp">
+      <Filter>Scripts\Profession</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\ArathiHighlands.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\Azshara.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\Azuremyst_Isle.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\BladeEdge_Mountains.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\BlastedLands.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\BloodmystIsle.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\Darkshore.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\Desolace.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\Dragonblight.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\Duskwood.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\Dustwallow_Marsh.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\Eastern_Plaguelands.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\EversongWoods.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\Ghostlands.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\Hellfire_Peninsula.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\HillsbradFoothills.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\Howling_Fjord.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\Isle_of_QuelDanas.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\LochModan.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\Mulgore.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\Nagrand.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\Netherstorm.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\Old_Hillsbrad.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\RedridgeMountains.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\ShadowMoon.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\SilvermoonCity.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\Silverpine_Forest.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\Stormwind.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\StranglethornVale.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\Tanaris.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\Teldrassil.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\Terrokar_Forest.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\The_Barrens.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\ThousandNeedles.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\TirisfalGlades.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\Undercity.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\UnGoro.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\Westfall.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\Zangarmarsh.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QuestScripts\SholazarBasin.cpp">
+      <Filter>Scripts\Zone</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\QuestScripts\Setup.h">
+      <Filter>Main Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Common\Base.h">
+      <Filter>Main Resources\Base Class</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,1 @@
+ALTER TABLE `worldmap_info` ADD COLUMN `cluster_loads_map` tinyint(3) unsigned NOT NULL DEFAULT 0 AFTER `collision`;

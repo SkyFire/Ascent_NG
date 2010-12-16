@@ -1,0 +1,137 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="LogonComm">
+      <UniqueIdentifier>{79629075-36d0-4c63-9ed6-a33cfa1d6fd4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Client">
+      <UniqueIdentifier>{7ea4417e-e453-4615-9f7e-a850210ea244}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Client\Chat">
+      <UniqueIdentifier>{48f0db2f-0beb-4c60-9414-096c5f7de9df}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Manager">
+      <UniqueIdentifier>{c1dc06d1-e4fd-4e8d-8367-c83e6347fef9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Worker Server">
+      <UniqueIdentifier>{ca8d143c-6533-4957-9475-d076fff12f5e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Defines">
+      <UniqueIdentifier>{855391eb-233c-4343-9740-272dc0e424a9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Storage">
+      <UniqueIdentifier>{45d1ecc5-70a2-4693-9532-37fc74dac4ec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Console">
+      <UniqueIdentifier>{e2aabe05-8767-4d1d-bc24-73be2cfc5ab6}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\ascent-realmserver\LogonCommClient.cpp">
+      <Filter>LogonComm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-realmserver\LogonCommHandler.cpp">
+      <Filter>LogonComm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-realmserver\CharacterHandler.cpp">
+      <Filter>Client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-realmserver\QueryHandler.cpp">
+      <Filter>Client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-realmserver\Session.cpp">
+      <Filter>Client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-realmserver\WorldSocket.cpp">
+      <Filter>Client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-realmserver\Channel.cpp">
+      <Filter>Client\Chat</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-realmserver\ChannelHandler.cpp">
+      <Filter>Client\Chat</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-realmserver\Chat.cpp">
+      <Filter>Client\Chat</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-realmserver\ChatHandler.cpp">
+      <Filter>Client\Chat</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-realmserver\ClientManager.cpp">
+      <Filter>Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-realmserver\ClusterManager.cpp">
+      <Filter>Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-realmserver\WorkerServer.cpp">
+      <Filter>Worker Server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-realmserver\WorkerServerSocket.cpp">
+      <Filter>Worker Server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-realmserver\ObjectStorage.cpp">
+      <Filter>Storage</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-realmserver\ConsoleCommands.cpp">
+      <Filter>Console</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-realmserver\ConsoleListener.cpp">
+      <Filter>Console</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ascent-realmserver\Main.cpp" />
+    <ClCompile Include="..\..\src\ascent-realmserver\Master.cpp" />
+    <ClCompile Include="..\..\src\ascent-realmserver\RStdAfx.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\ascent-realmserver\LogonCommClient.h">
+      <Filter>LogonComm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-realmserver\LogonCommHandler.h">
+      <Filter>LogonComm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-realmserver\Session.h">
+      <Filter>Client</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-realmserver\WorldSocket.h">
+      <Filter>Client</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-realmserver\Channel.h">
+      <Filter>Client\Chat</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-realmserver\ChannelMgr.h">
+      <Filter>Client\Chat</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-realmserver\Chat.h">
+      <Filter>Client\Chat</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-realmserver\ClientManager.h">
+      <Filter>Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-realmserver\ClusterManager.h">
+      <Filter>Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-realmserver\WorkerOpcodes.h">
+      <Filter>Worker Server</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-realmserver\WorkerServer.h">
+      <Filter>Worker Server</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-realmserver\WorkerServerSocket.h">
+      <Filter>Worker Server</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-realmserver\Structures.h">
+      <Filter>Defines</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-realmserver\ObjectStorage.h">
+      <Filter>Storage</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-realmserver\ConsoleCommands.h">
+      <Filter>Console</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ascent-realmserver\Master.h" />
+    <ClInclude Include="..\..\src\ascent-realmserver\RStdAfx.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\..\src\ascent-realmserver\resources.rc" />
+  </ItemGroup>
+</Project>

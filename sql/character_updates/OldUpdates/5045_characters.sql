@@ -1,0 +1,1 @@
+alter table `characters` add column `finished_daily_quests` longtext NOT NULL after `finished_quests`;

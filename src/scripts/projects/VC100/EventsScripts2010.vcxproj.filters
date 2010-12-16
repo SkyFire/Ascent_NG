@@ -1,0 +1,53 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Scripts">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Scripts\Dark Portal">
+      <UniqueIdentifier>{3d360bd3-d54a-4410-8796-850ab79cd041}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Main Ressources">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="Main Ressources\Setup">
+      <UniqueIdentifier>{ea6ecfc6-a3eb-4c87-a6e4-e6f9bf2d2d00}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Main Ressources\Base Class">
+      <UniqueIdentifier>{bfaa79ec-a545-4b22-85dc-c07c6e17e203}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Main Ressources\Instance Base Class">
+      <UniqueIdentifier>{782fe235-2633-4e72-97e2-0f502c00191f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\EventsScripts\Event_DarkPortal.cpp">
+      <Filter>Scripts\Dark Portal</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\EventsScripts\Setup.cpp">
+      <Filter>Main Ressources\Setup</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Common\Base.cpp">
+      <Filter>Main Ressources\Base Class</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Common\Instance_Base.cpp">
+      <Filter>Main Ressources\Instance Base Class</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\EventsScripts\Event_DarkPortal.h">
+      <Filter>Scripts\Dark Portal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\EventsScripts\Setup.h">
+      <Filter>Main Ressources\Setup</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Common\Base.h">
+      <Filter>Main Ressources\Base Class</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Common\Instance_Base.h">
+      <Filter>Main Ressources\Instance Base Class</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

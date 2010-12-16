@@ -1,0 +1,113 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Main Resources">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Main Resources\Base Class">
+      <UniqueIdentifier>{6538e1e6-e961-4506-93d2-76f1fc70a700}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Main Resources\Setup">
+      <UniqueIdentifier>{e571f3a1-56f8-4c19-8d4f-13c69f7e1413}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Main Resources\Raids Base Class">
+      <UniqueIdentifier>{3f4bd5e0-bfa4-4340-af6a-c3d2fb6ea07d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scripts">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Scripts\Raids">
+      <UniqueIdentifier>{218da707-235c-410f-ae2e-63d31dc867b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scripts\Raids\Naxxramas">
+      <UniqueIdentifier>{68b4ddc4-4d10-4d29-bf36-c78ffe53b017}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scripts\Raids\Sunwell Plateau">
+      <UniqueIdentifier>{0f680028-cfbc-404a-91e1-c14ebeabe5fe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scripts\Raids\Ulduar">
+      <UniqueIdentifier>{66800a28-9c81-400b-aa68-78a78b1efac3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\Common\Base.cpp">
+      <Filter>Main Resources\Base Class</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RaidsScripts\Setup.cpp">
+      <Filter>Main Resources\Setup</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Common\Instance_Base.cpp">
+      <Filter>Main Resources\Raids Base Class</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RaidsScripts\Raid_BlackTemple.cpp">
+      <Filter>Scripts\Raids</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RaidsScripts\Raid_BlackwingLair.cpp">
+      <Filter>Scripts\Raids</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RaidsScripts\Raid_CoT_BattleOfMountHyjal.cpp">
+      <Filter>Scripts\Raids</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RaidsScripts\Raid_GruulsLair.cpp">
+      <Filter>Scripts\Raids</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RaidsScripts\Raid_Karazhan.cpp">
+      <Filter>Scripts\Raids</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RaidsScripts\Raid_Magtheridons_Lair.cpp">
+      <Filter>Scripts\Raids</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RaidsScripts\Raid_MoltenCore.cpp">
+      <Filter>Scripts\Raids</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RaidsScripts\Raid_OnyxiasLair.cpp">
+      <Filter>Scripts\Raids</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RaidsScripts\Raid_SerpentshrineCavern.cpp">
+      <Filter>Scripts\Raids</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RaidsScripts\Raid_TheEye.cpp">
+      <Filter>Scripts\Raids</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RaidsScripts\Raid_TheObsidianSanctum.cpp">
+      <Filter>Scripts\Raids</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RaidsScripts\Raid_WorldBosses.cpp">
+      <Filter>Scripts\Raids</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RaidsScripts\Raid_ZulAman.cpp">
+      <Filter>Scripts\Raids</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RaidsScripts\Raid_ZulGurub.cpp">
+      <Filter>Scripts\Raids</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RaidsScripts\Raid_Naxxramas.cpp">
+      <Filter>Scripts\Raids\Naxxramas</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RaidsScripts\SunwellPlateau\Raid_SunwellPlateau.cpp">
+      <Filter>Scripts\Raids\Sunwell Plateau</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\RaidsScripts\Raid_Ulduar.cpp">
+      <Filter>Scripts\Raids\Ulduar</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\Common\Base.h">
+      <Filter>Main Resources\Base Class</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\RaidsScripts\Setup.h">
+      <Filter>Main Resources\Setup</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\Common\Instance_Base.h">
+      <Filter>Main Resources\Raids Base Class</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\RaidsScripts\Raid_Naxxramas.h">
+      <Filter>Scripts\Raids\Naxxramas</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\RaidsScripts\Raid_Ulduar.h">
+      <Filter>Scripts\Raids\Ulduar</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

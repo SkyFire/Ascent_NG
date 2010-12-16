@@ -1,0 +1,1 @@
+alter table `creature_proto` add column `vehicleId` int(30) DEFAULT '0' NOT NULL after `extra_a9_flags`;
