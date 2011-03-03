@@ -1,12 +1,12 @@
 /*
  * Ascent MMORPG Server
- * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
+ * Copyright (C) 2005-2011 Ascent Team <http://www.ascentemulator.net/>
  *
  * This software is  under the terms of the EULA License
- * All title, including but not limited to copyrights, in and to the AscentNG Software
+ * All title, including but not limited to copyrights, in and to the Ascent Software
  * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
  * and intellectual property rights in and to the content which may be accessed through
- * use of the AscentNG is the property of the respective content owner and may be protected
+ * use of the Ascent is the property of the respective content owner and may be protected
  * by applicable copyright or other intellectual property laws and treaties. This EULA grants
  * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
  *
@@ -17,7 +17,7 @@
 #include "../ascent-shared/svn_revision.h"
 #include <Console/CConsole.h>
 
-#define BANNER "AscentNG r%u/%s-%s-%s :: Realm Server\n"
+#define BANNER "Ascent r%u/%s-%s-%s :: Realm Server\n"
 
 #ifndef WIN32
 #include <sched.h>
@@ -206,7 +206,7 @@ bool Master::Run(int argc, char ** argv)
 
 #ifndef WIN32
 	if(geteuid() == 0 || getegid() == 0)
-		Log.LargeErrorMessage( LARGERRORMESSAGE_WARNING, "You are running AscentNG as root.", "This is not needed, and may be a possible security risk.", "It is advised to hit CTRL+C now and", "start as a non-privileged user.", NULL);
+		Log.LargeErrorMessage( LARGERRORMESSAGE_WARNING, "You are running Ascent as root.", "This is not needed, and may be a possible security risk.", "It is advised to hit CTRL+C now and", "start as a non-privileged user.", NULL);
 #endif
 
 	ThreadPool.Startup();
