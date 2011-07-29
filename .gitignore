@@ -22,3 +22,13 @@ Makefile.in
 *.opensdf
 *.suo
 *.sdf
+*.svn
+/bin
+*tlog
+*.unsuccessfulbuild
+*.log
+*.obj
+*.res
+*.pdb
+*.manifest
+*.lastbuildstate
