@@ -1,11 +1,11 @@
 /* Ascent MMORPG Server
- * Copyright (C) 2005-2011 Ascent Team <http://www.ascentemulator.net/>
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
  * This software is  under the terms of the EULA License
- * All title, including but not limited to copyrights, in and to the Ascent Software
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
  * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
  * and intellectual property rights in and to the content which may be accessed through
- * use of the Ascent is the property of the respective content owner and may be protected
+ * use of the AscentNG is the property of the respective content owner and may be protected
  * by applicable copyright or other intellectual property laws and treaties. This EULA grants
  * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
  *
@@ -605,7 +605,22 @@ void WorldSession::InitPacketHandlerTable()
 	WorldPacketHandlers[CMSG_GAMEOBJ_USE].handler							   = &WorldSession::HandleGameObjectUse;
 	WorldPacketHandlers[CMSG_PLAYED_TIME].handler							   = &WorldSession::HandlePlayedTimeOpcode;
 	WorldPacketHandlers[CMSG_SETSHEATHED].handler							   = &WorldSession::HandleSetSheathedOpcode;
-	WorldPacketHandlers[CMSG_MESSAGECHAT].handler							   = &WorldSession::HandleMessagechatOpcode;
+	WorldPacketHandlers[CMSG_MESSAGECHAT_SAY].handler							= &WorldSession::HandleMessagechatOpcode;
+	WorldPacketHandlers[CMSG_MESSAGECHAT_YELL].handler							= &WorldSession::HandleMessagechatOpcode;
+	WorldPacketHandlers[CMSG_MESSAGECHAT_WHISPER].handler							= &WorldSession::HandleMessagechatOpcode;
+	WorldPacketHandlers[CMSG_MESSAGECHAT_AFK].handler							= &WorldSession::HandleMessagechatOpcode;
+	WorldPacketHandlers[CMSG_MESSAGECHAT_RAID].handler							= &WorldSession::HandleMessagechatOpcode;
+	WorldPacketHandlers[CMSG_MESSAGECHAT_RAID_LEADER].handler							= &WorldSession::HandleMessagechatOpcode;
+	WorldPacketHandlers[CMSG_MESSAGECHAT_RAID_WARNING].handler							= &WorldSession::HandleMessagechatOpcode;
+	WorldPacketHandlers[CMSG_MESSAGECHAT_DND].handler							= &WorldSession::HandleMessagechatOpcode;
+	WorldPacketHandlers[CMSG_MESSAGECHAT_CHANNEL].handler							= &WorldSession::HandleMessagechatOpcode;
+	WorldPacketHandlers[CMSG_MESSAGECHAT_GUILD].handler							= &WorldSession::HandleMessagechatOpcode;
+	WorldPacketHandlers[CMSG_MESSAGECHAT_OFFICER].handler							= &WorldSession::HandleMessagechatOpcode;
+	WorldPacketHandlers[CMSG_MESSAGECHAT_EMOTE].handler							= &WorldSession::HandleMessagechatOpcode;
+	WorldPacketHandlers[CMSG_MESSAGECHAT_PARTY].handler							= &WorldSession::HandleMessagechatOpcode;
+	WorldPacketHandlers[CMSG_MESSAGECHAT_PARTY_LEADER].handler							= &WorldSession::HandleMessagechatOpcode;
+	WorldPacketHandlers[CMSG_MESSAGECHAT_BATTLEGROUND].handler							= &WorldSession::HandleMessagechatOpcode;
+	WorldPacketHandlers[CMSG_MESSAGECHAT_BATTLEGROUND_LEADER].handler							= &WorldSession::HandleMessagechatOpcode;
 	WorldPacketHandlers[CMSG_TEXT_EMOTE].handler								= &WorldSession::HandleTextEmoteOpcode;
 	WorldPacketHandlers[CMSG_INSPECT].handler								= &WorldSession::HandleInspectOpcode;
 	
@@ -689,7 +704,7 @@ void WorldSession::InitPacketHandlerTable()
 	WorldPacketHandlers[CMSG_AUTOEQUIP_ITEM].handler							= &WorldSession::HandleAutoEquipItemOpcode;
 	WorldPacketHandlers[CMSG_ITEM_QUERY_SINGLE].handler						 = &WorldSession::HandleItemQuerySingleOpcode;
 	WorldPacketHandlers[CMSG_SELL_ITEM].handler								 = &WorldSession::HandleSellItemOpcode;
-	WorldPacketHandlers[CMSG_BUY_ITEM_IN_SLOT].handler						  = &WorldSession::HandleBuyItemInSlotOpcode;
+	//WorldPacketHandlers[CMSG_BUY_ITEM_IN_SLOT].handler						  = &WorldSession::HandleBuyItemInSlotOpcode;
 	WorldPacketHandlers[CMSG_BUY_ITEM].handler								  = &WorldSession::HandleBuyItemOpcode;
 	WorldPacketHandlers[CMSG_LIST_INVENTORY].handler							= &WorldSession::HandleListInventoryOpcode;
 	WorldPacketHandlers[CMSG_AUTOSTORE_BAG_ITEM].handler						= &WorldSession::HandleAutoStoreBagItemOpcode;

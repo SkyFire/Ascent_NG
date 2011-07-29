@@ -1,12 +1,12 @@
 /*
  * Ascent MMORPG Server
- * Copyright (C) 2005-2011 Ascent Team <http://www.ascentemulator.net/>
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
  * This software is  under the terms of the EULA License
- * All title, including but not limited to copyrights, in and to the Ascent Software
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
  * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
  * and intellectual property rights in and to the content which may be accessed through
- * use of the Ascent is the property of the respective content owner and may be protected
+ * use of the AscentNG is the property of the respective content owner and may be protected
  * by applicable copyright or other intellectual property laws and treaties. This EULA grants
  * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
  *
@@ -751,106 +751,130 @@ void WorldSession::HandleItemQuerySingleOpcode( WorldPacket & recv_data )
 		return;
 	} 
 
-	uint8 databuffer[1000];
-	StackPacket data(SMSG_ITEM_QUERY_SINGLE_RESPONSE, databuffer, 1000);
-	
+	WorldPacket data(SMSG_ITEM_QUERY_SINGLE_RESPONSE, 12*4);
+	data << uint32(0x22);	//4.0.1 random
+	data << uint32(0x50238EC2); //4.0.1 random
+	data << uint32(0x20);	//4.0.1 random
 	data << itemProto->ItemId;
 	data << itemProto->Class;
 	data << itemProto->SubClass;
-	data << itemProto->unknown_bc;
-	data << itemProto->Name1;
-
-	data << uint8(0) << uint8(0) << uint8(0); // name 2,3,4
+	data << int32(-1);
+	data << itemProto->LockMaterial;
 	data << itemProto->DisplayInfoID;
-	data << itemProto->Quality;
-	data << itemProto->Flags;
-	data << itemProto->Faction;	//Added in 3.2
-	data << itemProto->BuyPrice;
-	data << itemProto->SellPrice;
 	data << itemProto->InventoryType;
-	data << itemProto->AllowableClass;
-	data << itemProto->AllowableRace;
-	data << itemProto->ItemLevel;
-	data << itemProto->RequiredLevel;
-	data << itemProto->RequiredSkill;
-	data << itemProto->RequiredSkillRank;
-	data << itemProto->RequiredSkillSubRank;
-	data << itemProto->RequiredPlayerRank1;
-	data << itemProto->RequiredPlayerRank2;
-	data << itemProto->RequiredFaction;
-	data << itemProto->RequiredFactionStanding;
-	data << itemProto->Unique;
-	data << itemProto->MaxCount;
-	data << itemProto->ContainerSlots;
-	data << uint32(10);								// 3.0.2 count of stats
+	data << itemProto->Field108; //Sheath? Please confirm - CMB
+	SendPacket(&data);
+	
+	//uint8 buf[600];
+	WorldPacket data2(SMSG_ITEM_QUERY_SINGLE_RESPONSE, 600);
+	data2 << uint32(0x22);	//4.0.1 random
+	data2 << uint32(0x919BE54E);	//4.0.1 random
+	data2 << itemProto->ItemId;
+	
+	size_t pos = data.wpos();
+
+	data2 << uint32(0);
+	data2 << itemProto->ItemId;
+	data2 << itemProto->Quality;
+	data2 << itemProto->Flags;
+	data2 << itemProto->Faction;	//Added in 3.2
+	data2 << itemProto->BuyPrice;
+	data2 << itemProto->SellPrice;
+	data2 << itemProto->InventoryType;
+	data2 << itemProto->AllowableClass;
+	data2 << itemProto->AllowableRace;
+	data2 << itemProto->ItemLevel;
+	data2 << itemProto->RequiredLevel;
+	data2 << itemProto->RequiredSkill;
+	data2 << itemProto->RequiredSkillRank;
+	data2 << itemProto->RequiredSkillSubRank;
+	data2 << itemProto->RequiredPlayerRank1;
+	data2 << itemProto->RequiredPlayerRank2;
+	data2 << itemProto->RequiredFaction;
+	data2 << itemProto->RequiredFactionStanding;
+	data2 << itemProto->Unique;
+	data2 << itemProto->MaxCount;
+	data2 << itemProto->ContainerSlots;
+	data2 << uint32(10);								// 3.0.2 count of stats
 	for(i = 0; i < 10; i++)
 	{
-		data << itemProto->Stats[i].Type;
-		data << itemProto->Stats[i].Value;
+		data2 << itemProto->Stats[i].Type;
+		data2 << itemProto->Stats[i].Value;
+		data2 << uint32(0);							// 4.0.0
+		data2 << uint32(0);							// 4.0.0
 	}
-	data << uint32(0);								// 3.0.2 related to scaling stats
-	data << uint32(0);								// 3.0.2 related to scaling stats
-	for(i = 0; i < 2; i++)
+
+	data2 << uint32(0);								// 3.0.2 related to scaling stats
+	data2 << uint32(0);								// 3.0.2 related to scaling stats
+	/*for(i = 0; i < 2; i++)
 	{
 		data << itemProto->Damage[i].Min;
 		data << itemProto->Damage[i].Max;
 		data << itemProto->Damage[i].Type;
-	}
+	}*/
 	// 7 resistances
-	data << itemProto->Armor;
+	/*data << itemProto->Armor;
 	data << itemProto->HolyRes;
 	data << itemProto->FireRes;
 	data << itemProto->NatureRes;
 	data << itemProto->FrostRes;
 	data << itemProto->ShadowRes;
-	data << itemProto->ArcaneRes;
+	data << itemProto->ArcaneRes;*/
 
-	data << itemProto->Delay;
-	data << itemProto->AmmoType;
-	data << itemProto->Range;
+	data2 << uint32(0);								// 4.0.0 damage type
+	data2 << itemProto->Delay;
+	data2 << itemProto->AmmoType;
+	data2 << itemProto->Range;
 	for(i = 0; i < 5; i++) {
-		data << itemProto->Spells[i].Id;
-		data << itemProto->Spells[i].Trigger;
-		data << itemProto->Spells[i].Charges;
-		data << itemProto->Spells[i].Cooldown;
-		data << itemProto->Spells[i].Category;
-		data << itemProto->Spells[i].CategoryCooldown;
+		data2 << itemProto->Spells[i].Id;
+		data2 << itemProto->Spells[i].Trigger;
+		data2 << itemProto->Spells[i].Charges;
+		data2 << itemProto->Spells[i].Cooldown;
+		data2 << itemProto->Spells[i].Category;
+		data2 << itemProto->Spells[i].CategoryCooldown;
 	}
-	data << itemProto->Bonding;
-	data << itemProto->Description;
-
-	data << itemProto->PageId;
-	data << itemProto->PageLanguage;
-	data << itemProto->PageMaterial;
-	data << itemProto->QuestId;
-	data << itemProto->LockId;
-	data << itemProto->LockMaterial;
-	data << itemProto->Field108;
-	data << itemProto->RandomPropId;
-	data << itemProto->RandomSuffixId;
-	data << itemProto->Block;
-	data << itemProto->ItemSet;
-	data << itemProto->MaxDurability;
-	data << itemProto->ZoneNameID;
-	data << itemProto->MapID;
-	data << itemProto->BagFamily;
-	data << itemProto->TotemCategory;
+	data2 << itemProto->Bonding;
+	data2 << uint32(0x16);
+	data2 << itemProto->Name1;
+	data2 << uint8(0x00) << uint8(0x00) << uint8(0x00);
+	data2 << itemProto->Description;
+	data2 << uint32(0);
+	data2 << itemProto->PageId;
+	data2 << itemProto->PageLanguage;
+	data2 << itemProto->PageMaterial;
+	data2 << itemProto->QuestId;
+	data2 << itemProto->LockId;
+	data2 << itemProto->LockMaterial;
+	data2 << itemProto->Field108;
+	data2 << itemProto->RandomPropId;
+	data2 << itemProto->RandomSuffixId;
+	//data << itemProto->Block;
+	data2 << itemProto->ItemSet;
+	data2 << itemProto->MaxDurability;
+	data2 << itemProto->ZoneNameID;
+	data2 << itemProto->MapID;
+	data2 << itemProto->BagFamily;
+	data2 << itemProto->TotemCategory;
 	// 3 sockets
-	data << itemProto->Sockets[0].SocketColor ;
-	data << itemProto->Sockets[0].Unk;
-	data << itemProto->Sockets[1].SocketColor ;
-	data << itemProto->Sockets[1].Unk ;
-	data << itemProto->Sockets[2].SocketColor ;
-	data << itemProto->Sockets[2].Unk ;
-	data << itemProto->SocketBonus;
-	data << itemProto->GemProperties;
-	data << itemProto->DisenchantReqSkill;			// should be a float here
-	data << itemProto->ArmorDamageModifier;
-	data << uint32(0);								// 2.4.2 Item duration in seconds
-	data << uint32(0);								// 3.0.2
-	data << uint32(0);								// 3.1.0
+	data2 << itemProto->Sockets[0].SocketColor ;
+	data2 << itemProto->Sockets[0].Unk;
+	data2 << itemProto->Sockets[1].SocketColor ;
+	data2 << itemProto->Sockets[1].Unk ;
+	data2 << itemProto->Sockets[2].SocketColor ;
+	data2 << itemProto->Sockets[2].Unk ;
+	data2 << itemProto->SocketBonus;
+	data2 << itemProto->GemProperties;
+	//data << itemProto->DisenchantReqSkill;			// should be a float here
+	data2 << itemProto->ArmorDamageModifier;
+	data2 << uint32(0);								// 2.4.2 Item duration in seconds
+	data2 << uint32(0);								// 3.0.2
+	data2 << uint32(0);								// 3.1.0
+	data2 << float(0);								// 4.0.0 damage/armor scaling factor
+	data2 << uint32(0);								// 4.0.0
+	data2 << uint32(0);								// 4.0.0
+	data2.put(pos, data.wpos()-16);
 
-	SendPacket( &data );
+	SendPacket( &data2 );
 }
 
 void WorldSession::HandleBuyBackOpcode( WorldPacket & recv_data )
@@ -1064,12 +1088,11 @@ void WorldSession::HandleBuyItemInSlotOpcode( WorldPacket & recv_data ) // drag 
 	int32 slot;
 	uint8 amount = 0;
 	uint8 error;
-	int8 bagslot = INVENTORY_SLOT_NOT_SET;
+	int8 bagslot = INVENTORY_SLOT_NOT_SET, unk;
 
-	recv_data >> srcguid >> itemid;
-	recv_data >> bagguid;
-	recv_data >> amount;
-	recv_data >> slot;
+	recv_data >> srcguid >> unk >> itemid;
+	recv_data >> slot >> amount;
+	recv_data >> bagguid >> bagslot;
 
 	if( _player->isCasting() )
 		_player->InterruptCurrentSpell();
@@ -1451,6 +1474,7 @@ void WorldSession::SendInventoryList(Creature* unit)
 
 				int32 av_am = (itr->max_amount>0)?itr->available_amount:-1;
 				data << (counter + 1);
+				data << uint32(1); //4.0.1 always 1
 				data << curItem->ItemId;
 				data << curItem->DisplayInfoID;
 				data << av_am;
@@ -1462,6 +1486,7 @@ void WorldSession::SendInventoryList(Creature* unit)
 					data << itr->extended_cost->costid;
 				else
 					data << uint32(0);
+				data << uint8(0); //4.0.1 unk
 
 				++counter;
 			}

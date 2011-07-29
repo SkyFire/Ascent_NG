@@ -1,12 +1,12 @@
 /*
  * Ascent MMORPG Server
- * Copyright (C) 2005-2011 Ascent Team <http://www.ascentemulator.net/>
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
  * This software is  under the terms of the EULA License
- * All title, including but not limited to copyrights, in and to the Ascent Software
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
  * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
  * and intellectual property rights in and to the content which may be accessed through
- * use of the Ascent is the property of the respective content owner and may be protected
+ * use of the AscentNG is the property of the respective content owner and may be protected
  * by applicable copyright or other intellectual property laws and treaties. This EULA grants
  * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
  *
@@ -100,8 +100,8 @@ bool AddonMgr::ShouldShowInList(std::string name)
 
 void AddonMgr::SendAddonInfoPacket(WorldPacket *source, uint32 pos, WorldSession *m_session)
 {
-	WorldPacket returnpacket;
-	returnpacket.Initialize(SMSG_ADDON_INFO);	// SMSG_ADDON_INFO
+	/*WorldPacket returnpacket;
+	returnpacket.Initialize(SMSG_ADDON_INFO);	// SMSG_ADDON_INFO*/
 
 	uint32 realsize;
 	uLongf rsize;
@@ -167,7 +167,7 @@ void AddonMgr::SendAddonInfoPacket(WorldPacket *source, uint32 pos, WorldSession
 			unpacked >> crc;
 			unpacked >> unknown;
 
-			unk = (Enable ? 2 : 1);
+			/*unk = (Enable ? 2 : 1);
 			returnpacket << unk;
 			unk1 = (Enable ? 1 : 0);
 			returnpacket << unk1;
@@ -189,13 +189,26 @@ void AddonMgr::SendAddonInfoPacket(WorldPacket *source, uint32 pos, WorldSession
 			if (unk2)
 				returnpacket << uint8(0);
 
-			//p = unpacked.rpos();
+			//p = unpacked.rpos();*/
 		}
 
 		unpacked >> unk3; //Added in 3.0.8
 	}
-	m_session->SendPacket(&returnpacket);
+	//m_session->SendPacket(&returnpacket);
 
+	//New 4.0.3a
+	WorldPacket addonPack(SMSG_ADDON_INFO);
+
+	addonPack << uint8(0x0C);
+	addonPack << uint8(0xC7);
+	addonPack << uint8(0x34);
+	addonPack << uint8(0xC6);
+	for(int i = 0; i < 6; i++)
+		addonPack << uint8(0x00);
+	addonPack << uint8(0x02);
+	addonPack << uint8(0x02);
+	
+	m_session->SendPacket(&addonPack);
 }
 
 bool AddonMgr::AppendPublicKey(WorldPacket& data, string AddonName, uint32 CRC)

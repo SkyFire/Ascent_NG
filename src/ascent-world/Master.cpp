@@ -1,12 +1,12 @@
 /*
  * Ascent MMORPG Server
- * Copyright (C) 2005-2011 Ascent Team <http://www.ascentemulator.net/>
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
  * This software is  under the terms of the EULA License
- * All title, including but not limited to copyrights, in and to the Ascent Software
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
  * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
  * and intellectual property rights in and to the content which may be accessed through
- * use of the Ascent is the property of the respective content owner and may be protected
+ * use of the AscentNG is the property of the respective content owner and may be protected
  * by applicable copyright or other intellectual property laws and treaties. This EULA grants
  * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
  *
@@ -16,7 +16,7 @@
 #include "StdAfx.h"
 #include <Console/CConsole.h>
 
-#define BANNER "Ascent %s r%u/%s-%s-%s :: World Server"
+#define BANNER "AscentNG %s r%u/%s-%s-%s :: World Server"
 
 #ifndef WIN32
 #include <sched.h>
@@ -159,9 +159,9 @@ bool Master::Run(int argc, char ** argv)
 	g_localTime = *localtime(&UNIXTIME);
 
 	printf(BANNER, BUILD_TAG, BUILD_REVISION, CONFIG, PLATFORM_TEXT, ARCH);
-	printf("\nCopyright (C) 2005-2011 Ascent Team. http://www.ascentemulator.net/\n");
+	printf("\nCopyright (C) 2005-2010 Ascent Team. http://www.ascentemulator.net/\n");
 	printf("This software is  under the terms of the EULA License.\n");
-	printf("All title, including but not limited to copyrights, in and to the Ascent Software and any copies there of are owned by ZEDCLANS INC.\n");
+	printf("All title, including but not limited to copyrights, in and to the AscentNG Software and any copies there of are owned by ZEDCLANS INC.\n");
 	printf("This EULA grants you no rights to use such content.\n");
 	printf("All rights not expressly granted are reserved by ZEDCLANS INC.\n");
 	Log.Line();

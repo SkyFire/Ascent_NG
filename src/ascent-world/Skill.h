@@ -1,6 +1,6 @@
 /*
  * Ascent MMORPG Server
- * Copyright (C) 2005-2011 Ascent Team <http://www.ascentemulator.net/>
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
  * This software is  under the terms of the EULA License
  * All title, including but not limited to copyrights, in and to the AscentNG Software
@@ -178,6 +178,21 @@
 #define SKILL_PET_EXOTIC_RHINO			786
 #define SKILL_PET_EXOTIC_CORE_HOUND		787
 #define SKILL_PET_EXOTIC_SPIRIT_BEAST	788
+#define SKILL_RACIAL_WORGEN				789
+#define SKILL_RACIAL_GOBLIN				790
+#define SKILL_LANG_WORGEN				791
+#define SKILL_LANG_GOBLIN				792	
+#define SKILL_ARCHAEOLOGY				794
+#define	SKILL_GENERAL_HUNTER			795
+#define SKILL_GENERAL_DEATHKNIGHT		796
+#define SKILL_GENERAL_ROGUE				797
+#define SKILL_GENERAL_DRUID				798	
+#define SKILL_GENERAL_MAGE				799	
+#define SKILL_GENERAL_PALADIN			800
+#define SKILL_GENERAL_SHAMAN			801
+#define SKILL_GENERAL_WARLOCK			802	
+#define SKILL_GENERAL_WARRIOR			803
+#define SKILL_GENERAL_PRIEST			804
 
 #define SKILL_TYPE_ATTRIBUTES           5
 #define SKILL_TYPE_WEAPON               6

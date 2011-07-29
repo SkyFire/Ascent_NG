@@ -1,12 +1,12 @@
 /*
  * Ascent MMORPG Server
- * Copyright (C) 2005-2011 Ascent Team <http://www.ascentemulator.net/>
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
  * This software is  under the terms of the EULA License
- * All title, including but not limited to copyrights, in and to the Ascent Software
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
  * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
  * and intellectual property rights in and to the content which may be accessed through
- * use of the Ascent is the property of the respective content owner and may be protected
+ * use of the AscentNG is the property of the respective content owner and may be protected
  * by applicable copyright or other intellectual property laws and treaties. This EULA grants
  * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
  *
@@ -43,6 +43,7 @@ WorldSocket::WorldSocket(SOCKET fd) : Socket(fd, sWorld.SocketSendBufSize, sWorl
 	//mSeed = rand() % 0xFFFFFFF0 + 10;
 	mSeed = RandomUInt();
 	pAuthenticationPacket = NULL;
+	addonPacket = NULL;
 	mQueued = false;
 	mRequestID = 0;
 	m_nagleEanbled = false;
@@ -217,36 +218,63 @@ OUTPACKET_RESULT WorldSocket::_OutPacket(uint16 opcode, size_t len, const void* 
 
 void WorldSocket::OnConnect()
 {
+	BigNumber seed, seed2;
 	sWorld.mAcceptedConnections++;
 	_latency = getMSTime();
-	WorldPacket data (SMSG_AUTH_CHALLENGE, 25);
-	data << uint32(1);			// Unk
-	data << mSeed;
-	data << uint32(0xC0FFEEEE);	// Generated Random.
-	data << uint32(0x00BABE00);	// 3.2.2
-	data << uint32(0xDF1697E5);	// 3.2.2
-	data << uint32(0x1234ABCD);	// 3.2.2
+	WorldPacket data (SMSG_AUTH_CHALLENGE, (9*4)+1);
+	data << uint32(0); //4.0.3a unk
+	data << uint32(0); //4.0.3a unk
+	data << mSeed; 
+	data << uint32(0); //4.0.3a unk
+	data << uint8(1); //unk
+	data << uint32(0); //4.0.3a unk
+	data << uint32(0); //4.0.3a unk
+	data << uint32(0); //4.0.3a unk
+	data << uint32(0); //4.0.3a unk
+	data << uint32(0); //4.0.3a unk
+
 	SendPacket(&data);
 }
 
 void WorldSocket::_HandleAuthSession(WorldPacket* recvPacket)
 {
 	std::string account;
-	uint32 unk1, unk2, unk4, unk5, unk6;
-	uint64 unk3;
+	WorldPacket addonPack;
 	_latency = getMSTime() - _latency;
+
+	uint8 unk;
+	uint64 unk2;
+	uint32 unk3, unk4, unk5, unk6;
+	uint8 unk7;
+	uint32 addonSize;
 
 	try
 	{
+		*recvPacket >> unk >> mDigest[15];
 		*recvPacket >> mClientBuild;
-		*recvPacket >> unk1;
-		*recvPacket >> account;
+		*recvPacket >> mDigest[5] >> mDigest[19];
 		*recvPacket >> unk2;
-		*recvPacket >> mClientSeed;
+		*recvPacket >> mDigest[13] >> mDigest[10] >> mDigest[1];
 		*recvPacket >> unk3;
+		*recvPacket >> mDigest[12] >> mDigest[4] >> mDigest[18] >> mDigest[8];
 		*recvPacket >> unk4;
+		*recvPacket >> mDigest[11] >> mDigest[9] >> mDigest[2];
 		*recvPacket >> unk5;
-		*recvPacket >> unk6;
+		*recvPacket >> mDigest[6] >> mDigest[16];
+		*recvPacket >> unk6 >> mClientSeed >> unk7;
+		*recvPacket >> mDigest[7] >> mDigest[0] >> mDigest[3] >> mDigest[17] >> mDigest[14];
+		*recvPacket >> account;
+		*recvPacket >> addonSize;
+		
+		uint8 * addonTable = new uint8[addonSize];
+		for(int i = 0; i < addonSize; i++) //Addon stuff
+		{
+			uint8 temp = 0;
+			*recvPacket >> temp;
+			addonTable[i] = temp;
+			addonPack << temp;
+		}
+		delete [] addonTable;
 	}
 	catch(ByteBuffer::error &)
 	{
@@ -265,6 +293,10 @@ void WorldSocket::_HandleAuthSession(WorldPacket* recvPacket)
 
 	// shitty hash !
 	m_fullAccountName = new string( account );
+
+	// Set the Addon Packet
+	addonPack.rpos(0);
+	addonPacket = &addonPack;
 
 	// Set the authentication packet 
     pAuthenticationPacket = recvPacket;
@@ -354,9 +386,6 @@ void WorldSocket::InformationRetreiveCallback(WorldPacket & recvData, uint32 req
 
 	Sha1Hash sha;
 
-	uint8 digest[20];
-	pAuthenticationPacket->read(digest, 20);
-
 	uint32 t = 0;
 	if( m_fullAccountName == NULL )				// should never happen !
 		sha.UpdateData(AccountName);
@@ -375,7 +404,7 @@ void WorldSocket::InformationRetreiveCallback(WorldPacket & recvData, uint32 req
 	sha.UpdateBigNumbers(&BNK, NULL);
 	sha.Finalize();
 
-	if (memcmp(sha.GetDigest(), digest, 20))
+	if (memcmp(sha.GetDigest(), mDigest, 20))
 	{
 		// AUTH_UNKNOWN_ACCOUNT = 21
 		OutPacket(SMSG_AUTH_RESPONSE, 1, "\x15");
@@ -468,13 +497,13 @@ void WorldSocket::Authenticate()
 		return;
 
 	if(pSession->HasFlag(ACCOUNT_FLAG_XPACK_02))
-		OutPacket(SMSG_AUTH_RESPONSE, 11, "\x0C\x30\x78\x00\x00\x00\x00\x00\x00\x00\x02");
+		OutPacket(SMSG_AUTH_RESPONSE, 11, "\x0C\x30\x78\x00\x00\x00\x00\x00\x00\x00\x02\x02");
 	else if(pSession->HasFlag(ACCOUNT_FLAG_XPACK_01))
-		OutPacket(SMSG_AUTH_RESPONSE, 11, "\x0C\x30\x78\x00\x00\x00\x00\x00\x00\x00\x01");
+		OutPacket(SMSG_AUTH_RESPONSE, 11, "\x0C\x30\x78\x00\x00\x00\x00\x00\x00\x00\x01\x02");
 	else
-		OutPacket(SMSG_AUTH_RESPONSE, 11, "\x0C\x30\x78\x00\x00\x00\x00\x00\x00\x00\x00");
+		OutPacket(SMSG_AUTH_RESPONSE, 11, "\x0C\x30\x78\x00\x00\x00\x00\x00\x00\x00\x00\x02");
 
-	sAddonMgr.SendAddonInfoPacket(pAuthenticationPacket, (uint32)pAuthenticationPacket->rpos(), pSession);
+	sAddonMgr.SendAddonInfoPacket(addonPacket, (uint32)addonPacket->rpos(), pSession);
 	pSession->_latency = _latency;
 
 	g_bufferPool.Deallocate(pAuthenticationPacket);

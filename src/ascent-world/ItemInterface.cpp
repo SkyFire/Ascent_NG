@@ -1,12 +1,12 @@
 /*
  * Ascent MMORPG Server
- * Copyright (C) 2005-2011 Ascent Team <http://www.ascentemulator.net/>
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
  * This software is  under the terms of the EULA License
- * All title, including but not limited to copyrights, in and to the Ascent Software
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
  * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
  * and intellectual property rights in and to the content which may be accessed through
- * use of the Ascent is the property of the respective content owner and may be protected
+ * use of the AscentNG is the property of the respective content owner and may be protected
  * by applicable copyright or other intellectual property laws and treaties. This EULA grants
  * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
  *
@@ -2274,7 +2274,7 @@ void ItemInterface::BuyItem(ItemPrototype *item, uint32 total_amount, Creature* 
 
 		int32 val = (int32)(ec->honor * total_amount);
 
-		if( m_pOwner->GetUInt32Value(PLAYER_FIELD_HONOR_CURRENCY) >= (uint32)val )
+		/*if( m_pOwner->GetUInt32Value(PLAYER_FIELD_HONOR_CURRENCY) >= (uint32)val )
 		{
 			m_pOwner->ModUnsigned32Value( PLAYER_FIELD_HONOR_CURRENCY, -val );
 			m_pOwner->m_honorPoints -= val;
@@ -2285,7 +2285,7 @@ void ItemInterface::BuyItem(ItemPrototype *item, uint32 total_amount, Creature* 
 		{
 			m_pOwner->ModUnsigned32Value( PLAYER_FIELD_ARENA_CURRENCY, -val );
 			m_pOwner->m_arenaPoints -= val;
-		}
+		}*/ /* TODO: Fix - CMB */
 	}
 }
 
@@ -2316,10 +2316,10 @@ uint8 ItemInterface::CanAffordItem(ItemPrototype * item, uint32 amount, Creature
 			}
 		}
 
-		if(m_pOwner->GetUInt32Value(PLAYER_FIELD_HONOR_CURRENCY) < (ec->honor*amount))
+		/*if(m_pOwner->GetUInt32Value(PLAYER_FIELD_HONOR_CURRENCY) < (ec->honor*amount))
 			return CAN_AFFORD_ITEM_ERROR_DONT_HAVE_ENOUGH_MONEY;
 		if(m_pOwner->GetUInt32Value(PLAYER_FIELD_ARENA_CURRENCY ) < (ec->arena*amount))
-			return CAN_AFFORD_ITEM_ERROR_DONT_HAVE_ENOUGH_MONEY;
+			return CAN_AFFORD_ITEM_ERROR_DONT_HAVE_ENOUGH_MONEY;*/
  		if(m_pOwner->GetMaxPersonalRating() < ec->personalrating)
 			return CAN_AFFORD_ITEM_ERROR_NOT_REQUIRED_RANK;
 	}

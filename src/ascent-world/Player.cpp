@@ -1,12 +1,12 @@
 /*
  * Ascent MMORPG Server
- * Copyright (C) 2005-2011 Ascent Team <http://www.ascentemulator.net/>
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
  * This software is  under the terms of the EULA License
- * All title, including but not limited to copyrights, in and to the Ascent Software
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
  * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
  * and intellectual property rights in and to the content which may be accessed through
- * use of the Ascent is the property of the respective content owner and may be protected
+ * use of the AscentNG is the property of the respective content owner and may be protected
  * by applicable copyright or other intellectual property laws and treaties. This EULA grants
  * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
  *
@@ -680,6 +680,14 @@ ASCENT_INLINE uint32 GetSpellForLanguage(uint32 SkillID)
 	case SKILL_LANG_DRAENEI:
 		return 29932;
 		break;
+
+	case SKILL_LANG_WORGEN:
+		return 69270;
+		break;
+
+	case SKILL_LANG_GOBLIN:
+		return 69269;
+		break;
 	}
 
 	return 0;
@@ -797,7 +805,7 @@ bool Player::Create(WorldPacket& data )
 
 	if( sWorld.StartLevel >= uint8(class_ != DEATHKNIGHT ? 10: 55) )
 	{
-		SetUInt32Value(PLAYER_CHARACTER_POINTS1, sWorld.StartLevel - uint32(class_ != DEATHKNIGHT ? 9: 55));
+		//SetUInt32Value(PLAYER_CHARACTER_POINTS1, sWorld.StartLevel - uint32(class_ != DEATHKNIGHT ? 9: 55));
 		SetUInt32Value(UNIT_FIELD_LEVEL,sWorld.StartLevel);
 	}
 	else
@@ -849,7 +857,7 @@ bool Player::Create(WorldPacket& data )
 	SetUInt32Value(PLAYER_BYTES_3, ((gender) | (0x00 << 8) | (0x00 << 16) | (GetPVPRank() << 24)));
 	SetUInt32Value(PLAYER_NEXT_LEVEL_XP, 400);
 	SetUInt32Value(PLAYER_FIELD_BYTES, 0x08 );
-	SetUInt32Value(PLAYER_CHARACTER_POINTS2,2);
+	//SetUInt32Value(PLAYER_CHARACTER_POINTS2,2);
 	SetFloatValue(UNIT_MOD_CAST_SPEED, 1.0f);
 	SetUInt32Value(PLAYER_FIELD_MAX_LEVEL, sWorld.GetMaxLevel(TO_PLAYER(this)));
   
@@ -1706,7 +1714,7 @@ void Player::smsg_InitialSpells()
 
 void Player::BuildPlayerTalentsInfo(WorldPacket *data, bool self)
 {
-	*data << uint32(GetUInt32Value(PLAYER_CHARACTER_POINTS1)); // Unspent talents
+	*data << uint32(availTalentPoints); // Unspent talents
 	// TODO: probably shouldn't send both specs if target is not self
 	*data << uint8(m_talentSpecsCount);
 	*data << uint8(m_talentActiveSpec);
@@ -2065,7 +2073,7 @@ void Player::addSpell(uint32 spell_id)
 		{
 			case SKILL_TYPE_PROFESSION:
 				max=75*((spell->RankNumber)+1);
-				ModUnsigned32Value( PLAYER_CHARACTER_POINTS2, -1 ); // we are learning a proffesion, so substract a point.
+				availProfPoints -= 1;
 				break;
 			case SKILL_TYPE_SECONDARY:
 				max=75*((spell->RankNumber)+1);
@@ -2143,6 +2151,8 @@ void Player::InitVisibleUpdateBits()
 	Player::m_visibleUpdateMask.SetBit(UNIT_FIELD_POWER5);
 	Player::m_visibleUpdateMask.SetBit(UNIT_FIELD_POWER6);
 	Player::m_visibleUpdateMask.SetBit(UNIT_FIELD_POWER7);
+	Player::m_visibleUpdateMask.SetBit(UNIT_FIELD_POWER8);
+	Player::m_visibleUpdateMask.SetBit(UNIT_FIELD_POWER9);
 
 	Player::m_visibleUpdateMask.SetBit(UNIT_FIELD_MAXHEALTH);
 	Player::m_visibleUpdateMask.SetBit(UNIT_FIELD_MAXPOWER1);
@@ -2152,6 +2162,8 @@ void Player::InitVisibleUpdateBits()
 	Player::m_visibleUpdateMask.SetBit(UNIT_FIELD_MAXPOWER5);
 	Player::m_visibleUpdateMask.SetBit(UNIT_FIELD_MAXPOWER6);
 	Player::m_visibleUpdateMask.SetBit(UNIT_FIELD_MAXPOWER7);
+	Player::m_visibleUpdateMask.SetBit(UNIT_FIELD_MAXPOWER8);
+	Player::m_visibleUpdateMask.SetBit(UNIT_FIELD_MAXPOWER9);
 
 	Player::m_visibleUpdateMask.SetBit(UNIT_FIELD_LEVEL);
 	Player::m_visibleUpdateMask.SetBit(UNIT_FIELD_FACTIONTEMPLATE);
@@ -2184,7 +2196,7 @@ void Player::InitVisibleUpdateBits()
 	Player::m_visibleUpdateMask.SetBit(PLAYER_DUEL_TEAM);
 	Player::m_visibleUpdateMask.SetBit(PLAYER_DUEL_ARBITER);
 	Player::m_visibleUpdateMask.SetBit(PLAYER_DUEL_ARBITER+1);
-	Player::m_visibleUpdateMask.SetBit(PLAYER_GUILDID);
+	//Player::m_visibleUpdateMask.SetBit(PLAYER_GUILDID);
 	Player::m_visibleUpdateMask.SetBit(PLAYER_GUILDRANK);
 	Player::m_visibleUpdateMask.SetBit(UNIT_FIELD_BYTES_2);
 
@@ -2233,8 +2245,8 @@ void Player::SaveToDB(bool bNewCharacter /* =false */)
 	if( m_bg != NULL && IS_ARENA( m_bg->GetType() ) )
 		in_arena = true;
 
-	if(m_uint32Values[PLAYER_CHARACTER_POINTS2]>2)
-		m_uint32Values[PLAYER_CHARACTER_POINTS2]=2;
+	if(availProfPoints>2)
+		availProfPoints=2;
  
 	//Calc played times
 	uint32 playedt = (uint32)UNIXTIME - m_playedtime[2];
@@ -2296,8 +2308,8 @@ void Player::SaveToDB(bool bNewCharacter /* =false */)
 	<< GetUInt64Value(PLAYER__FIELD_KNOWN_TITLES) << ","
 	<< GetUInt64Value(PLAYER__FIELD_KNOWN_TITLES1) << ","
 	<< m_uint32Values[PLAYER_FIELD_COINAGE] << ","
-	<< m_uint32Values[PLAYER_AMMO_ID] << ","
-	<< m_uint32Values[PLAYER_CHARACTER_POINTS2] << ","
+	<< ammoTrash << ","
+	<< availProfPoints << ","
 	<< m_maxTalentPoints << ","
 	<< load_health << ","
 	<< load_mana << ","
@@ -3039,8 +3051,8 @@ void Player::LoadFromDBProc(QueryResultVector & results)
 	SetUInt64Value( PLAYER__FIELD_KNOWN_TITLES, get_next_field.GetUInt64() );
 	SetUInt64Value( PLAYER__FIELD_KNOWN_TITLES1, get_next_field.GetUInt64() );
 	m_uint32Values[PLAYER_FIELD_COINAGE]				= get_next_field.GetUInt32();
-	m_uint32Values[PLAYER_AMMO_ID]					  = get_next_field.GetUInt32();
-	m_uint32Values[PLAYER_CHARACTER_POINTS2]			= get_next_field.GetUInt32();
+	ammoTrash					  = get_next_field.GetUInt32();
+	availProfPoints			= get_next_field.GetUInt32();
 	m_maxTalentPoints								= get_next_field.GetUInt16();
 	load_health										 = get_next_field.GetUInt32();
 	load_mana										   = get_next_field.GetUInt32();
@@ -4959,7 +4971,8 @@ void Player::_LoadSkills(QueryResult * result)
 		}
 	}
 	//Update , GM's can still learn more
-	SetUInt32Value( PLAYER_CHARACTER_POINTS2, ( GetSession()->HasGMPermissions()? 2 : proff_counter ) );
+	//SetUInt32Value( PLAYER_CHARACTER_POINTS2, ( GetSession()->HasGMPermissions()? 2 : proff_counter ) );
+	availProfPoints += GetSession()->HasGMPermissions() ? 2 : proff_counter;
 	_UpdateMaxSkillCounts();
 }
 
@@ -6682,7 +6695,8 @@ void Player::Reset_Talents()
 	if( getClass()==SHAMAN && _HasSkillLine( SKILL_DUAL_WIELD ) )
 		_RemoveSkillLine( SKILL_DUAL_WIELD );
 
-	SetUInt32Value(PLAYER_CHARACTER_POINTS1, GetMaxTalentPoints()); 
+	//SetUInt32Value(PLAYER_CHARACTER_POINTS1, GetMaxTalentPoints()); 
+	availTalentPoints = GetMaxTalentPoints();
 
 	if( getClass() == WARRIOR )
 	{	
@@ -6762,7 +6776,8 @@ void Player::ApplySpec(uint8 spec, bool init)
 		newTalentPoints = 0;	// just in case
 	else
 		newTalentPoints = maxTalentPoints - spentPoints;
-	SetUInt32Value(PLAYER_CHARACTER_POINTS1, newTalentPoints);
+	//SetUInt32Value(PLAYER_CHARACTER_POINTS1, newTalentPoints);
+	availTalentPoints = newTalentPoints;
 
 	// Apply glyphs
 	for(uint32 i = 0; i < GLYPHS_COUNT; i++)
@@ -6843,7 +6858,7 @@ void Player::LearnTalent(uint32 talent_id, uint32 requested_rank)
 	TalentEntry * talentInfo = dbcTalent.LookupEntryForced(talent_id);
 	if(!talentInfo)return;
 
-	uint32 CurTalentPoints = GetUInt32Value(PLAYER_CHARACTER_POINTS1);
+	uint32 CurTalentPoints = availTalentPoints;
 	std::map<uint32, uint8> *talents = &m_specs[m_talentActiveSpec].talents;
 	uint8 currentRank = 0;
 	std::map<uint32, uint8>::iterator itr = talents->find(talent_id);
@@ -6914,7 +6929,8 @@ void Player::LearnTalent(uint32 talent_id, uint32 requested_rank)
 	}
 
 	(*talents)[talent_id] = requested_rank;
-	SetUInt32Value(PLAYER_CHARACTER_POINTS1, CurTalentPoints - RequiredTalentPoints);
+	//SetUInt32Value(PLAYER_CHARACTER_POINTS1, CurTalentPoints - RequiredTalentPoints);
+	availTalentPoints = (CurTalentPoints - RequiredTalentPoints);
 	// More cheat death hackage! :)
 	if(spellid == 31330)
 		m_cheatDeathRank = 3;
@@ -6963,8 +6979,8 @@ void Player::Reset_ToLevel1()
 	SetUInt32Value(UNIT_FIELD_STAT3, info->intellect );
 	SetUInt32Value(UNIT_FIELD_STAT4, info->spirit );
 	SetUInt32Value(UNIT_FIELD_ATTACK_POWER, info->attackpower );
-	SetUInt32Value(PLAYER_CHARACTER_POINTS1,0);
-	SetUInt32Value(PLAYER_CHARACTER_POINTS2,2);
+	availTalentPoints = 0;
+	availProfPoints = 2;
 	for(uint32 x=0;x<7;x++)
 		SetFloatValue(PLAYER_FIELD_MOD_DAMAGE_DONE_PCT+x, 1.00);
 
@@ -7469,10 +7485,10 @@ void Player::UpdateKnownCurrencies(uint32 ItemId, bool apply)
 {
 	if(CurrencyTypesEntry * ctEntry = dbcCurrencyTypes.LookupEntryForced(ItemId))
 	{
-		if(apply)
+		/*if(apply)
 			SetFlag64(PLAYER_FIELD_KNOWN_CURRENCIES,(1 << (ctEntry->BitIndex-1)));
 		else
-			RemoveFlag64(PLAYER_FIELD_KNOWN_CURRENCIES,(1 << (ctEntry->BitIndex-1)));
+			RemoveFlag64(PLAYER_FIELD_KNOWN_CURRENCIES,(1 << (ctEntry->BitIndex-1)));*/ //TODO: Fix? - CMB
 	}
 }
 
@@ -7842,6 +7858,8 @@ void Player::ProcessPendingUpdates(ByteBuffer *pBuildBuffer, ByteBuffer *pCompre
     //build out of range updates if creation updates are queued
     if(bCreationBuffer.size() || mOutOfRangeIdCount)
     {
+		*(uint16*)&update_buffer[c] = 0;
+		c += 2;
         *(uint32*)&update_buffer[c] = ((mOutOfRangeIds.size() > 0) ? (mCreationCount + 1) : mCreationCount);
 		c += 4;
 
@@ -7878,6 +7896,8 @@ void Player::ProcessPendingUpdates(ByteBuffer *pBuildBuffer, ByteBuffer *pCompre
 	if(bUpdateBuffer.size())
 	{
 		c = 0;
+		*(uint16*)&update_buffer[c] = 0;
+		c += 2;
 		*(uint32*)&update_buffer[c] = ((mOutOfRangeIds.size() > 0) ? (mUpdateCount + 1) : mUpdateCount);
 		c += 4;
 		memcpy(&update_buffer[c], bUpdateBuffer.contents(), bUpdateBuffer.size());  c += bUpdateBuffer.size();
@@ -8544,7 +8564,7 @@ void Player::ApplyLevelInfo(LevelInfo* Info, uint32 Level)
 	if(Talents < 0)
 		Reset_Talents();
 	else if(Level >= 10)
-		ModUnsigned32Value(PLAYER_CHARACTER_POINTS1, Talents);
+		availTalentPoints += Talents;
 
 	_UpdateMaxSkillCounts();
 	UpdateStats();
@@ -8750,20 +8770,6 @@ void Player::SafeTeleport(MapMgr* mgr, LocationVector vec)
 	if(DuelingWith != NULL)
 	{
 		EndDuel(DUEL_WINNER_RETREAT);
-	}
-}
-
-void Player::SetGuildId(uint32 guildId)
-{
-	if(IsInWorld())
-	{
-		const uint32 field = PLAYER_GUILDID;
-		sEventMgr.AddEvent(TO_OBJECT(this), &Object::EventSetUInt32Value, field, guildId, EVENT_PLAYER_SEND_PACKET, 1,
-			1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
-	}
-	else
-	{
-		SetUInt32Value(PLAYER_GUILDID,guildId);
 	}
 }
 
@@ -9286,12 +9292,12 @@ void Player::ModifyBonuses(uint32 type,int32 val)
 			}break;
 		case ATTACK_POWER:
 			{
-				ModUnsigned32Value( UNIT_FIELD_ATTACK_POWER_MODS, val );
-				ModUnsigned32Value( UNIT_FIELD_RANGED_ATTACK_POWER_MODS, val );
+				ModUnsigned32Value( UNIT_FIELD_ATTACK_POWER_MOD_POS, val );
+				ModUnsigned32Value( UNIT_FIELD_RANGED_ATTACK_POWER_MOD_POS, val );
 			}break;
 		case RANGED_ATTACK_POWER:
 			{
-				ModUnsigned32Value( UNIT_FIELD_RANGED_ATTACK_POWER_MODS, val );
+				ModUnsigned32Value( UNIT_FIELD_RANGED_ATTACK_POWER_MOD_POS, val );
 			}break;
 		case FERAL_ATTACK_POWER:
 			{
@@ -9637,12 +9643,12 @@ void Player::CalcDamage()
 		{
 			if(it->GetProto()->SubClass != 19)//wands do not have bonuses from RAP & ammo
 			{
-//				ap_bonus = (GetUInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER)+(int32)GetUInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER_MODS))/14000.0;
+//				ap_bonus = (GetUInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER)+(int32)GetUInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER_MOD_POS))/14000.0;
 				//modified by Zack : please try to use premade functions if possible to avoid forgetting stuff
 				ap_bonus = GetRAP()/14000.0f;
 				bonus = ap_bonus*it->GetProto()->Delay;
 				
-				if(GetUInt32Value(PLAYER_AMMO_ID))
+				/*if(GetUInt32Value(PLAYER_AMMO_ID))
 				{
 					ItemPrototype * xproto=ItemPrototypeStorage.LookupEntry(GetUInt32Value(PLAYER_AMMO_ID));
 					if(xproto)
@@ -9650,7 +9656,9 @@ void Player::CalcDamage()
 						bonus+=((xproto->Damage[0].Min+xproto->Damage[0].Max)*it->GetProto()->Delay)/2000.0f;
 					}
 				}
-			}else bonus =0;
+			}else*/ 
+			}
+			bonus =0;
 			
 			r = BaseRangedDamage[0]+delta+bonus;
 			r *= tmp;
@@ -10136,7 +10144,7 @@ void Player::_UpdateSkillFields()
 			continue;
 		}
 
-		ASSERT(f <= PLAYER_CHARACTER_POINTS1);
+		ASSERT(f <= availTalentPoints);
 		if(itr->second.Skill->type == SKILL_TYPE_PROFESSION)
 			SetUInt32Value(f++, itr->first | 0x10000);
 		else
@@ -10247,11 +10255,11 @@ void Player::_UpdateSkillFields()
 	}
 
 	/* Null out the rest of the fields */
-	for(; f < PLAYER_CHARACTER_POINTS1; ++f)
+	/*for(; f < availTalentPoints; ++f)
 	{
 		if(m_uint32Values[f] != 0)
 			SetUInt32Value(f, 0);
-	}
+	}*/
 }
 
 bool Player::_HasSkillLine(uint32 SkillLine)
@@ -10423,7 +10431,7 @@ void Player::_AddLanguages(bool All)
 	skilllineentry * en;
 	uint32 spell_id;
 	static uint32 skills[] = { SKILL_LANG_COMMON, SKILL_LANG_ORCISH, SKILL_LANG_DWARVEN, SKILL_LANG_DARNASSIAN, SKILL_LANG_TAURAHE, SKILL_LANG_THALASSIAN,
-		SKILL_LANG_TROLL, SKILL_LANG_GUTTERSPEAK, SKILL_LANG_DRAENEI, 0 };
+		SKILL_LANG_TROLL, SKILL_LANG_GUTTERSPEAK, SKILL_LANG_DRAENEI, SKILL_LANG_WORGEN, SKILL_LANG_GOBLIN, 0 };
 	
 	if(All)
 	{

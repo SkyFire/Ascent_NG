@@ -1,12 +1,12 @@
 /*
  * Ascent MMORPG Server
- * Copyright (C) 2005-2011 Ascent Team <http://www.ascentemulator.net/>
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
  * This software is  under the terms of the EULA License
- * All title, including but not limited to copyrights, in and to the Ascent Software
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
  * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
  * and intellectual property rights in and to the content which may be accessed through
- * use of the Ascent is the property of the respective content owner and may be protected
+ * use of the AscentNG is the property of the respective content owner and may be protected
  * by applicable copyright or other intellectual property laws and treaties. This EULA grants
  * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
  *
@@ -38,7 +38,7 @@ struct LevelInfo;
 #define PLAYER_ACTION_BUTTON_COUNT 132
 #define PLAYER_ACTION_BUTTON_SIZE PLAYER_ACTION_BUTTON_COUNT * sizeof(ActionButton)
 #define MAX_SPEC_COUNT 2
-#define GLYPHS_COUNT 6
+#define GLYPHS_COUNT 9
 
 #define ALLIANCE 0
 #define HORDE 1
@@ -76,8 +76,11 @@ enum Races
 	RACE_TAUREN = 6,
 	RACE_GNOME = 7,
 	RACE_TROLL = 8,
+	RACE_GOBLIN = 9,
 	RACE_BLOODELF = 10,
 	RACE_DRAENEI = 11,
+	RACE_WORGEN = 22,
+	
 };
 
 enum PlayerStatus
@@ -781,6 +784,8 @@ public:
 	/************************************************************************/
 	/* Skill System															*/
 	/************************************************************************/
+	uint32 availTalentPoints;
+	uint32 availProfPoints;
 
 	void _AdvanceSkillLine(uint32 SkillLine, uint32 Count = 1);
 	void _AddSkillLine(uint32 SkillLine, uint32 Current, uint32 Max);
@@ -860,6 +865,8 @@ public:
 	void GiveXP(uint32 xp, const uint64 &guid, bool allowbonus);   // to stop rest xp being given
 	void ModifyBonuses(uint32 type,int32 val);
 	std::map<uint32, uint32> m_wratings;
+
+	uint32 ammoTrash;
 
     /************************************************************************/
     /* Taxi                                                                 */
@@ -1113,15 +1120,22 @@ public:
 	/************************************************************************/
 	/* Guilds                                                               */
 	/************************************************************************/
-	ASCENT_INLINE  bool        IsInGuild() {return (m_uint32Values[PLAYER_GUILDID] != 0) ? true : false;}
-	ASCENT_INLINE uint32       GetGuildId() { return m_uint32Values[PLAYER_GUILDID]; }
-	void                SetGuildId(uint32 guildId);
+	uint32 m_guildID;
+	ASCENT_INLINE  bool        IsInGuild() {return (m_guildID != 0) ? true : false; }
+	ASCENT_INLINE uint32       GetGuildId() { return m_guildID; }
+	ASCENT_INLINE void		   SetGuildId(uint32 guildId) 
+	{ 
+		m_guildID = guildId;
+		/*if(guildId != 0) //TODO: Fix this - CMB
+		{
+			SetUInt64Value(OBJECT_FIELD_DATA, )
+		}*/
+	}
 	ASCENT_INLINE uint32       GetGuildRank() { return m_uint32Values[PLAYER_GUILDRANK]; }
 	void                SetGuildRank(uint32 guildRank);
 	uint32              GetGuildInvitersGuid() { return m_invitersGuid; }
 	void                SetGuildInvitersGuid( uint32 guid ) { m_invitersGuid = guid; }
 	void                UnSetGuildInvitersGuid() { m_invitersGuid = 0; }
-
 	/************************************************************************/
 	/* Duel                                                                 */
 	/************************************************************************/

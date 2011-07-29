@@ -1,12 +1,12 @@
 /*
  * Ascent MMORPG Server
- * Copyright (C) 2005-2011 Ascent Team <http://www.ascentemulator.net/>
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
  * This software is  under the terms of the EULA License
- * All title, including but not limited to copyrights, in and to the Ascent Software
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
  * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
  * and intellectual property rights in and to the content which may be accessed through
- * use of the Ascent is the property of the respective content owner and may be protected
+ * use of the AscentNG is the property of the respective content owner and may be protected
  * by applicable copyright or other intellectual property laws and treaties. This EULA grants
  * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
  *
@@ -233,6 +233,11 @@ uint32 Object::BuildCreateUpdateBlockForPlayer(ByteBuffer *data, Player* target)
 	// we have dirty data, or are creating for ourself.
 	UpdateMask updateMask;
 	updateMask.SetCount( m_valuesCount );
+	/*if(GetTypeId() != TYPEID_PLAYER || target == this)
+		updateMask.SetCount( m_valuesCount );
+	else
+		updateMask.SetCount( MAX_VALUES_COUNT_OTHER_PLAYER ); */
+
 	_SetCreateBits( &updateMask, target );
 
 	// this will cache automatically if needed
@@ -589,6 +594,18 @@ void Object::_BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2
 			rotation = TO_GAMEOBJECT(this)->m_rotation;
         *data << uint64(rotation); //blizz 64bit rotation
     }
+
+	if(flags & 0x800)
+		*data << uint16(0) << uint16(0) << uint16(0); //4.0.3a unk
+
+	if(flags & 0x1000)
+	{
+		uint8 numOfBytes = 0;
+		*data << numOfBytes;
+
+		for(int i = 0; i < numOfBytes; i++)
+			*data << uint32(0);
+	}
 }
 
 //=======================================================================================
@@ -598,6 +615,10 @@ void Object::_BuildMovementUpdate(ByteBuffer * data, uint16 flags, uint32 flags2
 void Object::_BuildValuesUpdate(ByteBuffer * data, UpdateMask *updateMask, Player* target)
 {
 	bool reset = false;
+
+	uint32 valuesCount = m_valuesCount;
+	if(GetTypeId() == TYPEID_PLAYER && target != this)
+		valuesCount = MAX_VALUES_COUNT_OTHER_PLAYER;
 
 	uint32 oldState = 0;
 	if(updateMask->GetBit(OBJECT_FIELD_GUID) && target)	   // We're creating.
@@ -653,19 +674,19 @@ void Object::_BuildValuesUpdate(ByteBuffer * data, UpdateMask *updateMask, Playe
 		}
 	}
 
-	WPAssert( updateMask && updateMask->GetCount() == m_valuesCount );
+	WPAssert( updateMask && updateMask->GetCount() == valuesCount );
 	uint32 bc;
 	uint32 values_count;
-	if( m_valuesCount > ( 2 * 0x20 ) )//if number of blocks > 2->  unit and player+item container
+	if( valuesCount > ( 2 * 0x20 ) )//if number of blocks > 2->  unit and player+item container
 	{
 		bc = updateMask->GetUpdateBlockCount();
-		values_count = (uint32)min( bc * 32, m_valuesCount );
+		values_count = (uint32)min( bc * 32, valuesCount );
 
 	}
 	else
 	{
 		bc=updateMask->GetBlockCount();
-		values_count=m_valuesCount;
+		values_count=valuesCount;
 	}
 
 	*data << (uint8)bc;

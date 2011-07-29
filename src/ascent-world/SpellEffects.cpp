@@ -1,12 +1,12 @@
 /*
  * Ascent MMORPG Server
- * Copyright (C) 2005-2011 Ascent Team <http://www.ascentemulator.net/>
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
  * This software is  under the terms of the EULA License
- * All title, including but not limited to copyrights, in and to the Ascent Software
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
  * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
  * and intellectual property rights in and to the content which may be accessed through
- * use of the Ascent is the property of the respective content owner and may be protected
+ * use of the AscentNG is the property of the respective content owner and may be protected
  * by applicable copyright or other intellectual property laws and treaties. This EULA grants
  * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
  *
@@ -548,7 +548,7 @@ void Spell::SpellEffectSchoolDMG(uint32 i) // dmg school
 					if( it )
 						dmg += float2int32((it->GetProto()->Damage[0].Min + it->GetProto()->Damage[0].Max) * 0.2f); //+unmodified weapon damage
 
-					ItemPrototype* ip = ItemPrototypeStorage.LookupEntry( p_caster->GetUInt32Value( PLAYER_AMMO_ID ) );
+					ItemPrototype* ip = ItemPrototypeStorage.LookupEntry( p_caster->GetUInt32Value( 2512 ) ); //TEMP!!! TODO: Fix - CMB
 					if( ip )
 						dmg += float2int32((ip->Damage[0].Min + ip->Damage[0].Max) * 0.2f); //+unmodified ammo damage
 				}
@@ -4261,7 +4261,7 @@ void Spell::SpellEffectSkillStep(uint32 i) // Skill Step
 			return;*/
 
 		if( sk->type == SKILL_TYPE_PROFESSION )
-			target->ModUnsigned32Value( PLAYER_CHARACTER_POINTS2, -1 );
+			target->availTalentPoints -= 1;
 	  
 		if( skill == SKILL_RIDING )
 			target->_AddSkillLine( skill, max, max );

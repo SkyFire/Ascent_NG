@@ -1,12 +1,12 @@
 /*
  * Ascent MMORPG Server
- * Copyright (C) 2005-2011 Ascent Team <http://www.ascentemulator.net/>
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
  * This software is  under the terms of the EULA License
- * All title, including but not limited to copyrights, in and to the Ascent Software
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
  * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
  * and intellectual property rights in and to the content which may be accessed through
- * use of the Ascent is the property of the respective content owner and may be protected
+ * use of the AscentNG is the property of the respective content owner and may be protected
  * by applicable copyright or other intellectual property laws and treaties. This EULA grants
  * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
  *
@@ -62,10 +62,62 @@ void WorldSession::HandleMessagechatOpcode( WorldPacket & recv_data )
 	WorldPacket *data;
 	CHECK_INWORLD_RETURN;
 
-	uint32 type;
+	uint32 type = 0;
 	int32 lang;
 
-	recv_data >> type;
+	switch(recv_data.GetOpcode())
+	{
+	case CMSG_MESSAGECHAT_SAY:
+		type = CHAT_MSG_SAY;
+		break;
+	case CMSG_MESSAGECHAT_YELL:
+		type = CHAT_MSG_YELL;
+		break;
+	case CMSG_MESSAGECHAT_CHANNEL:
+		type = CHAT_MSG_CHANNEL;
+		break;
+	case CMSG_MESSAGECHAT_WHISPER:
+		type = CHAT_MSG_WHISPER;
+		break;
+	case CMSG_MESSAGECHAT_GUILD:
+		type = CHAT_MSG_GUILD;
+		break;
+	case CMSG_MESSAGECHAT_OFFICER:
+		type = CHAT_MSG_OFFICER;
+		break;
+	case CMSG_MESSAGECHAT_AFK:
+		type = CHAT_MSG_AFK;
+		break;
+	case CMSG_MESSAGECHAT_DND:
+		type = CHAT_MSG_DND;
+		break;
+	case CMSG_MESSAGECHAT_EMOTE:
+		type = CHAT_MSG_EMOTE;
+		break;
+	case CMSG_MESSAGECHAT_PARTY:
+		type = CHAT_MSG_PARTY;
+		break;
+	case CMSG_MESSAGECHAT_PARTY_LEADER:
+		type = CHAT_MSG_PARTY_LEADER;
+		break;
+	case CMSG_MESSAGECHAT_RAID:
+		type = CHAT_MSG_RAID;
+		break;
+	case CMSG_MESSAGECHAT_RAID_LEADER:
+		type = CHAT_MSG_RAID_LEADER;
+		break;
+	case CMSG_MESSAGECHAT_BATTLEGROUND:
+		type = CHAT_MSG_BATTLEGROUND;
+		break;
+	case CMSG_MESSAGECHAT_RAID_WARNING:
+		type = CHAT_MSG_RAID_WARNING;
+		break;
+	default:
+		sLog.outDetail("HandleMessagechatOpcode : Incorrect Opcode for type (%u)", recv_data.GetOpcode());
+		recv_data.hexlike();
+		return;
+	}
+
 	recv_data >> lang;
 
 	if( lang >= NUM_LANGUAGES )
@@ -82,8 +134,8 @@ void WorldSession::HandleMessagechatOpcode( WorldPacket & recv_data )
 	// special misc
 	if( type == CHAT_MSG_CHANNEL || type == CHAT_MSG_WHISPER )
 	{
-		recv_data >> misc;
 		recv_data >> msg;
+		recv_data >> misc;
 	}
 	else
 		recv_data >> msg;

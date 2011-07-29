@@ -1,12 +1,12 @@
 /*
  * Ascent MMORPG Server
- * Copyright (C) 2005-2011 Ascent Team <http://www.ascentemulator.net/>
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
  * This software is  under the terms of the EULA License
- * All title, including but not limited to copyrights, in and to the Ascent Software
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
  * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
  * and intellectual property rights in and to the content which may be accessed through
- * use of the Ascent is the property of the respective content owner and may be protected
+ * use of the AscentNG is the property of the respective content owner and may be protected
  * by applicable copyright or other intellectual property laws and treaties. This EULA grants
  * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
  *
@@ -136,6 +136,7 @@ void WorldSession::SendTrainerList(Creature* pCreature)
 
 	data << pCreature->GetGUID();
 	data << pTrainer->TrainerType;
+	data << uint32(0x0F); //unk 4.0.1
 
 	data << uint32(0);
 	for(vector<TrainerSpell>::iterator itr = pTrainer->Spells.begin(); itr != pTrainer->Spells.end(); ++itr)
@@ -149,13 +150,14 @@ void WorldSession::SendTrainerList(Creature* pCreature)
 		else
 			continue;
 
-		data << Status;
+		data << uint8(Status);
 		data << pSpell->Cost;
 		data << Spacer;
-		data << uint32(pSpell->IsProfession);
+		//data << uint32(pSpell->IsProfession);
 		data << uint8(pSpell->RequiredLevel);
 		data << pSpell->RequiredSkillLine;
 		data << pSpell->RequiredSkillLineValue;
+		data << uint32(0); //4.0.1 unk
 		data << pSpell->RequiredSpell;
 		data << Spacer;	//this is like a spell override or something, ex : (id=34568 or id=34547) or (id=36270 or id=34546) or (id=36271 or id=34548)
 		data << Spacer;
@@ -173,8 +175,9 @@ void WorldSession::HandleTrainerBuySpellOpcode(WorldPacket& recvPacket)
 	CHECK_INWORLD_RETURN;
 	uint64 Guid;
 	uint32 TeachingSpellID;
+	uint32 unk; //4.0.1 unk
 
-	recvPacket >> Guid >> TeachingSpellID;
+	recvPacket >> Guid >> unk >> TeachingSpellID;
 	Creature* pCreature = _player->GetMapMgr()->GetCreature(GET_LOWGUID_PART(Guid));
 	if(pCreature == 0) return;
 
@@ -284,7 +287,7 @@ uint8 WorldSession::TrainerGetSpellStatus(TrainerSpell*  pSpell)
 		|| (pSpell->RequiredSpell && !_player->HasSpell(pSpell->RequiredSpell))
 		|| (pSpell->Cost && _player->GetUInt32Value(PLAYER_FIELD_COINAGE) < pSpell->Cost)
 		|| (pSpell->RequiredSkillLine && _player->_GetSkillLineCurrent(pSpell->RequiredSkillLine,true) < pSpell->RequiredSkillLineValue)
-		|| (pSpell->IsProfession && pSpell->RequiredSkillLine==0 && _player->GetUInt32Value(PLAYER_CHARACTER_POINTS2) == 0)//check level 1 professions if we can learn a new proffesion
+		|| (pSpell->IsProfession && pSpell->RequiredSkillLine==0 && _player->availProfPoints == 0)//check level 1 professions if we can learn a new proffesion
 		)
 		return TRAINER_STATUS_NOT_LEARNABLE;
 	return TRAINER_STATUS_LEARNABLE;

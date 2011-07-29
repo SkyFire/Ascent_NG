@@ -1,12 +1,12 @@
 /*
  * Ascent MMORPG Server
- * Copyright (C) 2005-2011 Ascent Team <http://www.ascentemulator.net/>
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
  * This software is  under the terms of the EULA License
- * All title, including but not limited to copyrights, in and to the Ascent Software
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
  * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
  * and intellectual property rights in and to the content which may be accessed through
- * use of the Ascent is the property of the respective content owner and may be protected
+ * use of the AscentNG is the property of the respective content owner and may be protected
  * by applicable copyright or other intellectual property laws and treaties. This EULA grants
  * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
  *
@@ -53,11 +53,16 @@ WorldPacket* WorldSession::BuildQuestQueryResponse(Quest *qst)
 	*data << float(0);								// Reward Honor Multiplier
 	*data << uint32(qst->srcitem);					// Item given at the start of a quest (srcitem)
 	*data << uint32(qst->quest_flags);				// Quest Flags
+	*data << uint32(0);								// 4.0.1 unknown
 	*data << uint32(qst->reward_title);				// Reward Title Id - Player is givn this title upon completion
 	*data << uint32(qst->required_kill_player);		// Required Kill Player
 	*data << uint32(qst->reward_talents);			// Reward Talents
 	*data << uint32(0);								// Arena Points
+	*data << uint32(0);								// 4.0.1 unknown
+	*data << uint32(0);								// 4.0.1 unknown
 	*data << uint32(0);								// unk
+	*data << uint32(0);								// 4.0.1 unknown
+	*data << uint32(0);								// 4.0.1 unknown
 
 	// (loop 4 times)
 	for(uint32 i = 0; i < 4; ++i)
@@ -113,6 +118,19 @@ WorldPacket* WorldSession::BuildQuestQueryResponse(Quest *qst)
 		*data << qst->objectivetexts[1];			// Objective 2 - Used as text if mob not set
 		*data << qst->objectivetexts[2];			// Objective 3 - Used as text if mob not set
 		*data << qst->objectivetexts[3];			// Objective 4 - Used as text if mob not set
+
+		for(int i = 0; i < 4; i++)					// 4.0.0 currency reward id and count
+			*data << uint32(0) << uint32(0);
+		for(int i = 0; i < 4; i++)					// 4.0.0 currency reward id and count
+			*data << uint32(0) << uint32(0);
+
+		*data << "";								//4.0.1 unk string
+		*data << "";								//4.0.1 unk string
+		*data << "";								//4.0.1 unk string
+		*data << "";								//4.0.1 unk string
+
+		*data << uint32(0);							//4.0.1 unknown
+		*data << uint32(0);							//4.0.1 unknown
 
 
 	return data;

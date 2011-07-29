@@ -1,12 +1,12 @@
 /*
  * Ascent MMORPG Server
- * Copyright (C) 2005-2011 Ascent Team <http://www.ascentemulator.net/>
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
  * This software is  under the terms of the EULA License
- * All title, including but not limited to copyrights, in and to the Ascent Software
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
  * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
  * and intellectual property rights in and to the content which may be accessed through
- * use of the Ascent is the property of the respective content owner and may be protected
+ * use of the AscentNG is the property of the respective content owner and may be protected
  * by applicable copyright or other intellectual property laws and treaties. This EULA grants
  * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
  *
@@ -103,7 +103,7 @@ void WorldSession::HandleUnlearnSkillOpcode(WorldPacket& recv_data)
 {
 	CHECK_INWORLD_RETURN;
 	uint32 skill_line;
-	uint32 points_remaining=_player->GetUInt32Value(PLAYER_CHARACTER_POINTS2);
+	uint32 points_remaining=_player->availProfPoints;
 	recv_data >> skill_line;
 
 	// Cheater detection
@@ -119,13 +119,13 @@ void WorldSession::HandleUnlearnSkillOpcode(WorldPacket& recv_data)
 	_player->_RemoveSkillLine(skill_line);
 
 	//added by Zack : This is probably wrong or already made elsewhere : restore skill learnability
-	if(points_remaining==_player->GetUInt32Value(PLAYER_CHARACTER_POINTS2))
+	if(points_remaining==_player->availProfPoints)
 	{
 		//we unlearned a kill so we enable a new one to be learned
 		skilllineentry *sk=dbcSkillLine.LookupEntry(skill_line);
 		if(!sk)
 			return;
 		if(sk->type==SKILL_TYPE_PROFESSION && points_remaining<2)
-			_player->SetUInt32Value(PLAYER_CHARACTER_POINTS2,points_remaining+1);
+			_player->availProfPoints += points_remaining+1;
 	}
 }

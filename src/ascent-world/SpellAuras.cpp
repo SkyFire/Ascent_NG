@@ -1,12 +1,12 @@
 /*
  * Ascent MMORPG Server
- * Copyright (C) 2005-2011 Ascent Team <http://www.ascentemulator.net/>
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
  * This software is  under the terms of the EULA License
- * All title, including but not limited to copyrights, in and to the Ascent Software
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
  * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
  * and intellectual property rights in and to the content which may be accessed through
- * use of the Ascent is the property of the respective content owner and may be protected
+ * use of the AscentNG is the property of the respective content owner and may be protected
  * by applicable copyright or other intellectual property laws and treaties. This EULA grants
  * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
  *
@@ -2133,12 +2133,12 @@ void Aura::SpellAuraDummy(bool apply)
 			if( apply )
 			{
 				uint32 amt = GetSpellProto()->RankNumber * (_ptarget->GetUInt32Value(UNIT_FIELD_RESISTANCES)/180);
-				_ptarget->ModUnsigned32Value(UNIT_FIELD_ATTACK_POWER_MODS, amt);
+				_ptarget->ModUnsigned32Value(UNIT_FIELD_ATTACK_POWER_MOD_POS, amt);
 			}
 			else
 			{
 				uint32 amt = GetSpellProto()->RankNumber * (_ptarget->GetUInt32Value(UNIT_FIELD_RESISTANCES)/180);
-				_ptarget->ModUnsigned32Value(UNIT_FIELD_ATTACK_POWER_MODS, -int32(amt));
+				_ptarget->ModUnsigned32Value(UNIT_FIELD_ATTACK_POWER_MOD_POS, -int32(amt));
 			}
 			_ptarget->CalcDamage();
 		}break;*/
@@ -2383,9 +2383,9 @@ void Aura::SpellAuraDummy(bool apply)
 		{
 			SetPositive();
 			mod->realamount = (mod->m_amount * m_target->getLevel())/100;
-			m_target->ModUnsigned32Value(UNIT_FIELD_ATTACK_POWER_MODS,mod->realamount);
+			m_target->ModUnsigned32Value(UNIT_FIELD_ATTACK_POWER_MOD_POS,mod->realamount);
 		}else
-			m_target->ModUnsigned32Value(UNIT_FIELD_ATTACK_POWER_MODS, -mod->realamount);
+			m_target->ModUnsigned32Value(UNIT_FIELD_ATTACK_POWER_MOD_POS, -mod->realamount);
 		m_target->CalcDamage();
 	}break;
 	case 126: //Eye of Killrog     
@@ -4705,7 +4705,7 @@ void Aura::SpellAuraModShapeshift(bool apply)
 	}
 
 	if( mod->m_miscValue == FORM_CAT || mod->m_miscValue == FORM_BEAR || mod->m_miscValue == FORM_DIREBEAR || mod->m_miscValue == FORM_MOONKIN )
-		m_target->ModUnsigned32Value(UNIT_FIELD_ATTACK_POWER_MODS, apply ? TO_PLAYER(m_target)->m_feralAP : -TO_PLAYER(m_target)->m_feralAP);
+		m_target->ModUnsigned32Value(UNIT_FIELD_ATTACK_POWER_MOD_POS, apply ? TO_PLAYER(m_target)->m_feralAP : -TO_PLAYER(m_target)->m_feralAP);
 
 	if( apply )
 	{
@@ -6859,7 +6859,7 @@ void Aura::SpellAuraModAttackPower(bool apply)
 		SetNegative();
 	else
 		SetPositive();
-	m_target->ModUnsigned32Value(UNIT_FIELD_ATTACK_POWER_MODS,apply? mod->m_amount : -mod->m_amount);
+	m_target->ModUnsigned32Value(UNIT_FIELD_ATTACK_POWER_MOD_POS,apply? mod->m_amount : -mod->m_amount);
 	m_target->CalcDamage();
 }
 
@@ -7430,10 +7430,10 @@ void Aura::SpellAuraModRangedAttackPower(bool apply)
 			SetPositive();
 		else
 			SetNegative();
-		m_target->ModUnsigned32Value(UNIT_FIELD_RANGED_ATTACK_POWER_MODS,mod->m_amount);
+		m_target->ModUnsigned32Value(UNIT_FIELD_RANGED_ATTACK_POWER_MOD_POS,mod->m_amount);
 	}
 	else
-		m_target->ModUnsigned32Value(UNIT_FIELD_RANGED_ATTACK_POWER_MODS,-mod->m_amount);
+		m_target->ModUnsigned32Value(UNIT_FIELD_RANGED_ATTACK_POWER_MOD_POS,-mod->m_amount);
 	m_target->CalcDamage();
 }
 
@@ -9013,7 +9013,7 @@ void Aura::SpellAuraIncreaseRangedAPStatPCT(bool apply)
 			SetPositive();
 	}
 	//TODO make it recomputed each time we get AP or stats change
-	m_target->ModUnsigned32Value(UNIT_FIELD_RANGED_ATTACK_POWER_MODS, apply ? mod->realamount : -mod->realamount);
+	m_target->ModUnsigned32Value(UNIT_FIELD_RANGED_ATTACK_POWER_MOD_POS, apply ? mod->realamount : -mod->realamount);
 	m_target->CalcDamage();
 
 	if( m_spellProto->NameHash == SPELL_HASH_HUNTER_VS__WILD )
@@ -9021,7 +9021,7 @@ void Aura::SpellAuraIncreaseRangedAPStatPCT(bool apply)
 		Pet* pPet = TO_PLAYER(m_target)->GetSummon();
 		if( pPet )
 		{
-			pPet->ModUnsigned32Value(UNIT_FIELD_RANGED_ATTACK_POWER_MODS, apply ? mod->realamount : -mod->realamount);
+			pPet->ModUnsigned32Value(UNIT_FIELD_RANGED_ATTACK_POWER_MOD_POS, apply ? mod->realamount : -mod->realamount);
 			pPet->CalcDamage();
 		}
 	}
@@ -9287,7 +9287,7 @@ void Aura::SpellAuraIncreaseAPByAttribute(bool apply)
 			SetPositive();
 	}
 	//TODO make it recomputed each time we get AP or stats change
-	m_target->ModUnsigned32Value(UNIT_FIELD_ATTACK_POWER_MODS, apply ? mod->realamount : -mod->realamount);
+	m_target->ModUnsigned32Value(UNIT_FIELD_ATTACK_POWER_MOD_POS, apply ? mod->realamount : -mod->realamount);
 	m_target->CalcDamage();
 
 	if( m_spellProto->NameHash == SPELL_HASH_HUNTER_VS__WILD )
@@ -9298,7 +9298,7 @@ void Aura::SpellAuraIncreaseAPByAttribute(bool apply)
 		Pet* pPet = TO_PLAYER(m_target)->GetSummon();
 		if( pPet )
 		{
-			pPet->ModUnsigned32Value(UNIT_FIELD_ATTACK_POWER_MODS, apply ? mod->realamount : -mod->realamount);
+			pPet->ModUnsigned32Value(UNIT_FIELD_ATTACK_POWER_MOD_POS, apply ? mod->realamount : -mod->realamount);
 			pPet->CalcDamage();
 		}
 	}

@@ -1,12 +1,12 @@
 /*
  * Ascent MMORPG Server
- * Copyright (C) 2005-2011 Ascent Team <http://www.ascentemulator.net/>
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
  * This software is  under the terms of the EULA License
- * All title, including but not limited to copyrights, in and to the Ascent Software
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
  * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
  * and intellectual property rights in and to the content which may be accessed through
- * use of the Ascent is the property of the respective content owner and may be protected
+ * use of the AscentNG is the property of the respective content owner and may be protected
  * by applicable copyright or other intellectual property laws and treaties. This EULA grants
  * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
  *
@@ -210,7 +210,7 @@ void CommandTableStorage::Init()
 		{ "flags" ,	 'm', NULL,	"Unit Flags",		  NULL, UNIT_FIELD_FLAGS,		   0,			  1 },
 		{ "faction",	'm', NULL,	"Faction Template",	NULL, UNIT_FIELD_FACTIONTEMPLATE, 0,			  1 },
 		{ "dynamicflags",'m',NULL,	"Dynamic Flags",	   NULL, UNIT_DYNAMIC_FLAGS,		 0,			  1 },
-		{ "talentpoints",'m',NULL,	"Talent Points",	   NULL, PLAYER_CHARACTER_POINTS1,   0,			  1 },
+		//{ "talentpoints",'m',NULL,	"Talent Points",	   NULL, PLAYER_CHARACTER_POINTS1,   0,			  1 },
 		{ "happiness",	'm', NULL,	"Happiness",			 NULL, UNIT_FIELD_POWER5,	UNIT_FIELD_MAXPOWER5, 1 },
 		{ "spirit",	 'm', NULL,	"Spirit",			  NULL, UNIT_FIELD_STAT0,		   0,			  1 },
 		{ "boundingraidius",'m',NULL,  "Bounding Radius",	 NULL, UNIT_FIELD_BOUNDINGRADIUS,		 0,			  2 },

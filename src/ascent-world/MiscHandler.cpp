@@ -1,12 +1,12 @@
 /*
  * Ascent MMORPG Server
- * Copyright (C) 2005-2011 Ascent Team <http://www.ascentemulator.net/>
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
  * This software is  under the terms of the EULA License
- * All title, including but not limited to copyrights, in and to the Ascent Software
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
  * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
  * and intellectual property rights in and to the content which may be accessed through
- * use of the Ascent is the property of the respective content owner and may be protected
+ * use of the AscentNG is the property of the respective content owner and may be protected
  * by applicable copyright or other intellectual property laws and treaties. This EULA grants
  * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
  *
@@ -1189,7 +1189,9 @@ void WorldSession::HandleTogglePVPOpcode(WorldPacket& recv_data)
 
 void WorldSession::HandleAmmoSetOpcode(WorldPacket & recv_data)
 {
-	uint32 ammoId;
+	/* TODO: Fix - CMB */
+
+	/*uint32 ammoId;
 	recv_data >> ammoId;
 
 	if(!ammoId)
@@ -1242,7 +1244,7 @@ void WorldSession::HandleAmmoSetOpcode(WorldPacket & recv_data)
 
 #ifdef OPTIMIZED_PLAYER_SAVING
 	_player->save_Misc();
-#endif
+#endif*/
 }
 
 #define OPEN_CHEST 11437

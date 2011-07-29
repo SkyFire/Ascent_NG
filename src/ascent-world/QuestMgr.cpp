@@ -1,12 +1,12 @@
 /*
  * Ascent MMORPG Server
- * Copyright (C) 2005-2011 Ascent Team <http://www.ascentemulator.net/>
+ * Copyright (C) 2005-2010 Ascent Team <http://www.ascentemulator.net/>
  *
  * This software is  under the terms of the EULA License
- * All title, including but not limited to copyrights, in and to the Ascent Software
+ * All title, including but not limited to copyrights, in and to the AscentNG Software
  * and any copies there of are owned by ZEDCLANS INC. or its suppliers. All title
  * and intellectual property rights in and to the content which may be accessed through
- * use of the Ascent is the property of the respective content owner and may be protected
+ * use of the AscentNG is the property of the respective content owner and may be protected
  * by applicable copyright or other intellectual property laws and treaties. This EULA grants
  * you no rights to use such content. All rights not expressly granted are reserved by ZEDCLANS INC.
  *
@@ -283,6 +283,14 @@ void QuestMgr::BuildOfferReward(WorldPacket *data, Quest* qst, Object* qst_giver
 	*data << qst->title;
 	*data << qst->completiontext;
 
+	*data << "";												// 4.0.1 unknown string
+	*data << "";												// 4.0.1 unknown string
+	*data << "";												// 4.0.1 unknown string
+	*data << "";												// 4.0.1 unknown string
+
+	*data << uint32(0);											//4.0.1 unk
+	*data << uint32(0);											//4.0.1 unk
+
 	//uint32 a = 0, b = 0, c = 1, d = 0, e = 1;
 
 	*data << (qst->next_quest_id ? uint8(1) : uint8(0));		// next quest shit
@@ -324,15 +332,19 @@ void QuestMgr::BuildOfferReward(WorldPacket *data, Quest* qst, Object* qst_giver
 
 	*data << GenerateRewardMoney(plr, qst);
 	*data << uint32(0);
-	*data << (qst->reward_honor * 10);
+	//*data << (qst->reward_honor * 10);
 	*data << float(0);
-	*data << uint32(0x08);
+	/**data << uint32(0x08);
 	*data << qst->reward_spell;
 	*data << qst->effect_on_player;
 	*data << qst->reward_title;
 	*data << qst->reward_talents;
 	*data << uint32(0); // 3.3 Arena Points.
-	*data << uint32(0); // Maybe show reward rep.
+	*data << uint32(0); // Maybe show reward rep.*/
+
+	*data << uint32(0);											//4.0.1 unk
+	*data << uint32(0);											//4.0.1 unk
+	*data << uint32(0);											//4.0.1 unk
 
 	// 3.3 Faction Reward Stuff.
 	for(i = 0; i < 5; ++i)
@@ -343,12 +355,24 @@ void QuestMgr::BuildOfferReward(WorldPacket *data, Quest* qst, Object* qst_giver
 
 	for(i = 0; i < 5; ++i)
 		*data << int32(qst->reward_replimit);
+
+	*data << uint32(0);											//4.0.1 unk
+	*data << uint32(0);											//4.0.1 unk
+
+	for(int i = 0; i < 4; i++)
+		*data << uint32(0);											//4.0.1 unk
+	for(int i = 0; i < 4; i++)
+		*data << uint32(0);											//4.0.1 unk
+	
+	*data << uint32(0);											//4.0.1 unk
+	*data << uint32(0);											//4.0.1 unk
 	//end
 }
 
 void QuestMgr::BuildQuestDetails(WorldPacket *data, Quest* qst, Object* qst_giver, uint32 menutype, uint32 language, Player* plr)
 {
 	std::map<uint32, uint8>::const_iterator itr;
+	std::string unkStr = "";
 
 	data->SetOpcode( SMSG_QUESTGIVER_QUEST_DETAILS );
 
@@ -358,10 +382,18 @@ void QuestMgr::BuildQuestDetails(WorldPacket *data, Quest* qst, Object* qst_give
 	*data <<  qst->title;
 	*data <<  qst->details;
 	*data <<  qst->objectives;
+	*data << unkStr;								//4.0.1 unknown string
+	*data << unkStr;								//4.0.1 unknown string
+	*data << unkStr;								//4.0.1 unknown string
+	*data << unkStr;								//4.0.1 unknown string
+	*data << uint32(0);								//4.0.1 unknown
+	*data << uint32(0);								//4.0.1 unknown
 	*data << uint8(1);								// Is Acceptable
 	*data << qst->quest_flags;
 	*data << qst->suggested_players;				// "Suggested players"
+	*data << uint8(0);								//4.0.1 unknown
 	*data << uint8(0);								// Autofinish quest? Like talk to so and so.
+	*data << uint32(0);								//4.0.1 unknown
 	*data << qst->count_reward_choiceitem;
 
 	ItemPrototype *ip;
@@ -394,17 +426,22 @@ void QuestMgr::BuildQuestDetails(WorldPacket *data, Quest* qst, Object* qst_give
 		else
 			*data << uint32(0);
 	}
-
+	*data << uint32(0);								//4.0.1 unknown
+	*data << uint32(0);								//4.0.1 unknown
 	*data << GenerateRewardMoney(plr, qst);		// Reward Money
 	*data << uint32(0);							// new 3.3.0
-	*data << (qst->reward_honor * 10);			// Bonus Honor
+	//*data << (qst->reward_honor * 10);			// Bonus Honor
 	*data << float(0);							// new 3.3.0
-	*data << qst->reward_spell;					// Reward Spell Id
+	/**data << qst->reward_spell;					// Reward Spell Id
 	*data << qst->effect_on_player;				// Cast Spell Id
 	*data << qst->reward_title;					// Reward Title Id
 	*data << qst->reward_talents;				// 3.0.2 - Reward Talents
 	*data << uint32(0);							// new 3.3.0
-	*data << uint32(0);							// new 3.3.0
+	*data << uint32(0);							// new 3.3.0*/
+
+	*data << uint32(0);								//4.0.1 unknown
+	*data << uint32(0);								//4.0.1 unknown
+	*data << uint32(0);								//4.0.1 unknown
 
 	// 3.3 Faction Reward Stuff.
 	for(i = 0; i < 5; ++i)
@@ -416,6 +453,17 @@ void QuestMgr::BuildQuestDetails(WorldPacket *data, Quest* qst, Object* qst_give
 	for(i = 0; i < 5; ++i)
 		*data << int32(qst->reward_replimit);
 	//end
+
+	*data << uint32(0);								//4.0.1 unknown
+	*data << uint32(0);								//4.0.1 unknown
+
+	for(int i = 0; i < 4; i++)
+		*data << uint32(0);								//4.0.1 unknown
+	for(int i = 0; i < 4; i++)
+		*data << uint32(0);								//4.0.1 unknown
+
+	*data << uint32(0);								//4.0.1 unknown
+	*data << uint32(0);								//4.0.1 unknown
 
 	*data << uint32(4);							// Quantity of emotes, always four
 	*data << uint32(1);							// Emote id 1
@@ -467,15 +515,23 @@ void QuestMgr::BuildRequestItems(WorldPacket *data, Quest* qst, Object* qst_give
 		}
 	}
 
+	//Added in 4.0.1
+	uint32 counter = 0;
+	*data << counter;
+
+	for(uint32 i = 0; i < counter; i++)
+		*data << uint32(0) << uint32(0);
+
 	// wtf is this?
 	if(status == QMGR_QUEST_NOT_FINISHED)
 		*data << uint32(0x00); //incomplete button
 	else
-		*data << uint32(0x03);
+		*data << uint32(0x02);
 
 	*data << uint32(0x04);
 	*data << uint32(0x08);
 	*data << uint32(0x10);
+	*data << uint32(0x40);	//Added in 4.0.1
 }
 
 void QuestMgr::BuildQuestComplete(Player* plr, Quest* qst)
@@ -488,6 +544,7 @@ void QuestMgr::BuildQuestComplete(Player* plr, Quest* qst)
 	}
 
 	WorldPacket data(SMSG_QUESTGIVER_QUEST_COMPLETE, 24);
+	data << uint8(0x80);					// 4.0.1 unk flag
 	data << uint32(qst->id);
 	data << uint32(xp);
 	data << uint32(GenerateRewardMoney(plr, qst));
@@ -1033,7 +1090,7 @@ void QuestMgr::OnQuestFinished(Player* plr, Quest* qst, Object* qst_giver, uint3
 	if(IsQuestRepeatable(qst))
 	{
 		plr->ModUnsigned32Value(PLAYER_FIELD_COINAGE, GenerateRewardMoney(plr, qst));
-		plr->ModUnsigned32Value(PLAYER_CHARACTER_POINTS1, qst->reward_talents);
+		plr->availTalentPoints += qst->reward_talents;
 		HonorHandler::AddHonorPointsToPlayer(plr, qst->reward_honor);
 		// Reputation reward
 		GiveQuestRewardReputation(plr, qst, qst_giver);
@@ -1134,7 +1191,8 @@ void QuestMgr::OnQuestFinished(Player* plr, Quest* qst, Object* qst_giver, uint3
 	else
 	{
 		plr->ModUnsigned32Value(PLAYER_FIELD_COINAGE, GenerateRewardMoney(plr, qst));
-		plr->ModUnsigned32Value(PLAYER_CHARACTER_POINTS1, qst->reward_talents);
+		//plr->ModUnsigned32Value(PLAYER_CHARACTER_POINTS1, qst->reward_talents);
+		plr->availTalentPoints += qst->reward_talents;
 		HonorHandler::AddHonorPointsToPlayer(plr, qst->reward_honor);
   	
 		// Reputation reward
