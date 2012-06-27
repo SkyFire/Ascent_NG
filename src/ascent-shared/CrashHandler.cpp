@@ -13,7 +13,7 @@
  */
 
 #include "Common.h"
-#include "svn_revision.h"
+#include "git_revision.h"
 
 #include "CrashHandler.h"
 #include "Log.h"

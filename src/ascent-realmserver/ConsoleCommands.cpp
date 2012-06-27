@@ -13,7 +13,7 @@
  */
 
 #include "RStdAfx.h"
-#include <svn_revision.h>
+#include <git_revision.h>
 #include <Console/BaseConsole.h>
 #include <Console/CConsole.h>
 #include "ConsoleCommands.h"

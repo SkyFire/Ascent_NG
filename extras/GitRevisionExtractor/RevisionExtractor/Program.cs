@@ -11,6 +11,8 @@ namespace RevisionExtractor
     {
         static void Main(string[] args)
         {
+            Console.WriteLine("Git Revision Extractor\n");
+
             Uri pfad = null;
             if (args.Length > 0)
             {
@@ -21,7 +23,7 @@ namespace RevisionExtractor
             string user = SystemInformation.UserName;
             string host = SystemInformation.ComputerName;
 
-            if (!File.Exists(pfad == null ? "" : pfad.LocalPath + ".git/FETCH_HEAD"))
+            if (!File.Exists(pfad == null ? "" : pfad.LocalPath + ".git/refs/heads/master"))
             {
                 Console.WriteLine("Search for git folder...");
                 Uri.TryCreate(FindGitDir(), UriKind.Absolute, out pfad);
@@ -33,7 +35,7 @@ namespace RevisionExtractor
                 }
             }
 
-            string[] fileInput = File.ReadAllText(pfad == null ? "" : pfad.LocalPath + ".git/FETCH_HEAD").Split(new string[] { "\t\t" }, StringSplitOptions.None);
+            string[] fileInput = File.ReadAllLines(pfad == null ? "" : pfad.LocalPath + ".git/refs/heads/master");
             string verHash = fileInput[0];
 
             Console.WriteLine("Current git revision is {0}", verHash);
@@ -41,7 +43,7 @@ namespace RevisionExtractor
             bool gen = true;
             if (File.Exists("git_revision.h"))
             {
-                // Ist die vorhandene Datei aktuell...?
+                // Does file exist?
                 string[] revInput = File.ReadAllLines("git_revision.h");
                 if (revInput == null ||
                     revInput.Length != 10 ||
@@ -72,8 +74,6 @@ namespace RevisionExtractor
                                 wStream.WriteLine("#define BUILD_REVISION \"{0}\"", verHash);
                                 wStream.WriteLine("#define BUILD_HOST \"{0}\"", host);
                                 wStream.WriteLine("#define BUILD_USER \"{0}\"", user);
-                                wStream.WriteLine("#define BUILD_TIME __TIME__");
-                                wStream.WriteLine("#define BUILD_DATE __DATE__\n");
                                 wStream.WriteLine("#endif\t\t // GIT_REVISION_H");
                             }
                         }
@@ -101,7 +101,7 @@ namespace RevisionExtractor
             string dir = Environment.CurrentDirectory;
             while (dir.IndexOf('\\') != -1)
             {
-                if (File.Exists(String.Format("{0}/.git/FETCH_HEAD", dir)))
+                if (File.Exists(String.Format("{0}/.git/refs/heads/master", dir)))
                     return dir + "\\";
 
                 int pos = dir.LastIndexOf('\\');

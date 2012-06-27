@@ -14,7 +14,7 @@
 
 
 #include "RStdAfx.h"
-#include "../ascent-shared/svn_revision.h"
+#include "../ascent-shared/git_revision.h"
 #include <Console/CConsole.h>
 
 #define BANNER "Ascent r%u/%s-%s-%s :: Realm Server\n"
@@ -23,7 +23,7 @@
 #include <sched.h>
 #endif
 
-#include "svn_revision.h"
+#include "git_revision.h"
 
 #include <signal.h>
 
