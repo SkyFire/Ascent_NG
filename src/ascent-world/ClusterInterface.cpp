@@ -643,7 +643,7 @@ void ClusterInterface::HandleTransporterMapChange(WorldPacket & pck)
 	sEventMgr.RemoveEvents(t);
 	//t->m_canmove = false;
 	t->AddToWorld(mgr);
-	sEventMgr.AddEvent(t, &Transporter::EventClusterMapChange, mapid, l, EVENT_UNK, 1, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT | EVENT_FLAG_MOVE_TO_WORLD_CONTEXT);
+	//sEventMgr.AddEvent(t, &Transporter::EventClusterMapChange, mapid, l, EVENT_UNK, 1, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT | EVENT_FLAG_MOVE_TO_WORLD_CONTEXT);
 }
 
 void ClusterInterface::HandlePlayerTeleport(WorldPacket & pck)

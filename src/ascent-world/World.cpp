@@ -147,8 +147,10 @@ World::~World()
 	Log.Notice("LfgMgr", "~LfgMgr()");
 	delete LfgMgr::getSingletonPtr();
 
+#ifndef CLUSTERING
 	Log.Notice("ChannelMgr", "~ChannelMgr()");
 	delete ChannelMgr::getSingletonPtr();
+#endif
 
 	Log.Notice("QuestMgr", "~QuestMgr()");
 	delete QuestMgr::getSingletonPtr();
