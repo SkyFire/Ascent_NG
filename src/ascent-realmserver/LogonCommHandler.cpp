@@ -20,8 +20,8 @@ LogonCommHandler::LogonCommHandler()
 {
 	idhigh = 1;
 	next_request = 1;
-	pings = !Config.RealmConfig.GetBoolDefault("LogonServer", "DisablePings", false);
-	string logon_pass = Config.RealmConfig.GetStringDefault("LogonServer", "RemotePassword", "r3m0t3");
+	pings = !Config.ClusterConfig.GetBoolDefault("LogonServer", "DisablePings", false);
+	string logon_pass = Config.ClusterConfig.GetStringDefault("LogonServer", "RemotePassword", "r3m0t3");
 	
 	// sha1 hash it
 	Sha1Hash hash;

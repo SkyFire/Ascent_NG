@@ -17,7 +17,7 @@
 
 #ifdef SCRIPTLIB
 
-#include <svn_revision.h>
+#include <git_revision.h>
 #ifndef SKIP_ALLOCATOR_SHARING
 #include "CoreMemoryAllocator.cpp"
 #endif

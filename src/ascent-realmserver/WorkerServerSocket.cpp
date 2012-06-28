@@ -13,7 +13,7 @@
  */
 
 #include "RStdAfx.h"
-#include "svn_revision.h"
+#include "git_revision.h"
 
 WSSocket::WSSocket(SOCKET fd) : Socket(fd, 100000, 100000)
 {

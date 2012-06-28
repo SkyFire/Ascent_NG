@@ -17,7 +17,7 @@
 #include <Common.h>
 #include <Network/Network.h>
 #include <Config/ConfigEnv.h>
-#include <svn_revision.h>
+#include <git_revision.h>
 #include <Console/BaseConsole.h>
 
 #include "BaseConsole.h"

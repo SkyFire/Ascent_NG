@@ -13,7 +13,7 @@
  */
 
 #include "StdAfx.h"
-#include <svn_revision.h>
+#include <git_revision.h>
 #include "ConsoleCommands.h"
 
 bool HandleInfoCommand(BaseConsole * pConsole, int argc, const char * argv[])

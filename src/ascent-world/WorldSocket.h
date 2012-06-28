@@ -115,7 +115,7 @@ public:
 	ASCENT_INLINE uint32 GetRemotePort() { return ntohs(m_address.sin_port); }
 
 	ASCENT_INLINE void SendPacket(WorldPacket* packet) { if(!packet) return; OutPacket(packet->GetOpcode(), (uint16)packet->size(), (packet->size() ? (const void*)packet->contents() : NULL)); }
-	ASCENT_INLINE void SendPacket(StackPacket * packet) { if(!packet) return; OutPacket(packet->GetOpcode(), packet->GetSize(), (packet->GetSize() ? (const void*)packet->GetBuffer*() : NULL)); }
+	ASCENT_INLINE void SendPacket(StackPacket * packet) { if(!packet) return; OutPacket(packet->GetOpcode(), packet->GetSize(), (packet->GetSize() ? (const void*)packet->GetBufferPointer() : NULL)); }
 	void ASCENT_FASTCALL OutPacket(uint16 opcode, uint16 len, const void* data);
 	ASCENT_INLINE uint32 GetSessionId() { return m_sessionId; }
 

@@ -14,7 +14,7 @@
 
 #include "StdAfx.h"
 #include "AuthCodes.h"
-#include "svn_revision.h"
+#include "git_revision.h"
 
 bool ChatHandler::HandleRenameAllCharacter(const char * args, WorldSession * m_session)
 {
@@ -798,10 +798,10 @@ void WorldSession::FullLogin(Player* plr)
 
 	// Send revision (if enabled)
 #ifdef WIN32
-	_player->BroadcastMessage("Server: %sAscent %s r%u/%s-Win-%s %s(www.ascentemulator.net)", MSG_COLOR_WHITE, BUILD_TAG,
+	_player->BroadcastMessage("Server: %sAscent %s r%u/%s-Win-%s %s(www.ascentemulator.net)", MSG_COLOR_WHITE,
 		BUILD_REVISION, CONFIG, ARCH, MSG_COLOR_LIGHTBLUE);
 #else
-	_player->BroadcastMessage("Server: %sAscent %s r%u/%s-%s %s(www.ascentemulator.net)", MSG_COLOR_WHITE, BUILD_TAG,
+	_player->BroadcastMessage("Server: %sAscent %s r%u/%s-%s %s(www.ascentemulator.net)", MSG_COLOR_WHITE,
 		BUILD_REVISION, PLATFORM_TEXT, ARCH, MSG_COLOR_LIGHTBLUE);
 #endif
 

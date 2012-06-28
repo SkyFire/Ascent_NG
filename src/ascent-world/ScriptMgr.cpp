@@ -23,11 +23,11 @@
     #include <cstring>
 #endif
 
-#include <svn_revision.h>
+#include <git_revision.h>
 #define SCRIPTLIB_HIPART(x) ((x >> 16))
 #define SCRIPTLIB_LOPART(x) ((x & 0x0000ffff))
-#define SCRIPTLIB_VERSION_MINOR (BUILD_REVISION % 1000)
-#define SCRIPTLIB_VERSION_MAJOR (BUILD_REVISION / 1000)
+#define SCRIPTLIB_VERSION_MINOR (BUILD_REVISION)
+#define SCRIPTLIB_VERSION_MAJOR (BUILD_REVISION)
 
 initialiseSingleton(ScriptMgr);
 initialiseSingleton(HookInterface);
@@ -98,8 +98,8 @@ void ScriptMgr::LoadScripts()
 				{
 					uint32 version = vcall();
 					uint32 stype = scall();
-					if(SCRIPTLIB_LOPART(version) == SCRIPTLIB_VERSION_MINOR && SCRIPTLIB_HIPART(version) == SCRIPTLIB_VERSION_MAJOR)
-					{
+					//if(SCRIPTLIB_LOPART(version) == SCRIPTLIB_VERSION_MINOR && SCRIPTLIB_HIPART(version) == SCRIPTLIB_VERSION_MAJOR)
+					//{
 						std::stringstream cmsg; 
 						cmsg << "Loading " << data.cFileName << ", crc:0x" << reinterpret_cast< uint32* >( mod );
 
@@ -122,12 +122,12 @@ void ScriptMgr::LoadScripts()
 						}
 						Log.Success("ScriptMgr",cmsg.str().c_str());
 						++count;
-					}
+				/*	}
 					else
 					{
 						Log.Error("ScriptMgr","Loading %s failed, version mismatch", data.cFileName);
 						FreeLibrary(mod);
-					}
+					}*/
 				}
 			}
 		}
