@@ -22,7 +22,7 @@
 #include <sched.h>
 #endif
 
-#include "svn_revision.h"
+#include "git_revision.h"
 
 #include <signal.h>
 
@@ -158,7 +158,7 @@ bool Master::Run(int argc, char ** argv)
 	UNIXTIME = time(NULL);
 	g_localTime = *localtime(&UNIXTIME);
 
-	printf(BANNER, BUILD_TAG, BUILD_REVISION, CONFIG, PLATFORM_TEXT, ARCH);
+	printf(BANNER, BUILD_REVISION, CONFIG, PLATFORM_TEXT, ARCH);
 	printf("\nCopyright (C) 2005-2011 Ascent Team. http://www.ascentemulator.net/\n");
 	printf("This software is  under the terms of the EULA License.\n");
 	printf("All title, including but not limited to copyrights, in and to the Ascent Software and any copies there of are owned by ZEDCLANS INC.\n");

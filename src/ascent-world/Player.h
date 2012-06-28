@@ -1547,7 +1547,7 @@ public:
 #ifndef CLUSTERING
 	void _Relocate(uint32 mapid,const LocationVector & v, bool sendpending, bool force_new_world, uint32 instance_id);
 #else
-	void RelocateCallback(uint32 instance_were_going_to);
+	//void RelocateCallback(uint32 instance_were_going_to);
 #endif
 	void AddItemsToWorld();
 	void RemoveItemsFromWorld();

@@ -18,7 +18,7 @@
 
 #include "StdAfx.h"
 #include "ObjectMgr.h"
-#include <svn_revision.h>
+#include <git_revision.h>
 
 bool ChatHandler::ShowHelpForCommand(WorldSession *m_session, ChatCommand *table, const char* cmd)
 {

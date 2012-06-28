@@ -25,9 +25,9 @@
 #endif
 
 #if PLATFORM == PLATFORM_WIN32
-# define _FULLVERSION _VERSION "-SVN (Win32)"
+# define _FULLVERSION _VERSION "-GIT (Win32)"
 #else
-# define _FULLVERSION _VERSION "-SVN (Unix)"
+# define _FULLVERSION _VERSION "-GIT (Unix)"
 #endif
 
 #ifdef _DEBUG
